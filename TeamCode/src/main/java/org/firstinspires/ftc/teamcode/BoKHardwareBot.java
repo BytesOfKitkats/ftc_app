@@ -38,7 +38,7 @@ public abstract class BoKHardwareBot
     protected static final double CG_OPEN = 1;//0.9
     protected static final double CG_CLOSE = 0;//0.4
                                   //CG_CLOSE was 0.22 before taulman
-    // Jewel flioker arm
+    // Jewel flicker arm
     protected static final double JA_INIT = 0.2;
     protected static final double JA_FINAL = 0.72;
     // Jewel flicker
@@ -46,7 +46,7 @@ public abstract class BoKHardwareBot
     protected static final double JF_FINAL = 0.5;
     protected static final double JF_RIGHT = 1;
     protected static final double JF_LEFT = 0;
-    // Glyph flicker
+    // Glyph flipper
     protected static final double GF_INIT = 0.34;
     protected static final double GF_FINAL_AUTO = 0.6;
     protected static final double GF_FINAL_TELE = 0.7;
@@ -346,13 +346,6 @@ public abstract class BoKHardwareBot
     protected abstract double getTargetEncCount(double targetDistanceInches);
     protected abstract int getLFEncCount();
     protected abstract int getRFEncCount();
-    protected abstract int getRBEncCount();
-    protected abstract int getLBEncCount();
-    protected abstract void getCurrentPosition ();
-    protected abstract double[] calculateGoToPosition(double[] gotoPos);
-    protected abstract void enablePositionTracking();
-    protected abstract void disablePositionTracking();
-    protected abstract boolean isPositionTrackingEnabled();
 
     /*
      *

@@ -5,11 +5,6 @@ import android.util.Log;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-
 /**
  * Created by Krishna Saxena on 10/2/2017.
  * Extends BoKHardwareBot to implement the Mecanum wheels drive train with 4 DC Motors.
@@ -42,13 +37,7 @@ public class BoKMecanumDT extends BoKHardwareBot
     private int rightFrontTarget;
     private int rightBackTarget;
 
-    // Position tracking
-    private double lastEncRF = 0.0;
-    private double lastEncLF = 0.0;
-    private double lastEncRB = 0.0;
-    private double lastEncLB = 0.0;
-    private double currentPosition[] =  {0, 0, 0};
-    private boolean positionTracking = false;
+
 
     /*
      * Implement all the abstract methods
@@ -139,7 +128,6 @@ public class BoKMecanumDT extends BoKHardwareBot
         // all four motors need encoder wires to use RUN_TO_POSITION
         setModeForDTMotors(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setModeForDTMotors(DcMotor.RunMode.RUN_USING_ENCODER);
-        lastEncRF = lastEncLF = lastEncLB = lastEncRB = 0;
     }
 
     private void setDTMotorEncoderTarget(int leftTarget, int rightTarget)
@@ -225,6 +213,10 @@ public class BoKMecanumDT extends BoKHardwareBot
                     rightFrontTarget, rightBackTarget);
             setPowerToDTMotors(-power, power, -power, power);
         }
+        Log.v("BOK", "Target LF " + leftFrontTarget +
+                ", LB " + leftBackTarget +
+                ", RF" + rightFrontTarget +
+                ", RB " + rightBackTarget);
         return (int)targetEncCount;
     }
 
@@ -271,89 +263,5 @@ public class BoKMecanumDT extends BoKHardwareBot
     protected int getRFEncCount()
     {
         return rightFront.getCurrentPosition();
-    }
-
-    protected int getLBEncCount()
-    {
-        return leftBack.getCurrentPosition();
-    }
-
-    protected int getRBEncCount()
-    {
-        return rightBack.getCurrentPosition();
-    }
-
-    private double getAverageEnc() {
-        double EncRF = getRFEncCount();
-
-        double diffRF = -EncRF - lastEncRF;
-        double EncLF = getLFEncCount();
-        double diffLF = EncLF - lastEncLF;
-        double EncRB = getRBEncCount(); //
-        double diffRB = -EncRB - lastEncRB;
-        double EncLB = getLBEncCount();
-        double diffLB = EncLB - lastEncLB;
-        Log.v("BOK", "EncRF: " + EncRF + ", LF: " + EncLF + " EncRB: " + EncRB + " LB: " + EncLB );
-        double enc = (((diffRF+diffLF)/2.0)+((diffRB+diffLB)/2.0))/2.0;
-        lastEncRF = -EncRF;
-        lastEncLF = EncLF;
-        lastEncLB = EncLB;
-        lastEncRB = -EncRB;
-        enc /= 56.9; // encoder counts  per inch (AndyMark Orbital 20)
-        return enc;
-    }
-
-    protected void enablePositionTracking()
-    {
-        if (!positionTracking) {
-            positionTracking = true;
-            currentPosition[0] = currentPosition[1] = currentPosition[2] = 0;
-            resetDTEncoders();
-        }
-    }
-
-    protected void disablePositionTracking()
-    {
-        positionTracking = false;
-    }
-
-    protected boolean isPositionTrackingEnabled()
-    {
-        return positionTracking;
-    }
-
-    protected void getCurrentPosition ()
-    {
-        double angle = getAngle();
-        double distance = getAverageEnc();
-        angle += 90;
-        currentPosition[0] = distance*Math.cos(angle * (Math.PI/180.0)) + currentPosition[0];
-        currentPosition[1] = distance*Math.sin(angle * (Math.PI/180.0)) + currentPosition[1];
-        currentPosition[2] =  angle;
-        Log.v("BOK", "Dist: " + distance + " x: " + currentPosition[0] +
-                     ", y: " + currentPosition [1] + " angle: " + (angle-90));
-    }
-
-    protected double[] calculateGoToPosition(double[] gotoPos)
-    {
-        double x = Math.abs(gotoPos[0]) - Math.abs(currentPosition[0]);
-        double y = Math.abs(gotoPos[1]) - Math.abs(currentPosition[1]);
-        double disToTravel = Math.hypot(currentPosition[0] - gotoPos[0],
-                currentPosition[1] - gotoPos[1]);
-        double angle = Math.atan2(y,x) * (180.0/Math.PI);
-        angle -= 90;
-        while (opMode.opModeIsActive() && (angle < -180 || angle > 180)) {
-            if (angle < -180) {
-                angle += 360;
-            }
-            else if(angle  > 180) {
-                angle -= 360;
-            }
-        }
-
-        Log.v("BOK", "Goto angle " + angle + ", distance: " + disToTravel);
-
-        double[] goToPositionData = {angle, disToTravel};
-        return goToPositionData;
     }
 }

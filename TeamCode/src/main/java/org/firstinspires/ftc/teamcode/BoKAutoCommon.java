@@ -595,16 +595,9 @@ public abstract class BoKAutoCommon implements BoKAuto
                     Log.v("BOK", "move timed out!" + String.format(" %.1f", waitForSec));
                     break;
                 }
-                if (robot.isPositionTrackingEnabled()) {
-                    robot.getCurrentPosition();
-                }
             }
 
             robot.stopMove();
-            if (robot.isPositionTrackingEnabled()) {
-                robot.getCurrentPosition();
-            }
-            opMode.telemetry.update();
         }
     }
 
@@ -1007,18 +1000,12 @@ public abstract class BoKAutoCommon implements BoKAuto
                 break;
             }
 
-            if (robot.isPositionTrackingEnabled()) {
-                robot.getCurrentPosition();
-            }
             // Update telemetry & Allow time for other processes to run.
             opMode.telemetry.update();
             //opMode.sleep(BoKHardwareBot.OPMODE_SLEEP_INTERVAL_MS_SHORT);
         }
 
         Log.v("BOK", "turnF: " + angles.thirdAngle);
-        if (robot.isPositionTrackingEnabled()) {
-            robot.getCurrentPosition();
-        }
         return angles.thirdAngle;
     }
 

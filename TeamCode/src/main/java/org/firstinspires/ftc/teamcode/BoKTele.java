@@ -28,14 +28,8 @@ public class BoKTele
     private static final double SPEED_COEFF_SLOW = 0.25;
     private static final double SPEED_COEFF_FAST = 0.6;
     private static final int RA_JOYSTICK_RATIO = 500;
-    private static final int RELIC_DELAY_START = 40;
-    private static final int RELIC_DEPLOY_STOP = 80; // loop runs 25 times a second
     private static final double RELIC_DEPLOY_POWER = 0.6;
     private static final float GLYPH_FLICKER_INCREMENT = 0.01F;
-
-    private static int glyphArmInitialPos = 0;
-    private static double glyphWristInitialPos = 0.0;
-
 
     private BoKHardwareBot robot;
     private LinearOpMode opMode;
@@ -47,7 +41,6 @@ public class BoKTele
         BOK_TELE_FAILURE,
         BOK_TELE_SUCCESS
     }
-
 
     public BoKTeleStatus initSoftware(LinearOpMode opMode,
                                       BoKHardwareBot robot,
@@ -76,7 +69,9 @@ public class BoKTele
         boolean glyph_flipper_open = false;
         //boolean glyph_at_end = false;
         boolean relic_deploying = false;
-        int relic_extend_delay_count = 0;
+
+        int glyphArmInitialPos = 0;
+        double glyphWristInitialPos = 0.0;
 
         robot.jewelArm.setPosition(robot.JA_INIT);
         robot.jewelFlicker.setPosition(robot.JF_INIT);
@@ -139,9 +134,9 @@ public class BoKTele
             // Left bumper:            Raise relic arm to clear the wall
             // Right bumper:           Lower relic arm for relic placement
 
-            if (opMode.gamepad2.y) {
+            if (opMode.gamepad2.y && !end_game) {
                 end_game = true;
-                Log.v("BOK", "End Game Started: " + opMode.gamepad2.dpad_down);
+                Log.v("BOK", "End Game Started");
             }
             if (opMode.gamepad2.x) {
                 end_game = false;
@@ -157,16 +152,11 @@ public class BoKTele
                     robot.relicArm.setPosition(robot.RA_DEPLOY_POS);
                     left_bumper_pressed = false;
                     right_bumper_pressed = false;
-                    if (relic_extend_delay_count == 0) { // only once
-                        // fold the wrist & bring down the upper arm
-                        robot.glyphArm.moveUpperArmEncCount(0, robot.UA_MOVE_POWER_DN);
-                        robot.glyphClawWrist.setPosition(0.85);
-                        //Log.v("BOK", "clawWrist set to 0.85: " + robot.wristInitPosFromFile);
-                        //if (!opMode.gamepad2.y)
-                            // delay deploying the relic lift so that the wires are not tangled
-                        //    relic_extend_delay_count = 1;
-                    }
-                    Log.v("BOK", "Relic mode started: " + opMode.gamepad2.y);
+
+                    // fold the wrist & bring down the upper arm
+                    robot.glyphArm.moveUpperArmEncCount(0, robot.UA_MOVE_POWER_DN);
+                    robot.glyphClawWrist.setPosition(0.85);
+                    Log.v("BOK", "Relic mode started");
                 }
 
                 if (opMode.gamepad2.dpad_up) {
@@ -174,25 +164,6 @@ public class BoKTele
                     relic_deploying = false;
                     robot.setModeForDTMotors(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     Log.v("BOK", "Relic mode ended");
-                }
-
-                if (relic_extend_delay_count > 0) {
-                    relic_extend_delay_count++;
-                    relic_deploying = true; // automatic mode, use right stick for manual control
-
-                    if ((relic_extend_delay_count >= RELIC_DELAY_START) &&
-                        (relic_extend_delay_count < RELIC_DEPLOY_STOP)) {
-                        if (relic_extend_delay_count == RELIC_DELAY_START) {
-                            // deploy the relic lift
-                            robot.relicSpool.setPower(RELIC_DEPLOY_POWER);
-                        }
-                    }
-                    else if ((relic_extend_delay_count == RELIC_DEPLOY_STOP) ||
-                             (relic_deploying == false)) {
-                        robot.relicSpool.setPower(0.0);
-                        relic_deploying = false; // end automatic mode
-                        relic_extend_delay_count = -1; // stop the countdown
-                    }
                 }
             }
 
@@ -393,13 +364,6 @@ public class BoKTele
             if (opMode.gamepad2.b) { // open the glyph claw grab or relic claw
                 if (!relic_mode) {
                     robot.glyphArm.setClawGrabOpen();
-                    /*
-                    if (glyph_at_end && placementMode) {
-                        robot.glyphArm.moveUpperArmDegrees(robot.UA_GLYPH_AT_MID,
-                                robot.UA_MOVE_POWER);
-                        robot.glyphClawWrist.setPosition(robot.CW_GLYPH_AT_MID);
-                        glyph_at_end = false;
-                    }*/
                 }
                 else {
                     robot.relicClaw.setPosition(robot.RC_UNLOCK);
