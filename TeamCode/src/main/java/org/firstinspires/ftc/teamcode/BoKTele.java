@@ -26,7 +26,7 @@ public class BoKTele
     private static final double UPPER_ARM_MOTOR_POWER_SLOW = 0.4;//0.2
     private static final double UPPER_ARM_MOTOR_POWER_FAST = 0.6;//0.4
     private static final double SPEED_COEFF_SLOW = 0.25;
-    private static final double SPEED_COEFF_FAST = 0.5;
+    private static final double SPEED_COEFF_FAST = 0.6;
     private static final int RA_JOYSTICK_RATIO = 500;
     private static final int RELIC_DELAY_START = 40;
     private static final int RELIC_DEPLOY_STOP = 80; // loop runs 25 times a second
@@ -141,14 +141,16 @@ public class BoKTele
 
             if (opMode.gamepad2.y) {
                 end_game = true;
-                Log.v("BOK", "End Game Started");
+                Log.v("BOK", "End Game Started: " + opMode.gamepad2.dpad_down);
             }
             if (opMode.gamepad2.x) {
                 end_game = false;
             }
             if (end_game) { // You need to be in end_game to be in relic mode
-                if (opMode.gamepad2.dpad_down) {
+                if (opMode.gamepad2.dpad_down && !relic_mode) {
                     relic_mode = true;
+                    // set mode to RUN_USING_ENCODER
+                    robot.setModeForDTMotors(DcMotor.RunMode.RUN_USING_ENCODER);
                     // open the glyph flipper
                     robot.glyphFlipper.setPosition(robot.GF_FINAL_TELE);
                     // turn the relic arm
@@ -158,17 +160,19 @@ public class BoKTele
                     if (relic_extend_delay_count == 0) { // only once
                         // fold the wrist & bring down the upper arm
                         robot.glyphArm.moveUpperArmEncCount(0, robot.UA_MOVE_POWER_DN);
-                        robot.glyphClawWrist.setPosition(robot.wristInitPosFromFile);
-                        if (!opMode.gamepad2.y)
+                        robot.glyphClawWrist.setPosition(0.85);
+                        //Log.v("BOK", "clawWrist set to 0.85: " + robot.wristInitPosFromFile);
+                        //if (!opMode.gamepad2.y)
                             // delay deploying the relic lift so that the wires are not tangled
-                            relic_extend_delay_count = 1;
+                        //    relic_extend_delay_count = 1;
                     }
-                    Log.v("BOK", "Relic mode started");
+                    Log.v("BOK", "Relic mode started: " + opMode.gamepad2.y);
                 }
 
                 if (opMode.gamepad2.dpad_up) {
                     relic_mode = false;
                     relic_deploying = false;
+                    robot.setModeForDTMotors(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     Log.v("BOK", "Relic mode ended");
                 }
 
@@ -449,7 +453,6 @@ public class BoKTele
             motorPowerLB = -gamePad1LeftStickY - gamePad1LeftStickX;
             motorPowerRF = gamePad1LeftStickY - (-gamePad1LeftStickX);
             motorPowerRB = gamePad1LeftStickY - gamePad1LeftStickX;
-
             //Log.v("BOK","LF:" + String.format("%.2f", motorPowerLF*speedCoef) +
             //        "LB: " + String.format("%.2f", motorPowerLB*speedCoef) +
             //        "RF: " + String.format("%.2f", motorPowerRF*speedCoef) +
@@ -458,8 +461,12 @@ public class BoKTele
         else if ((gamePad1RightStickX > GAME_STICK_DEAD_ZONE) ||
                 (gamePad1RightStickX < -GAME_STICK_DEAD_ZONE)) {
             // Right joystick is for turning
-            motorPowerLF = motorPowerLB = gamePad1RightStickX;
-            motorPowerRF = motorPowerRB = gamePad1RightStickX;
+
+            //first and last
+            motorPowerLF = gamePad1RightStickX;
+            motorPowerLB = gamePad1RightStickX;
+            motorPowerRF = gamePad1RightStickX;
+            motorPowerRB = gamePad1RightStickX;
 
             //Log.v("BOK","Turn: LF:" + String.format("%.2f", motorPowerLF) +
             //        "LB: " + String.format("%.2f", motorPowerLB) +
