@@ -60,8 +60,9 @@ public class BoKAutoRedFar extends BoKAutoCommon {
 
         // Deliver the glyph to crypto
         deliverGlyphToCrypto(DISTANCE_BACK_TO_CRYPTO_RF,
-                DISTANCE_AWAY_FROM_CRYPTO,
-                0,
-                robot.wristInitPosFromFile);
+                             DISTANCE_AWAY_FROM_CRYPTO,
+                             true, // jiggle the robot
+                             0,    // reset the upper arm
+                             -1);  // do not lower the wrist yet as it will hit the stone!
     }
 }

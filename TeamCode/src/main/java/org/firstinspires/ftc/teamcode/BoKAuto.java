@@ -39,6 +39,7 @@ public interface BoKAuto
     public static double DT_TIMEOUT = 4;
     public static double UA_TIMEOUT = 2;
     public static double GF_TIMEOUT = 2;
+    public static double CW_FINAL_POS = 0.4;
 
     public BoKAutoStatus initSoftware(BoKAutoOpMode opMode,
                                       BoKHardwareBot robot);

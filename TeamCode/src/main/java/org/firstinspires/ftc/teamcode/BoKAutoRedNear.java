@@ -61,10 +61,9 @@ public class BoKAutoRedNear extends BoKAutoCommon {
 
         // Deliver glyph to crypto
         deliverGlyphToCrypto(DISTANCE_BACK_TO_CRYPTO_RN,
-                DISTANCE_AWAY_FROM_CRYPTO,
-                0,
-                robot.wristInitPosFromFile);
-
-
+                             DISTANCE_AWAY_FROM_CRYPTO,
+                             true, // jiggle the robot
+                             0,    // reset the upper arm
+                             CW_FINAL_POS); // reset the claw wrist
     }
 }
