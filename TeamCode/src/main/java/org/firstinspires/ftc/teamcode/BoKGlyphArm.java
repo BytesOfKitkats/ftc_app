@@ -55,8 +55,8 @@ public class BoKGlyphArm
         //Log.v("BOK", "TargetD (arm enc): " + target + ", current: " +
         //        robot.upperArm.getCurrentPosition());
 
-        robot.upperArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         robot.upperArm.setTargetPosition(target);
+        robot.upperArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         robot.upperArm.setPower(power);
     }
 
@@ -65,8 +65,8 @@ public class BoKGlyphArm
         //Log.v("BOK", "TargetE (arm enc): " + targetEncCount + ", " +
         //        "current: " + robot.upperArm.getCurrentPosition());
 
-        robot.upperArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         robot.upperArm.setTargetPosition(targetEncCount);
+        robot.upperArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         robot.upperArm.setPower(power);
     }
 

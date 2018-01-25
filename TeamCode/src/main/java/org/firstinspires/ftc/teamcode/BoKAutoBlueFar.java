@@ -62,7 +62,7 @@ public class BoKAutoBlueFar extends BoKAutoCommon
 
         deliverGlyphToCrypto(DISTANCE_BACK_TO_CRYPTO,
                              DISTANCE_AWAY_FROM_CRYPTO,
-                             UA_INIT_ANGLE,
+                             0,
                              robot.wristInitPosFromFile);
     }
 }

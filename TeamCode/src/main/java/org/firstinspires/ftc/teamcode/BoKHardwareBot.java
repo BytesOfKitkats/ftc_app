@@ -36,7 +36,8 @@ public abstract class BoKHardwareBot
     // Claw grab
     protected static final double CG_INIT = 0.6; // Partially open at initialization
     protected static final double CG_OPEN = 1;//0.9
-    protected static final double CG_CLOSE = 0.3;//0.4
+    protected static final double CG_CLOSE = 0;//0.4
+                                  //CG_CLOSE was 0.22 before taulman
     // Jewel flioker arm
     protected static final double JA_INIT = 0.2;
     protected static final double JA_FINAL = 0.72;

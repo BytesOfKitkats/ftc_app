@@ -27,15 +27,15 @@ public class BoKSetupOpMode extends LinearOpMode
 
     private void moveUpperArm(double targetAngleDegrees, double power)
     {
-        robot.upperArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         int target = (int) robot.glyphArm.getTargetEncCount(targetAngleDegrees);
-        //Log.v("BOK", "Target (arm): " + target);
+        Log.v("BOK", "Target (arm): " + target);
 
         robot.upperArm.setTargetPosition(target);
+        robot.upperArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         robot.upperArm.setPower(power);
         while (opModeIsActive() && robot.upperArm.isBusy()) {
             //opMode.telemetry.update();
-            sleep(BoKHardwareBot.OPMODE_SLEEP_INTERVAL_MS_SHORT);
+            //sleep(BoKHardwareBot.OPMODE_SLEEP_INTERVAL_MS_SHORT);
         }
         robot.upperArm.setPower(0);
         // Turn off RUN_TO_POSITION
