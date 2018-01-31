@@ -1033,6 +1033,13 @@ public abstract class BoKAutoCommon implements BoKAuto
         }
     }
 
+    class ResetCW extends Thread {
+        @Override
+        public void run() {
+            robot.glyphArm.clawWrist.setPosition(CW_FINAL_POS);
+        }
+    }
+
     protected void moveToCrypto(double initGyroAngle, int waitForServoMs)
     {
         if (opMode.opModeIsActive()) {
@@ -1124,10 +1131,11 @@ public abstract class BoKAutoCommon implements BoKAuto
             //        false,
             //        DT_STRAFE_TIMEOUT);
 
+            ResetCW resetCW = new ResetCW();
+            resetCW.start();
+            
             moveRamp(DT_POWER_HIGH, distBack, false, DT_TIMEOUT_4S);
             moveRamp(DT_POWER_HIGH, distBack, true, DT_TIMEOUT_4S);
-
-            robot.glyphArm.clawWrist.setPosition(CW_FINAL_POS);
         }
     }
 
