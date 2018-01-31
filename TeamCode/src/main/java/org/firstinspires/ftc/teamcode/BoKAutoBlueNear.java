@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode;
 
 import android.util.Log;
 
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 
 /**
@@ -15,10 +14,9 @@ public class BoKAutoBlueNear extends BoKAutoCommon
     private static final double TIMEOUT_CENTER = 5;
     private static final double TIMEOUT_RIGHT = 6;
 
-    private static final double DISTANCE_TO_LEFT_COL = 5.5;  // 21 // inches!!
-    private static final double DISTANCE_TO_CENTER_COL = 3;  // 29
-    private static final double DISTANCE_TO_RIGHT_COL = 9.5; // 37
-    private static final double DISTANCE_BACK_TO_CRYPTO_BN = 9.25;
+    private static final double DISTANCE_TO_LEFT_COL = 26; // inches!!
+    private static final double DISTANCE_TO_CENTER_COL = 34;
+    private static final double DISTANCE_TO_RIGHT_COL = 42;
 
     // Constructor
     public BoKAutoBlueNear()
@@ -32,14 +30,9 @@ public class BoKAutoBlueNear extends BoKAutoCommon
         // NOTE: Move backwards towards crypto
 
         // Detect Vuforia image and flick the jewel
-        detectVuforiaImgAndFlick();
+        detectVuforiaImgAndFlick(WAIT_FOR_JEWEL_FLICKER_MS_LOW);
 
         // Move backward out of balancing stone
-        moveRamp(DT_POWER_FOR_STONE, DISTANCE_OFF_BALANCE, false, DT_TIMEOUT);
-
-        // Move to the blue line
-        moveUntilColor(DT_POWER_FOR_LINE, false, DT_TIMEOUT);
-
         // Distance and timeout to the cryptobox depends on column number
         double distance = DISTANCE_TO_LEFT_COL;
         double timeout = TIMEOUT_LEFT;
@@ -52,25 +45,15 @@ public class BoKAutoBlueNear extends BoKAutoCommon
             timeout = TIMEOUT_RIGHT;
         }
 
+        // Move backward out of balancing stone
         // Distance and timeout depends on column number;
-        if (cryptoColumn == RelicRecoveryVuMark.LEFT) {
-            moveRamp(DT_POWER_FOR_STONE, distance, true, timeout);
-        }
-        else {
-            moveRamp(DT_POWER_FOR_STONE, distance, false, timeout);
-        }
+        move(DT_POWER_FOR_STONE,
+             DT_POWER_FOR_STONE,
+             distance,
+             false,
+             timeout);
 
         // Move towards the crypto
-        moveToCrypto();
-
-        // Turn left 90 degrees
-        gyroTurn(DT_TURN_SPEED_HIGH, 0, TURN_LEFT_DEGREES, DT_TURN_TIMEOUT);
-
-        // Deliver glyph to crypto
-        deliverGlyphToCrypto(DISTANCE_BACK_TO_CRYPTO_BN,
-                DISTANCE_AWAY_FROM_CRYPTO,
-                true, // jiggle the robot
-                0,    // reset the upper arm
-                CW_FINAL_POS);
+        moveToCrypto(0, WAIT_FOR_JEWEL_FLICKER_MS_LOW);
     }
 }

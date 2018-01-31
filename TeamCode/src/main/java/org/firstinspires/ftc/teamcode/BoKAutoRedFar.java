@@ -10,11 +10,10 @@ public class BoKAutoRedFar extends BoKAutoCommon {
     private static double TIMEOUT_RIGHT = 5;
     private static double TIMEOUT_CENTER = 6;
     private static double TIMEOUT_LEFT = 8;
-    private static double DT_MOVE_TO_CRYPTO = 29.5;//inches
-    private static final double DISTANCE_BACK_TO_CRYPTO_RF = 7;
-    private static int DISTANCE_TO_RIGHT_COL_CM = 61;//cm
-    private static int DISTANCE_TO_CENTER_COL_CM = 80;//43;//cm
-    private static int DISTANCE_TO_LEFT_COL_CM = 97;//cm
+    private static double DT_MOVE_TO_CRYPTO = 25.5;//inches
+    private static int DISTANCE_TO_CENTER_COL_CM = 43;//cm
+    private static int DISTANCE_TO_RIGHT_COL_CM = 24;//cm
+    private static int DISTANCE_TO_LEFT_COL_CM = 63;//cm
 
     // Constructor
     public BoKAutoRedFar()
@@ -28,13 +27,19 @@ public class BoKAutoRedFar extends BoKAutoCommon {
         far = true;
 
         // Detect Vuforia image, flick the jewel
-        detectVuforiaImgAndFlick();
+        detectVuforiaImgAndFlick(WAIT_FOR_JEWEL_FLICKER_MS_LOW);
 
         // Move out of the balancing stone, distance
-        moveRamp(DT_POWER_FOR_STONE, DT_MOVE_TO_CRYPTO, true, DT_TIMEOUT + 2);
+        move(DT_POWER_FOR_STONE, DT_POWER_FOR_STONE, DT_MOVE_TO_CRYPTO, true, DT_TIMEOUT_6S);
 
         // turn left 90 degrees
-        double current_angle = gyroTurn(DT_TURN_SPEED_HIGH, 0, TURN_LEFT_DEGREES, DT_TURN_TIMEOUT);
+        double currentAngle = gyroTurn(DT_TURN_SPEED_HIGH,
+                                       0,
+                                       TURN_LEFT_DEGREES,
+                                       DT_TURN_THRESHOLD_LOW, // Threshold
+                                       false, // NOT a tank turn
+                                       false,
+                                       DT_TURN_TIMEOUT);
 
         // Move forwards towards cryptobox
         // Distance and timeout depends on column number
@@ -53,16 +58,6 @@ public class BoKAutoRedFar extends BoKAutoCommon {
         moveWithRangeSensor(DT_POWER_FOR_RS, distance, false, timeout); // CM
 
         // Prepare to unload the glyph
-        moveToCrypto();
-
-        // Turn left 90 degrees
-        gyroTurn(DT_TURN_SPEED_HIGH, current_angle, 180, DT_TURN_TIMEOUT*3);
-
-        // Deliver the glyph to crypto
-        deliverGlyphToCrypto(DISTANCE_BACK_TO_CRYPTO_RF,
-                             DISTANCE_AWAY_FROM_CRYPTO,
-                             true, // jiggle the robot
-                             0,    // reset the upper arm
-                             -1);  // do not lower the wrist yet as it will hit the stone!
+        moveToCrypto(currentAngle, WAIT_FOR_JEWEL_FLICKER_MS_LOW);
     }
 }

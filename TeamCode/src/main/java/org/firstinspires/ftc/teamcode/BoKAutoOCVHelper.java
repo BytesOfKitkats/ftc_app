@@ -26,6 +26,10 @@ public class BoKAutoOCVHelper
     private static int MIN_POLYGON_AREA = 200;
     private static int MAX_POLYGON_AREA = 300;
     private static int MIN_RECT_AREA = 3000;
+    private static final String OCV_LOW_IMG = "ocvLow.png";
+    private static final String OCV_HIGH_IMG = "ocvHigh.png";
+    private static final String OCV_LOW_EDGES_IMG = "ocvLowEdges.png";
+    private static final String OCV_HIGH_EDGES_IMG = "ocvHighEdges.png";
 
     // Returns true if the two OpenCV Rect r1 & r2 intersect, false otherwise
     private static boolean ocvRectsIntersect(Rect r1, Rect r2)
@@ -151,10 +155,10 @@ public class BoKAutoOCVHelper
         Mat dst = filterImg(img,
                             new Scalar(0, 0, 0),
                             new Scalar(179, 255, 80),
-                            BoKAutoCommon.OCV_LOW_IMG);
+                            OCV_LOW_IMG);
 
         // Run Canny edge detection on the low intensity image
-        Mat edges = findEdges(dst, false, BoKAutoCommon.OCV_LOW_EDGES_IMG);
+        Mat edges = findEdges(dst, false, OCV_LOW_EDGES_IMG);
         // Done with dst mat
         dst.release();
         // Find contours for the low intensity image
@@ -227,10 +231,10 @@ public class BoKAutoOCVHelper
         Mat dst = filterImg(img,
                             new Scalar(0, 0, 200),
                             new Scalar(179, 255, 255),
-                            BoKAutoCommon.OCV_HIGH_IMG);
+                            OCV_HIGH_IMG);
 
         // Run Canny edge detection on high intensity image
-        Mat edges = findEdges(dst, true, BoKAutoCommon.OCV_HIGH_EDGES_IMG);
+        Mat edges = findEdges(dst, true, OCV_HIGH_EDGES_IMG);
         // Done with dst mat
         dst.release();
         // Find contours for the low intensity image

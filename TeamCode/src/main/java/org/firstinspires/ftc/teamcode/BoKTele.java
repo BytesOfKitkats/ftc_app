@@ -147,7 +147,7 @@ public class BoKTele
                     // set mode to RUN_USING_ENCODER
                     robot.setModeForDTMotors(DcMotor.RunMode.RUN_USING_ENCODER);
                     // open the glyph flipper
-                    robot.glyphFlipper.setPosition(robot.GF_FINAL_TELE);
+                    robot.glyphFlipper.setPosition(0.72);
                     // turn the relic arm
                     robot.relicArm.setPosition(robot.RA_DEPLOY_POS);
                     left_bumper_pressed = false;
@@ -308,7 +308,7 @@ public class BoKTele
                     if (posOfArm < robot.RA_UPPER_LIMIT) {
                     } else {
                         robot.relicArm.setPosition(posOfArm -
-                                (-opMode.gamepad2.left_stick_y / RA_JOYSTICK_RATIO));
+                                (-opMode.gamepad2.left_stick_y / (RA_JOYSTICK_RATIO*1.5)));
                     }
                 }
             } else if (opMode.gamepad2.left_stick_y > UPPER_ARM_STICK_DEAD_ZONE) {
