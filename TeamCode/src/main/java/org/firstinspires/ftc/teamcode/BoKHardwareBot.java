@@ -33,7 +33,7 @@ public abstract class BoKHardwareBot
     // Claw wrist
     protected static final double CW_INIT = 0.5;
     protected static final double CW_MIN = 0.1;
-    protected static final double CW_MID = 0.45;
+    protected static final double CW_MID = 0.4;
     // Claw grab
     protected static final double CG_INIT = 0.6; // Partially open at initialization
     protected static final double CG_OPEN = 1;
@@ -44,13 +44,17 @@ public abstract class BoKHardwareBot
     protected static final double JA_FINAL = 0.72;
     // Jewel flicker
     protected static final double JF_INIT = 0.9;
-    protected static final double JF_FINAL = 0.5;
+    protected static final double JF_FINAL = 0.47;
     protected static final double JF_RIGHT = 1;
     protected static final double JF_LEFT = 0;
     // Glyph flipper
     protected static final double GF_INIT = 0.34;
+    protected static final double GF_MID = 0.5;
     protected static final double GF_FINAL_AUTO = 0.6;
     protected static final double GF_FINAL_TELE = 0.7;
+    // Glyph flipper gate
+    protected static final double FG_UP = 1;
+    protected static final double FG_DOWN = 0.22;
     // Relic lift arm
     protected static final double RA_INIT = 0.15;
     protected static final double RA_UPPER_LIMIT = 0.3;
@@ -58,8 +62,8 @@ public abstract class BoKHardwareBot
     protected static final double RA_HIGH_POS = 0.52;
     protected static final double RA_DEPLOY_POS = 0.58;
     // Relic claw
-    protected static final double RC_UNLOCK = 1; // initially unlocked
-    protected static final double RC_LOCK = 0.4;
+    protected static final double RC_UNLOCK = .725; // initially unlocked
+    protected static final double RC_LOCK = 0.1;
     // Glyph arm positions to place the glyph
     protected static final int UA_GLYPH_AT_TIP = 138;
     protected static final int UA_GLYPH_AT_MID = 160;
@@ -82,6 +86,7 @@ public abstract class BoKHardwareBot
     private static final String RELIC_ARM_SERVO = "ra";
     private static final String RELIC_CLAW_SERVO = "rc";
     private static final String GLYPH_FLICKER = "gf";
+    private static final String FLIPPER_GATE = "fg";
     private static final String RANGE_SENSOR_JA = "rs";
     private static final String RANGE_SENSOR_FRONT_CFG  = "rsf";
     private static final String RANGE_SENSOR_BACK_CFG   = "rsb";
@@ -111,6 +116,7 @@ public abstract class BoKHardwareBot
     protected Servo relicArm;
     protected Servo relicClaw;
     protected Servo glyphFlipper;
+    protected Servo flipperGate;
 
     // Sensors
     protected BNO055IMU imu;
@@ -204,6 +210,11 @@ public abstract class BoKHardwareBot
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 
+        flipperGate = opMode.hardwareMap.servo.get(FLIPPER_GATE);
+        if(flipperGate == null){
+            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
+        }
+
         upperArm = opMode.hardwareMap.dcMotor.get(UPPER_ARM_MOTOR);
         if(upperArm == null){
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
@@ -279,13 +290,14 @@ public abstract class BoKHardwareBot
             jewelArm.setPosition(JA_INIT);
             jewelFlicker.setPosition(JF_INIT);
             relicArm.setPosition(RA_INIT);
-            relicClaw.setPosition(RC_UNLOCK);
+            relicClaw.setPosition(RC_LOCK);
             glyphFlipper.setPosition(GF_INIT);
+            flipperGate.setPosition(FG_DOWN);
         }
         else {
             // IMPORTANT: Do not move the servos during initialization of Teleop
             relicArm.setPosition(RA_INIT);
-            relicClaw.setPosition(RC_UNLOCK);
+            flipperGate.setPosition(FG_DOWN);
         }
 
         //upperArm.setDirection(DcMotorSimple.Direction.REVERSE);

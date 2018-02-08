@@ -58,6 +58,6 @@ public class BoKAutoRedFar extends BoKAutoCommon {
         moveWithRangeSensor(DT_POWER_FOR_RS, distance, false, timeout); // CM
 
         // Prepare to unload the glyph
-        moveToCrypto(currentAngle, WAIT_FOR_JEWEL_FLICKER_MS_LOW);
+        moveToCrypto(currentAngle, WAIT_FOR_JEWEL_FLICKER_MS_LOW, false);
     }
 }

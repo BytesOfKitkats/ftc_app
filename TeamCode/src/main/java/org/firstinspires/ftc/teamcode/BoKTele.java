@@ -64,14 +64,19 @@ public class BoKTele
         double posOfUpperArm = 0;
         boolean clawClosed = false;
 
-        boolean right_bumper_pressed = false;
-        boolean left_bumper_pressed = false;
+        boolean g1_left_bumper_pressed = false;
+        boolean g2_left_bumper_pressed = false;
+        boolean g2_right_bumper_pressed = false;
+        boolean g2_left_trigger_pressed = false;
         boolean glyph_flipper_open = false;
         //boolean glyph_at_end = false;
+        boolean angle_glyph = false;
         boolean relic_deploying = false;
 
         int glyphArmInitialPos = 0;
         double glyphWristInitialPos = 0.0;
+        int INIT = 1, WALL = 2, ANGLE = 3, OPEN = 4;
+        int current_state = INIT;
 
         robot.jewelArm.setPosition(robot.JA_INIT);
         robot.jewelFlicker.setPosition(robot.JF_INIT);
@@ -147,11 +152,12 @@ public class BoKTele
                     // set mode to RUN_USING_ENCODER
                     robot.setModeForDTMotors(DcMotor.RunMode.RUN_USING_ENCODER);
                     // open the glyph flipper
+                    robot.flipperGate.setPosition(robot.FG_DOWN);
                     robot.glyphFlipper.setPosition(0.72);
                     // turn the relic arm
                     robot.relicArm.setPosition(robot.RA_DEPLOY_POS);
-                    left_bumper_pressed = false;
-                    right_bumper_pressed = false;
+                    g2_left_bumper_pressed = false;
+                    g2_right_bumper_pressed = false;
 
                     // fold the wrist & bring down the upper arm
                     robot.glyphArm.moveUpperArmEncCount(0, robot.UA_MOVE_POWER_DN);
@@ -187,28 +193,8 @@ public class BoKTele
                     robot.turnTable.setPower(0.0);
             }
 
+
             if (!relic_mode) {
-                if (!left_bumper_pressed && opMode.gamepad1.left_bumper) {
-                    left_bumper_pressed = true;
-                    glyph_flipper_open = true;
-                    robot.glyphFlipper.setPosition(robot.GF_INIT);
-                }
-                if (left_bumper_pressed){
-                    if (robot.glyphFlipper.getPosition() < robot.GF_FINAL_TELE - 0.01) {
-                        robot.glyphFlipper.setPosition(
-                                robot.glyphFlipper.getPosition() + GLYPH_FLICKER_INCREMENT);
-                    } else {
-                        robot.glyphFlipper.setPosition(robot.GF_FINAL_TELE);
-                        left_bumper_pressed = false; // stop moving the glyph flipper
-                    }
-                }
-
-                if (opMode.gamepad1.right_bumper) { // close the glyph flicker
-                    left_bumper_pressed = false; // ready to open again
-                    robot.glyphFlipper.setPosition(robot.GF_INIT);
-                    glyph_flipper_open = false;
-                }
-
                 // Do not allow placement mode if glyph flipper is open
                 if (!placementMode && !glyph_flipper_open) {
                     if (opMode.gamepad2.dpad_left || opMode.gamepad2.left_bumper ||
@@ -254,28 +240,94 @@ public class BoKTele
                         robot.glyphClawWrist.setPosition(robot.CW_GLYPH_AT_END);
                     }
                 }
-            }
+
+                if (opMode.gamepad1.left_trigger > 0.5) {
+                    if(current_state != WALL) {
+                        robot.glyphFlipper.setPosition(robot.GF_INIT);
+                        robot.flipperGate.setPosition(robot.FG_UP);
+                        g1_left_bumper_pressed = false;
+                        glyph_flipper_open = false;
+                        current_state = WALL;
+                    }
+                }
+
+                if (opMode.gamepad1.right_bumper) {
+                    if(current_state == WALL || current_state == OPEN) {
+                        g1_left_bumper_pressed = false;
+                        robot.glyphFlipper.setPosition(robot.GF_INIT);
+                        robot.flipperGate.setPosition(robot.FG_DOWN);
+                        glyph_flipper_open = false;
+                        current_state = INIT;
+                    }
+                }
+
+                if ((opMode.gamepad1.right_trigger > 0.5)) {
+                    if(current_state == INIT || current_state == WALL) {
+                        current_state = ANGLE;
+                        glyph_flipper_open = true;
+                        angle_glyph = true;
+                        robot.flipperGate.setPosition(robot.FG_UP);
+
+                    }
+                }
+                if (angle_glyph) {
+                    if (robot.glyphFlipper.getPosition() < robot.GF_MID - 0.01) {
+                        robot.glyphFlipper.setPosition(
+                                robot.glyphFlipper.getPosition() + GLYPH_FLICKER_INCREMENT);
+                    } else {
+                        robot.glyphFlipper.setPosition(robot.GF_MID);
+                        angle_glyph = false; // stop moving the glyph flipper
+                    }
+                }
+
+                if (opMode.gamepad1.left_bumper) {
+                    if(current_state == INIT){
+                        current_state = OPEN;
+                        g1_left_bumper_pressed = true;
+                        glyph_flipper_open = true;
+                    }
+
+                }
+                if (g1_left_bumper_pressed){
+                    if (robot.glyphFlipper.getPosition() < robot.GF_FINAL_TELE - 0.01) {
+                        robot.glyphFlipper.setPosition(
+                                robot.glyphFlipper.getPosition() + GLYPH_FLICKER_INCREMENT);
+                    } else {
+                        robot.glyphFlipper.setPosition(robot.GF_FINAL_TELE);
+                        g1_left_bumper_pressed = false; // stop moving the glyph flipper
+                    }
+                }
+            } // !relic_mode
 
             if (relic_mode) {
                 if ((opMode.gamepad2.right_stick_y) <= -GAME_TRIGGER_DEAD_ZONE) {
                     relic_deploying = false; // manual control enabled!
+                    g2_left_trigger_pressed = false;
                     robot.relicSpool.setPower(-opMode.gamepad2.right_stick_y*RELIC_DEPLOY_POWER);
                 } else if (opMode.gamepad2.right_stick_y >= GAME_TRIGGER_DEAD_ZONE) {
                     relic_deploying = false; // manual control enabled!
+                    g2_left_trigger_pressed = false;
                     robot.relicSpool.setPower(-opMode.gamepad2.right_stick_y*RELIC_DEPLOY_POWER);
                 }
                 else if (!relic_deploying) { // manual mode
                     robot.relicSpool.setPower(0);
                 }
-                if (!left_bumper_pressed && opMode.gamepad2.left_bumper ) {
+                if (!g2_left_bumper_pressed && opMode.gamepad2.left_bumper ) {
                     //Log.v("BOK", "Left bumper pressed"); // raise the relic arm to RA_HIGH_POS
-                    left_bumper_pressed = true;
+                    g2_left_bumper_pressed = true;
+                    g2_left_trigger_pressed = false;
                     robot.relicArm.setPosition(robot.RA_HIGH_POS);
                 }
-                if (!right_bumper_pressed && opMode.gamepad2.right_bumper ) {
+                if (!g2_right_bumper_pressed && opMode.gamepad2.right_bumper ) {
                     //Log.v("BOK", "Right bumper pressed"); // lower the relic arm to RA_DEPLOY_POS
-                    right_bumper_pressed = true;
+                    g2_right_bumper_pressed = true;
+                    g2_left_trigger_pressed = false;
                     robot.relicArm.setPosition(robot.RA_DEPLOY_POS-0.01);
+                }
+                if (!g2_left_trigger_pressed && (opMode.gamepad2.left_trigger > 0.5)) {
+                    g2_left_trigger_pressed = true;
+                    g2_left_bumper_pressed = false;
+                    robot.relicArm.setPosition(robot.RA_DEPLOY_POS+0.02);
                 }
             }
 
@@ -303,12 +355,13 @@ public class BoKTele
                     //Log.v("BOK", "Relic mode Left Stick Up");
                     // Move relic arm up
                     double posOfArm = robot.relicArm.getPosition();
-                    left_bumper_pressed = false;
-                    right_bumper_pressed = false;
+                    g2_left_bumper_pressed = false;
+                    g2_right_bumper_pressed = false;
+                    g2_left_trigger_pressed = false;
                     if (posOfArm < robot.RA_UPPER_LIMIT) {
                     } else {
                         robot.relicArm.setPosition(posOfArm -
-                                (-opMode.gamepad2.left_stick_y / (RA_JOYSTICK_RATIO*1.5)));
+                                (-opMode.gamepad2.left_stick_y / RA_JOYSTICK_RATIO));
                     }
                 }
             } else if (opMode.gamepad2.left_stick_y > UPPER_ARM_STICK_DEAD_ZONE) {
@@ -328,8 +381,9 @@ public class BoKTele
                 } else if (relic_mode) {
                     // Move relic arm down
                     double posOfArm = robot.relicArm.getPosition();
-                    left_bumper_pressed = false;
-                    right_bumper_pressed = false;
+                    g2_left_bumper_pressed = false;
+                    g2_right_bumper_pressed = false;
+                    g2_left_trigger_pressed = false;
                     if (posOfArm > robot.RA_LOWER_LIMIT) {
                     } else {
                         robot.relicArm.setPosition(posOfArm +

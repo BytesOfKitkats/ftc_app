@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.util.ElapsedTime;
+
 /**
  * Created by Krishna Saxena on 10/14/2016.
  * Define all the CONSTANTS used for autonomous mode.
@@ -39,12 +41,13 @@ public interface BoKAuto
     public static int DT_TURN_THRESHOLD_LOW = 1;
     public static int DT_TURN_THRESHOLD_HIGH = 2;
     public static int DT_TURN_TIMEOUT = 5;
-    public static double DT_TURN_SPEED_LOW  = 0.2;
+    public static double DT_TURN_SPEED_LOW  = 0.25;
     public static double DT_TURN_SPEED_HIGH = 0.4;
     public static int TURN_LEFT_DEGREES = 90;
     //public static double DT_POWER_FOR_STRAFE = 0.2;
     //public static double ROTATIONS_STRAFE_TO_WALL = 0.15;
 
+    public static ElapsedTime runTimeOpMode = new ElapsedTime();
     public BoKAutoStatus initSoftware(BoKAutoOpMode opMode,
                                       BoKHardwareBot robot);
 

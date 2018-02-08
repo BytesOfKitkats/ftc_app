@@ -54,6 +54,6 @@ public class BoKAutoBlueNear extends BoKAutoCommon
              timeout);
 
         // Move towards the crypto
-        moveToCrypto(0, WAIT_FOR_JEWEL_FLICKER_MS_LOW);
+        moveToCrypto(0, WAIT_FOR_JEWEL_FLICKER_MS_LOW, (cryptoColumn == RelicRecoveryVuMark.LEFT));
     }
 }

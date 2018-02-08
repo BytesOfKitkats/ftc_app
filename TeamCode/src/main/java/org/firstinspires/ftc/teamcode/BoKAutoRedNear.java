@@ -11,7 +11,7 @@ public class BoKAutoRedNear extends BoKAutoCommon {
     private static final double TIMEOUT_CENTER = 5;
     private static final double TIMEOUT_LEFT = 6;
     
-    private static final double DISTANCE_TO_RIGHT_COL = 16.5; // inches!!
+    private static final double DISTANCE_TO_RIGHT_COL = 18; // inches!!
     private static final double DISTANCE_TO_CENTER_COL = 26;
     private static final double DISTANCE_TO_LEFT_COL = 33;
 
@@ -24,7 +24,6 @@ public class BoKAutoRedNear extends BoKAutoCommon {
     @Override
     public void runSoftware()
     {
-
         // Detect Vuforia image and flick the jewel
         detectVuforiaImgAndFlick(WAIT_FOR_JEWEL_FLICKER_MS_LOW);
 
@@ -48,6 +47,6 @@ public class BoKAutoRedNear extends BoKAutoCommon {
 
 
         // Prepare to unload the glyph
-        moveToCrypto(0, WAIT_FOR_JEWEL_FLICKER_MS_LOW);
+        moveToCrypto(0, WAIT_FOR_JEWEL_FLICKER_MS_LOW, (cryptoColumn == RelicRecoveryVuMark.RIGHT));
     }
 }
