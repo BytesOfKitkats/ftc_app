@@ -1206,7 +1206,7 @@ public abstract class BoKAutoCommon implements BoKAuto
                 else {
                     distBack += 1;
                     if (secondGlyph)
-                        move(DT_POWER_HIGH, DT_POWER_HIGH, 14, true, DT_TIMEOUT_4S);
+                        move(DT_POWER_HIGH, DT_POWER_HIGH, 11, true, DT_TIMEOUT_4S);
                     else
                         move(DT_POWER_HIGH, DT_POWER_HIGH, 9, true, DT_TIMEOUT_4S);
                 }
@@ -1230,7 +1230,7 @@ public abstract class BoKAutoCommon implements BoKAuto
                   ", Time: " + String.format("%.2f", timeElapsed));
             if (!secondGlyph) {
                 // just park in the safe zone
-                moveRamp(DT_POWER_HIGH, distBack - 4, true, DT_TIMEOUT_4S);
+                moveRamp(DT_POWER_HIGH, distBack - 4.5, true, DT_TIMEOUT_4S);
             }
             else if (timeElapsed > 15) {
                 // Not enough time!!
@@ -1238,7 +1238,7 @@ public abstract class BoKAutoCommon implements BoKAuto
                 resetUAandTTorCW2.setUADegrees(0); // reset upper arm & claw wrist
                 resetUAandTTorCW2.start();
                 // just park in the safe zone
-                moveRamp(DT_POWER_HIGH, distBack - 4, true, DT_TIMEOUT_4S);
+                moveRamp(DT_POWER_HIGH, distBack - 4.5, true, DT_TIMEOUT_4S);
             }
             else { // Attempt to get a second glyph
                 double distForward = 12, distRA;
@@ -1270,6 +1270,9 @@ public abstract class BoKAutoCommon implements BoKAuto
 
                     DeliverGlyphToFlipper deliverGlyph = new DeliverGlyphToFlipper();
                     deliverGlyph.start();
+
+                    if (allianceColor == BoKAllianceColor.BOK_ALLIANCE_BLUE)
+                        distForward -= 1;
 
                     moveRamp(DT_POWER_HIGH, distForward, false, DT_TIMEOUT_4S);
                     try { // now wait for glyph to be delivered to the flipper
