@@ -86,7 +86,11 @@ public class BoKGlyphArm
     {
         double pos = clawWrist.getPosition();
         double min = robot.CW_MIN;
-        if (robot.upperArm.getCurrentPosition() < 450) // approx 30 degree
+        int currentArmPos = robot.upperArm.getCurrentPosition();
+        //Log.v("BOK", "robot.upperArm.getCurrentPosition(): " + currentArmPos);
+        if (currentArmPos < 300) // approx 30 degree
+            min = 0.35;
+        else if (currentArmPos < 450)
             min = 0.25;
 
         if(pos < min) {
