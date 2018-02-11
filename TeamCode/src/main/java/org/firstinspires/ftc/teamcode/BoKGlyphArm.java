@@ -49,6 +49,11 @@ public class BoKGlyphArm
         return (COUNTS_PER_MOTOR_REV * degreesOfMotorTurn) / 360.0;
     }
 
+    protected double getTTDegrees(double encCount)
+    {
+        return (encCount*360)/(COUNTS_PER_MOTOR_REV*DRIVE_GEAR_REDUCTION_TT);
+    }
+
     public void moveUpperArmDegrees(double targetAngleDegrees, double power)
     {
         int target = (int) getTargetEncCount(targetAngleDegrees);
