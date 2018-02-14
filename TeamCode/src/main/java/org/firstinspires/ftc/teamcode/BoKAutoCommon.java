@@ -326,7 +326,7 @@ public abstract class BoKAutoCommon implements BoKAuto
             nRedPixels += (int) resFloat[p];
         }
 
-        if (nRedPixels >= (numPixels / 2))
+        if (nRedPixels >= ((numPixels * 45)/100))
             foundRed = true;
 
         Log.v("BOK", "num Red pixels: " + nRedPixels + " out of " + numPixels);

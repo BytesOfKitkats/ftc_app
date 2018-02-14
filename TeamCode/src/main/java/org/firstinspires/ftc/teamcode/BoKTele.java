@@ -162,6 +162,7 @@ public class BoKTele
                     // fold the wrist & bring down the upper arm
                     robot.glyphArm.moveUpperArmEncCount(0, robot.UA_MOVE_POWER_DN);
                     robot.glyphClawWrist.setPosition(0.85);
+                    robot.relicClaw.setPosition(robot.RC_UNLOCK);
                     Log.v("BOK", "Relic mode started");
                 }
 
@@ -212,6 +213,7 @@ public class BoKTele
 
                 if (placementMode) {
                     if (opMode.gamepad2.dpad_right) {
+                        Log.v("BOK", "Dpad Right: Arm Pos " + robot.upperArm.getCurrentPosition());
                         // exit placement mode
                         placementMode = false;
                         //robot.glyphFlicker.setPosition(robot.GF_INIT);
@@ -399,12 +401,14 @@ public class BoKTele
                 }
             }
 
-            if (opMode.gamepad2.left_trigger > GAME_TRIGGER_DEAD_ZONE) {
-                //Log.v("BoK","Wrist position: " + robot.glyphArm.clawWrist.getPosition());
-                if (trigger_left_decrease)
-                    robot.glyphArm.decreaseClawWristPos(opMode.gamepad2.left_trigger);
-                else
-                    robot.glyphArm.increaseClawWristPos(opMode.gamepad2.left_trigger);
+            if (!relic_mode) {
+                if (opMode.gamepad2.left_trigger > GAME_TRIGGER_DEAD_ZONE) {
+                    //Log.v("BoK","Wrist position: " + robot.glyphArm.clawWrist.getPosition());
+                    if (trigger_left_decrease)
+                        robot.glyphArm.decreaseClawWristPos(opMode.gamepad2.left_trigger);
+                    else
+                        robot.glyphArm.increaseClawWristPos(opMode.gamepad2.left_trigger);
+                }
             }
 
             if (opMode.gamepad2.right_trigger > GAME_TRIGGER_DEAD_ZONE) {
