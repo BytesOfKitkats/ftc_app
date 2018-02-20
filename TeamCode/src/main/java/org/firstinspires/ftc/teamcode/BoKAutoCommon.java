@@ -99,6 +99,7 @@ public abstract class BoKAutoCommon implements BoKAuto
     private VuforiaTrackables relicTrackables;
 
     protected ElapsedTime runTime  = new ElapsedTime();
+    protected ElapsedTime runTimeTh = new ElapsedTime();
 
     protected BoKAllianceColor allianceColor;
     protected boolean far = false;
@@ -1047,30 +1048,28 @@ public abstract class BoKAutoCommon implements BoKAuto
         return Range.clip(error * PCoeff, -1, 1);
     }
 
-    class ResetUA_andTTorCW extends Thread
+    class ResetUA_TT_CW extends Thread
     {
         int uaDegrees;
         boolean moveTT;
-        public ResetUA_andTTorCW(int uaDegrees)
+        boolean moveWrist;
+        public ResetUA_TT_CW(int uaDegrees, boolean moveTT, boolean moveWrist)
         {
             this.uaDegrees = uaDegrees;
-            moveTT = true;
-        }
-
-        public void setUADegrees(int uaDegrees)
-        {
-            this.uaDegrees = uaDegrees;
-            moveTT = false;
+            this.moveTT = moveTT;
+            this.moveWrist = moveWrist;
         }
 
         @Override
         public void run()
         {
+            if (moveWrist) // first raise the wrist so that it doesn't get caught
+                robot.glyphClawWrist.setPosition(robot.CW_GLYPH_AT_MID);
             // move turn table and upper arm
             moveUpperArm(uaDegrees, UA_POWER, DT_TIMEOUT_2S);
             if (moveTT)
                 moveTurnTable(0, TT_POWER, DT_TIMEOUT_2S);
-            else
+            if (moveWrist)
                 robot.glyphArm.clawWrist.setPosition(CW_FINAL_POS);
         }
     }
@@ -1138,15 +1137,6 @@ public abstract class BoKAutoCommon implements BoKAuto
         }
     }
 
-    class ResetUAandCW extends Thread
-    {
-        @Override
-        public void run() {
-            moveUpperArm(0, robot.UA_MOVE_POWER_DN, DT_TIMEOUT_4S);
-            robot.glyphArm.clawWrist.setPosition(CW_FINAL_POS);
-        }
-    }
-
     class SweepResults {
         ArrayList<Double> listDist;
         ArrayList<Double> listAngles;
@@ -1161,65 +1151,96 @@ public abstract class BoKAutoCommon implements BoKAuto
                 Log.v("BOK", i + ": " + listDist.get(i) + ", " + listAngles.get(i));
             }
 
-            listDist.clear();
-            listAngles.clear();
+            //listDist.clear();
+            //listAngles.clear();
         }
+
         double [] findGlyph(){
             double angleForGlyph = 0;
             int i = 0;
-            int counter = 0;
-            double firstVal = listDist.get(listDist.size()-1);
+            int first_edge = -1;
             boolean success = false;
-            for (i = listDist.size()-2; i >= 0; i--) {
-                Log.v("BOK", i + ": " + listDist.get(i) + ", " + listAngles.get(i));
-                if(listDist.get(i)>255){
-                    counter = 1;
+            Log.v("BOK", "No of entries: " + listDist.size());
+
+            double prev_distance = -1;
+            double sum = 0;
+            int n = 0;
+            //for (i = listDist.size()-1; i >= 0; i--) {
+            for (i = 0; i < listDist.size(); i++) {
+                if(listDist.get(i) > 255){
+                    //Log.v("BOK", "i: " + i + " val: " + listDist.get(i));
+                    //counter = -1;
+                    if (prev_distance == -1)
+                        prev_distance = listDist.get(i);
+                    sum += 255;
+                    n++;
                     continue;
                 }
-                if(Math.abs(listDist.get(i) - firstVal)<=1){
-                    counter++;
-                    if(counter >= 3) {
-                        angleForGlyph= Math.round(listAngles.get( i - (counter/2)));
+
+                double cdist = listDist.get(i);
+                if (cdist < 25)
+                    continue;
+
+                Log.v("BOK", i + ": " + listDist.get(i) + ", " + String.format("%.2f", listAngles.get(i)));
+                sum += cdist;
+                n++;
+                if (prev_distance == -1) {
+                    prev_distance = listDist.get(i);
+                }
+                else {
+                    int delta = (first_edge == -1) ? 20 : 5;
+                    double diff = Math.abs(cdist - (sum/n));
+                    if ((diff > delta) && (cdist < 50)){
+                        if (i < (listDist.size()-1)) {
+                            double avg = (cdist + listDist.get(i + 1)) / 2;
+                            double cdiff = Math.abs(avg-cdist);
+                            if (cdiff > 10) {
+                                prev_distance = cdist;
+                                continue;
+                            }
+                        }
+
+                        if (first_edge == -1) {
+                            first_edge = i;
+                            continue;
+                        }
                         success = true;
+                        angleForGlyph = listAngles.get(i);
                         break;
                     }
+                    prev_distance = cdist;
                 }
-                /*
-                if (counter >= 2) {
-                    angleForGlyph= Math.round(listAngles.get( i - (counter/2)));
+            }
+            if (!success) {
+                if (first_edge != -1)
                     success = true;
-                    break;
-                }
-                */
-                else {
-                    counter = 1;
-                }
-                if(counter == 1) {
-                    firstVal = listDist.get(i);
-                }
-
+                i = first_edge;
             }
             if(success) {
                // angleForGlyph = (listAngles.get(i) + listAngles.get(i - 1) + listAngles.get(i - 2) + listAngles.get(i - 3)) / 4;
-                Log.v("BOK", "angle: " + angleForGlyph + " i: " + i);
+                double dist = listDist.get(i);
+                double rad_angle = (2.54/(dist+25));//(11*2.54)/(dist+25);
+
                 double [] Result = new double[2];
-                Result[0]=angleForGlyph;
-                Result[1]=listDist.get(i);
+                rad_angle = (rad_angle*180)/Math.PI;
+                Result[0]=angleForGlyph + rad_angle;//- rad_angle;
+                Result[1]=dist;
+                Log.v("BOK", " i: " + i + ", angle: " + Result[0] + ", dist: " + Result[1]);
                 return Result;
             }
             return null;
         }
     }
 
-    SweepResults sweepUsingTurnTable(double waitForSec)
+    SweepResults sweepUsingTurnTable(int targetAngle, double waitForSec)
     {
         SweepResults result = new SweepResults();
         //robot.turnTable.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         //int target = (int) robot.glyphArm.getTargetEncCountTT(targetAngleDegrees);
         runTime.reset();
-        //Log.v("BOK", "Target (tt): " + target);
+        //Log.v("BOK", "Target : " + targetAngle);
 
-        robot.turnTable.setTargetPosition(0);
+        robot.turnTable.setTargetPosition((int)robot.glyphArm.getTargetEncCountTT(targetAngle));
         robot.turnTable.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         robot.turnTable.setPower(0.05);
         while (opMode.opModeIsActive() && robot.turnTable.isBusy()) {
@@ -1236,6 +1257,10 @@ public abstract class BoKAutoCommon implements BoKAuto
         }
 
         robot.turnTable.setPower(0);
+        Double dblDist = new Double(robot.rangeSensorGA.getDistance(DistanceUnit.CM));
+        result.listDist.add(dblDist);
+        Double dblAngle = new Double(robot.glyphArm.getTTDegrees(robot.turnTable.getCurrentPosition()));
+        result.listAngles.add(dblAngle);
         // Turn off RUN_TO_POSITION
         robot.turnTable.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
@@ -1279,8 +1304,8 @@ public abstract class BoKAutoCommon implements BoKAuto
             opMode.sleep(waitForServoMs);
 
             int uaDegrees = (secondGlyph) ? UA_ANGLE_FOR_SECOND_GLYPH : 0;
-            ResetUA_andTTorCW resetUAandTTorCW = new ResetUA_andTTorCW(uaDegrees);
-            resetUAandTTorCW.start(); // reset upper arm and turn table
+            ResetUA_TT_CW resetUA_TT_CW = new ResetUA_TT_CW(uaDegrees, true, false);
+            resetUA_TT_CW.start(); // reset upper arm and turn table
 
             double distBack = 10.0;
             if (far) {
@@ -1346,30 +1371,25 @@ public abstract class BoKAutoCommon implements BoKAuto
             }
             else if (timeElapsed > 17) {
                 // Not enough time!!
-                ResetUA_andTTorCW resetUAandTTorCW2 = new ResetUA_andTTorCW(uaDegrees);
-                resetUAandTTorCW2.setUADegrees(0); // reset upper arm & claw wrist
-                resetUAandTTorCW2.start();
+                ResetUA_TT_CW resetUA_TT_CW2 = new ResetUA_TT_CW(0, false, true);
+                // reset upper arm & claw wrist
+                resetUA_TT_CW2.start();
                 // just park in the safe zone
                 moveRamp(DT_POWER_HIGH, distBack - 4.5, true, DT_TIMEOUT_4S);
             }
             else { // Attempt to get a second glyph
                 double distForward = 12, distRA = 0;
                 int count = 0;
-
-                double initDegrees = (allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED) ? -20 : 20;
+/*
+                int initDegrees = (allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED) ? -20 : 20;
+                int targetDegrees = (allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED) ? 25 : -10;
                 SetupTurnTableSweep sweep = new SetupTurnTableSweep(initDegrees);
                 sweep.start();
-
+*/
                 move(DT_POWER_HIGH, DT_POWER_HIGH, distForward, true, DT_TIMEOUT_2S);
 /*
-                do {
-                    distRA = robot.rangeSensorGA.getDistance(DistanceUnit.CM);
-                    count++; // try up to 5 times to get a valid distance
-                } while ((distRA > 255) && (count < 5));
-*/
-
-                SweepResults results = sweepUsingTurnTable(3);
-                //results.printResults();
+                SweepResults results = sweepUsingTurnTable(targetDegrees, DT_TIMEOUT_4S);
+                results.printResults();
 
                 double[] RC = results.findGlyph();
                 if(RC != null){
@@ -1379,59 +1399,61 @@ public abstract class BoKAutoCommon implements BoKAuto
                 }
                 if ((RC == null) || distRA > 50) {
 
-                //if (distRA > 40) { // too far
                     Log.v("BOK", "did not find glyph or distRA > 50");
-                    ResetUA_andTTorCW resetUAandTTorCW2 = new ResetUA_andTTorCW(uaDegrees);
-                    resetUAandTTorCW2.setUADegrees(0); // reset upper arm & claw wrist
+                    ResetUA_TT_CW resetUAandTTorCW2 = new ResetUA_TT_CW(0, true, true);
+                    // reset upper arm & claw wrist
                     resetUAandTTorCW2.start();
                     // go back 5 inches to the safe zone
-                    move(DT_POWER_HIGH, DT_POWER_HIGH, 5, false, DT_TIMEOUT_2S);
+                    //move(DT_POWER_HIGH, DT_POWER_HIGH, 5, false, DT_TIMEOUT_2S);
+                    try {
+                        resetUAandTTorCW2.join();
+                    } catch (InterruptedException e) {
+
+                    }
                     return;
                 }
-               // else {
-                    Log.v("BOK", "found glyph");
-                    if(allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED) {
-                        moveTurnTable(RC[0]-9, DT_POWER_HIGH, 4);
-                    }
-                    else{
-                        moveTurnTable(RC[0], DT_POWER_HIGH, 4);
+                Log.v("BOK", "found glyph");
+                //if(allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED) {
+                    moveTurnTable(RC[0], DT_POWER_HIGH, 4);
+                //}
+                //else{
+                //    moveTurnTable(RC[0], DT_POWER_HIGH, 4);
 
-                    }
-                    moveWColor(DT_POWER_HIGH, (0.75 * distRA) / 2.54, true, DT_TIMEOUT_4S);
-                    moveRampWColor(DT_POWER_FOR_RS, (0.25 * distRA) / 2.54, true, DT_TIMEOUT_2S);
-                    // close the glyph claw to grab & raise the wrist a bit
-                    closeClawGrab(DT_TIMEOUT_4S);
-                    robot.opMode.sleep(350);
-                    robot.glyphClawWrist.setPosition(CW_FOR_SECOND_GLYPH+0.02);
+                //}
 
-                    move(DT_POWER_HIGH, DT_POWER_HIGH, distRA/2.54, false, DT_TIMEOUT_5S);
-                    moveTurnTable(0,DT_POWER_HIGH, DT_TIMEOUT_2S);
-                    DeliverGlyphToFlipper deliverGlyph = new DeliverGlyphToFlipper();
-                    deliverGlyph.start();
+                moveWColor(DT_POWER_HIGH, (0.75 * distRA) / 2.54, true, DT_TIMEOUT_4S);
+                moveRampWColor(DT_POWER_FOR_RS, (0.25 * distRA) / 2.54, true, DT_TIMEOUT_2S);
+                // close the glyph claw to grab & raise the wrist a bit
+                closeClawGrab(DT_TIMEOUT_4S);
+                robot.opMode.sleep(350);
+                robot.glyphClawWrist.setPosition(CW_FOR_SECOND_GLYPH+0.02);
 
-                  //  if (allianceColor == BoKAllianceColor.BOK_ALLIANCE_BLUE)
-                        distForward -= 1;
+                move(DT_POWER_HIGH, DT_POWER_HIGH, distRA/2.54, false, DT_TIMEOUT_5S);
+                moveTurnTable(0,DT_POWER_HIGH, DT_TIMEOUT_2S);
+                DeliverGlyphToFlipper deliverGlyph = new DeliverGlyphToFlipper();
+                deliverGlyph.start();
 
-                    moveRamp(DT_POWER_HIGH, distForward, false, DT_TIMEOUT_4S);
-                    try { // now wait for glyph to be delivered to the flipper
-                        deliverGlyph.join();
-                    } catch (InterruptedException e)
-                    {
-                        // do nothing!
-                    }
+                //  if (allianceColor == BoKAllianceColor.BOK_ALLIANCE_BLUE)
+                    distForward -= 1;
 
-                    ResetUAandCW resetUAandCW = new ResetUAandCW();
-                    resetUAandCW.start();
+                moveRamp(DT_POWER_HIGH, distForward, false, DT_TIMEOUT_4S);
+                try { // now wait for glyph to be delivered to the flipper
+                    deliverGlyph.join();
+                } catch (InterruptedException e)
+                {
+                    // do nothing!
+                }
 
-                    moveGlyphFlipper(DT_TIMEOUT_2S);
-                    opMode.sleep(100); // let the glyph fall
+                ResetUA_TT_CW resetUA_TT_CW3 = new ResetUA_TT_CW(0, false, true);
+                resetUA_TT_CW3.start();
 
-                    // go forward a bit
-                    move(DT_POWER_FOR_RS, DT_POWER_FOR_RS, 3.75, true, DT_TIMEOUT_2S);
-                    opMode.sleep(500);
-                    move(DT_POWER_HIGH, DT_POWER_HIGH, 4.25, true, DT_TIMEOUT_2S);
-              //  } // distRA < 40
+                moveGlyphFlipper(DT_TIMEOUT_2S);
+                opMode.sleep(100); // let the glyph fall
 
+                // go forward a bit
+                move(DT_POWER_FOR_RS, DT_POWER_FOR_RS, 3.75, true, DT_TIMEOUT_2S);
+                opMode.sleep(500);
+                move(DT_POWER_HIGH, DT_POWER_HIGH, 4.25, true, DT_TIMEOUT_2S);*/
             } // secondGlyph == true
         } // opMode.isActive
     }
@@ -1439,7 +1461,7 @@ public abstract class BoKAutoCommon implements BoKAuto
     public void moveUpperArm(double targetAngleDegrees, double power, double waitForSec)
     {
         int target = (int) robot.glyphArm.getTargetEncCount(targetAngleDegrees);
-        runTime.reset();
+        runTimeTh.reset();
         //Log.v("BOK", "Target (arm): " + target + ", " + robot.upperArm.getCurrentPosition());
 
         robot.upperArm.setTargetPosition(target);
@@ -1448,7 +1470,7 @@ public abstract class BoKAutoCommon implements BoKAuto
 
         if (waitForSec > 0) {
             while (opMode.opModeIsActive() && robot.upperArm.isBusy()) {
-                if (runTime.seconds() >= waitForSec) {
+                if (runTimeTh.seconds() >= waitForSec) {
                     Log.v("BOK", "moveUpperArm timed out!" + String.format(" %.1f", waitForSec));
                     break;
                 }
@@ -1468,7 +1490,7 @@ public abstract class BoKAutoCommon implements BoKAuto
     {
         //robot.turnTable.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         int target = (int) robot.glyphArm.getTargetEncCountTT(targetAngleDegrees);
-        runTime.reset();
+        runTimeTh.reset();
         //Log.v("BOK", "Target (tt): " + target);
 
         robot.turnTable.setTargetPosition(target);
@@ -1476,7 +1498,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         robot.turnTable.setPower(power);
         if (waitForSec > 0) {
             while (opMode.opModeIsActive() && robot.turnTable.isBusy()) {
-                if (runTime.seconds() >= waitForSec) {
+                if (runTimeTh.seconds() >= waitForSec) {
                     Log.v("BOK", "moveTurnTable timed out!" + String.format(" %.1f", waitForSec));
                     break;
                 }
@@ -1643,4 +1665,80 @@ public abstract class BoKAutoCommon implements BoKAuto
         }
     }
 
+    void SweepOnly()
+    {
+        int targetDegrees = (allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED) ? 0 : 0;
+        moveUpperArm(UA_ANGLE_FOR_SECOND_GLYPH, UA_POWER, DT_TIMEOUT_2S);
+        double cwPos = CW_FOR_SECOND_GLYPH;
+        ResetCW resetCW = new ResetCW(cwPos);
+        resetCW.start();
+        try {
+            resetCW.join();
+        } catch (InterruptedException e) {
+
+        }
+        int initDegrees = (allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED) ? 40 : -40;
+        SetupTurnTableSweep sweep = new SetupTurnTableSweep(initDegrees);
+        sweep.start();
+        try {
+            sweep.join();
+        } catch (InterruptedException e) {
+
+        }
+
+        opMode.sleep(1000);
+
+        SweepResults results = sweepUsingTurnTable(targetDegrees, DT_TIMEOUT_4S);
+        results.printResults();
+
+        double[] RC = results.findGlyph();
+        double distRA = 0;
+        if(RC != null){
+            distRA = RC[1];
+            Log.v("BOK", "distRA: " + distRA);
+
+        }
+        if ((RC == null) || distRA > 50) {
+
+            //if (distRA > 40) { // too far
+            Log.v("BOK", "did not find glyph or distRA > 50");
+            ResetUA_TT_CW resetUAandTTorCW2 = new ResetUA_TT_CW(0, true, true);
+            // reset upper arm & claw wrist
+            resetUAandTTorCW2.start();
+            // go back 5 inches to the safe zone
+            //move(DT_POWER_HIGH, DT_POWER_HIGH, 5, false, DT_TIMEOUT_2S);
+            try {
+                resetUAandTTorCW2.join();
+            } catch (InterruptedException e) {
+
+            }
+            return;
+        }
+        Log.v("BOK", "found glyph");
+        if(allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED) {
+            moveTurnTable(RC[0], DT_POWER_HIGH, 4);
+        }
+        else{
+            moveTurnTable(RC[0], DT_POWER_HIGH, 4);
+
+        }
+
+        while (opMode.opModeIsActive()) {
+            if (opMode.gamepad1.a)
+            {
+                ResetUA_TT_CW resetUAandTTorCW2 = new ResetUA_TT_CW(0, true, true);
+                // reset upper arm & claw wrist
+                resetUAandTTorCW2.start();
+                // go back 5 inches to the safe zone
+                //move(DT_POWER_HIGH, DT_POWER_HIGH, 5, false, DT_TIMEOUT_2S);
+                try {
+                    resetUAandTTorCW2.join();
+                } catch (InterruptedException e) {
+
+                }
+
+            }
+        }
+
+    }
 }

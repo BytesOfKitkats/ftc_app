@@ -162,7 +162,7 @@ public class BoKTele
                     // fold the wrist & bring down the upper arm
                     robot.glyphArm.moveUpperArmEncCount(0, robot.UA_MOVE_POWER_DN);
                     robot.glyphClawWrist.setPosition(0.85);
-                    robot.relicClaw.setPosition(robot.RC_UNLOCK);
+                    //robot.relicClaw.setPosition(robot.RC_UNLOCK);
                     Log.v("BOK", "Relic mode started");
                 }
 

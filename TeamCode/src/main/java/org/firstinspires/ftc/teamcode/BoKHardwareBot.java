@@ -62,7 +62,7 @@ public abstract class BoKHardwareBot
     protected static final double RA_HIGH_POS = 0.52;
     protected static final double RA_DEPLOY_POS = 0.58;
     // Relic claw
-    protected static final double RC_UNLOCK = .725; // initially unlocked
+    protected static final double RC_UNLOCK = 1.0; // initially unlocked
     protected static final double RC_LOCK = 0.1;
     // Glyph arm positions to place the glyph
     protected static final int UA_GLYPH_AT_TIP = 138;

@@ -100,6 +100,13 @@ public class BoKSetupOpMode extends LinearOpMode
                        Double.toString(robot.glyphArm.clawWrist.getPosition()));
             }
 
+            if (gamepad1.a) {
+                robot.relicClaw.setPosition(robot.RC_LOCK);
+            }
+            if (gamepad1.b) {
+                robot.relicClaw.setPosition(robot.RC_UNLOCK);
+            }
+
             robot.waitForTick(BoKHardwareBot.WAIT_PERIOD);
         }
     }
