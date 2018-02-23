@@ -170,6 +170,7 @@ public class BoKTele
                     relic_mode = false;
                     relic_deploying = false;
                     robot.setModeForDTMotors(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    robot.relicArm.setPosition(robot.RA_INIT);
                     Log.v("BOK", "Relic mode ended");
                 }
             }
@@ -345,14 +346,15 @@ public class BoKTele
                         robot.glyphArm.clawWrist.setPosition(
                                 robot.glyphArm.clawWrist.getPosition() -
                                         (degreesChanged / robot.glyphArm.WRIST_SERVO_MAX_DEGREES));
-                        posOfUpperArm = posOfArm;
-                        //Log.v("BoK","Upper arm position: " + robot.upperArm.getCurrentPosition());
                     }
-                    if (clawClosed)
-                        robot.upperArm.setPower(UPPER_ARM_MOTOR_POWER_FAST);
-                    else
-                        robot.upperArm.setPower(UPPER_ARM_MOTOR_POWER_SLOW);
-                    //Log.v("BOK", "Upper arm position: " + robot.upperArm.getCurrentPosition());
+                    posOfUpperArm = posOfArm;
+                    //if (clawClosed)
+                    //    robot.upperArm.setPower(UPPER_ARM_MOTOR_POWER_FAST);
+                    //else
+                    robot.upperArm.setPower(UPPER_ARM_MOTOR_POWER_SLOW);
+
+                    //Log.v("BoK","Upper arm pos: " + robot.upperArm.getCurrentPosition()  +
+                    //        " wrist at: " + robot.glyphArm.clawWrist.getPosition());
                 } else if (relic_mode) {
                     //Log.v("BOK", "Relic mode Left Stick Up");
                     // Move relic arm up
@@ -377,7 +379,9 @@ public class BoKTele
                             robot.glyphArm.clawWrist.getPosition() - (degreesChanged / 240));
                     posOfUpperArm = posOfArm;
 
-                    robot.upperArm.setPower(-UPPER_ARM_MOTOR_POWER_FAST);
+                    //Log.v("BoK","Upper arm DOWN: " + robot.upperArm.getCurrentPosition()  +
+                    //        " wrist at: " + robot.glyphArm.clawWrist.getPosition());
+                    robot.upperArm.setPower(-UPPER_ARM_MOTOR_POWER_SLOW);
 
                     //Log.v("BoK","Upper arm position: " + robot.upperArm.getCurrentPosition());
                 } else if (relic_mode) {
@@ -395,9 +399,11 @@ public class BoKTele
             } else {
                 if (robot.upperArm.getMode() == DcMotor.RunMode.RUN_TO_POSITION) {
                     stopUpperArm(true);
+                    posOfUpperArm = robot.upperArm.getCurrentPosition();
                 }
                 else {
                     robot.upperArm.setPower(0);
+                    posOfUpperArm = robot.upperArm.getCurrentPosition();
                 }
             }
 

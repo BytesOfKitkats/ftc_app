@@ -95,7 +95,7 @@ public class BoKGlyphArm
         //Log.v("BOK", "robot.upperArm.getCurrentPosition(): " + currentArmPos);
         if (currentArmPos < 300) // approx 30 degree
             min = 0.35;
-        else if (currentArmPos < 450)
+        else if (currentArmPos < 750)
             min = 0.25;
 
         if(pos < min) {

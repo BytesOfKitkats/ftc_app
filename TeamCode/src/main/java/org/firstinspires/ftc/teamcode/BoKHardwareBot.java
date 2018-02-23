@@ -63,7 +63,7 @@ public abstract class BoKHardwareBot
     protected static final double RA_DEPLOY_POS = 0.58;
     // Relic claw
     protected static final double RC_UNLOCK = 1.0; // initially unlocked
-    protected static final double RC_LOCK = 0.1;
+    protected static final double RC_LOCK = 0.2;
     // Glyph arm positions to place the glyph
     protected static final int UA_GLYPH_AT_TIP = 138;
     protected static final int UA_GLYPH_AT_MID = 160;
@@ -73,7 +73,7 @@ public abstract class BoKHardwareBot
     protected static final double CW_GLYPH_AT_MID = 0.65;
     protected static final double CW_GLYPH_AT_END = 0.65;
     // Glyph arm placement power
-    protected static final double UA_MOVE_POWER_UP = 0.6;
+    protected static final double UA_MOVE_POWER_UP = 0.8;
     protected static final double UA_MOVE_POWER_DN = 0.8;
 
     private static final String TURN_TABLE_MOTOR = "tt";
