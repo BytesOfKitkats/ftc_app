@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginLeft="10dp"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/textViewRedSettings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="RED Settings"
+        android:textAlignment="center"
+        android:textAppearance="@android:style/TextAppearance.DeviceDefault.DialogWindowTitle"
+        android:visibility="visible" />
+
+    <CheckBox
+        android:id="@+id/cbRedRight"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="RIGHT"
+        android:textAppearance="@android:style/TextAppearance.DeviceDefault.DialogWindowTitle" />
+
+    <EditText
+        android:id="@+id/textRedRight"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="50dp"
+        android:layout_marginRight="50dp"
+        android:clickable="false"
+        android:inputType="numberSigned"
+        android:paddingBottom="10dp"
+        android:paddingLeft="10dp"
+        android:paddingTop="10dp"
+        android:text="-2"
+        android:textAlignment="center"
+        android:textAppearance="@android:style/TextAppearance.DeviceDefault.DialogWindowTitle"
+        android:textSize="30sp" />
+
+    <CheckBox
+        android:id="@+id/cbRedCenter"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="CENTER"
+        android:textAppearance="@android:style/TextAppearance.DeviceDefault.DialogWindowTitle" />
+
+    <EditText
+        android:id="@+id/textRedCenter"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="50dp"
+        android:layout_marginRight="50dp"
+        android:clickable="false"
+        android:inputType="numberSigned"
+        android:paddingBottom="10dp"
+        android:paddingLeft="10dp"
+        android:paddingTop="10dp"
+        android:text="0"
+        android:textAlignment="center"
+        android:textAppearance="@android:style/TextAppearance.DeviceDefault.DialogWindowTitle"
+        android:textSize="30sp" />
+    <CheckBox
+        android:id="@+id/cbRedLeft"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="LEFT"
+        android:textAppearance="@android:style/TextAppearance.DeviceDefault.DialogWindowTitle" />
+
+    <EditText
+        android:id="@+id/textRedLeft"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="50dp"
+        android:layout_marginRight="50dp"
+        android:clickable="false"
+        android:inputType="numberSigned"
+        android:paddingBottom="10dp"
+        android:paddingLeft="10dp"
+        android:paddingTop="10dp"
+        android:text="2"
+        android:textAlignment="center"
+        android:textAppearance="@android:style/TextAppearance.DeviceDefault.DialogWindowTitle"
+        android:textSize="30sp" />
+
+    <Button
+        android:id="@+id/redSave"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginTop="20dp"
+        android:text="Save" />
+</LinearLayout>

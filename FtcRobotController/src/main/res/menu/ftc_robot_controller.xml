@@ -77,6 +77,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       android:title="@string/inspection_mode_menu_item"/>
 
   <item
+    android:id="@+id/red_settings"
+    android:orderInCategory="700"
+    android:icon="@android:drawable/ic_menu_info_details"
+    android:title="@string/red_settings_menu_item"/>
+
+  <item
+    android:id="@+id/blue_settings"
+    android:orderInCategory="750"
+    android:icon="@android:drawable/ic_menu_info_details"
+    android:title="@string/blue_settings_menu_item"/>
+
+  <item
     android:id="@+id/action_about"
     android:orderInCategory="999"
     android:icon="@android:drawable/ic_menu_info_details"

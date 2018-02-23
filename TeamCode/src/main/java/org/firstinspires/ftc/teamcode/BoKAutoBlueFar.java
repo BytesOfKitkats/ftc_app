@@ -30,7 +30,7 @@ public class BoKAutoBlueFar extends BoKAutoCommon
         far = true;
 
         // Detect Vuforia image and flick the jewel
-        detectVuforiaImgAndFlick(WAIT_FOR_JEWEL_FLICKER_MS_LOW);
+        detectVuforiaImgAndFlick(WAIT_FOR_JEWEL_FLICKER_MS);
 
         // Move back out of the balancing stone
         move(DT_POWER_FOR_STONE, DT_POWER_FOR_STONE, DT_MOVE_TO_CRYPTO, false, DT_TIMEOUT_4S);
@@ -83,6 +83,6 @@ public class BoKAutoBlueFar extends BoKAutoCommon
         moveWithRangeSensor(DT_POWER_FOR_RS, distance, true, timeout); // CM
 
         // Prepare to unload the glyph
-        moveToCrypto(currentAngle, WAIT_FOR_JEWEL_FLICKER_MS_LOW, false);
+        moveToCrypto(currentAngle, WAIT_FOR_JEWEL_FLICKER_MS, false);
     }
 }

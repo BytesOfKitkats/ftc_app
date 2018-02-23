@@ -22,8 +22,7 @@ public interface BoKAuto
     public static int UA_INIT_ANGLE = 12;
     public static int TT_INIT_ANGLE = -90;
     // Jewel flicker wait
-    public static int WAIT_FOR_JEWEL_FLICKER_MS_LOW = 350;
-    public static int WAIT_FOR_JEWEL_FLICKER_MS_HIGH = 500;
+    public static int WAIT_FOR_JEWEL_FLICKER_MS = 500;
     // Vuforia
     public static int VUFORIA_TIMEOUT = 4;
     // Drive train

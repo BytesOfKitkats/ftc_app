@@ -25,7 +25,7 @@ public class BoKAutoRedNear extends BoKAutoCommon {
     public void runSoftware()
     {
         // Detect Vuforia image and flick the jewel
-        detectVuforiaImgAndFlick(WAIT_FOR_JEWEL_FLICKER_MS_LOW);
+        detectVuforiaImgAndFlick(WAIT_FOR_JEWEL_FLICKER_MS);
 
         // Move forward out of balancing stone
         // Distance and timeout depends on column number; TBD
@@ -47,6 +47,6 @@ public class BoKAutoRedNear extends BoKAutoCommon {
 
 
         // Prepare to unload the glyph
-        moveToCrypto(0, WAIT_FOR_JEWEL_FLICKER_MS_LOW, (cryptoColumn == RelicRecoveryVuMark.RIGHT));
+        moveToCrypto(0, WAIT_FOR_JEWEL_FLICKER_MS, true);
     }
 }

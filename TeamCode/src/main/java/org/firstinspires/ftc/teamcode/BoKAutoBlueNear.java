@@ -30,7 +30,7 @@ public class BoKAutoBlueNear extends BoKAutoCommon
         // NOTE: Move backwards towards crypto
 
         // Detect Vuforia image and flick the jewel
-        detectVuforiaImgAndFlick(WAIT_FOR_JEWEL_FLICKER_MS_LOW);
+        detectVuforiaImgAndFlick(WAIT_FOR_JEWEL_FLICKER_MS);
 
         // Move backward out of balancing stone
         // Distance and timeout to the cryptobox depends on column number
@@ -54,6 +54,6 @@ public class BoKAutoBlueNear extends BoKAutoCommon
              timeout);
 
         // Move towards the crypto
-        moveToCrypto(0, WAIT_FOR_JEWEL_FLICKER_MS_LOW, (cryptoColumn == RelicRecoveryVuMark.LEFT));
+        moveToCrypto(0, WAIT_FOR_JEWEL_FLICKER_MS, true);
     }
 }

@@ -49,6 +49,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   <string name="restart_robot_menu_item">Restart Robot</string>
   <string name="configure_robot_menu_item">Configure Robot</string>
   <string name="about_menu_item">About</string>
+  <string name="red_settings_menu_item">RED</string>
+  <string name="blue_settings_menu_item">BLUE</string>
   <string name="exit_menu_item">Exit</string>
 
   <!-- Toast messages -->
