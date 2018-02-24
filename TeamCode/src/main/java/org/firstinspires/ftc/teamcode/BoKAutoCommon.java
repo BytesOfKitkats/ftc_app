@@ -82,7 +82,7 @@ public abstract class BoKAutoCommon implements BoKAuto
     private static final double CRS_CRYPTO_TIMEOUT = 2.5;
     private static final int UA_FINAL_ANGLE = 25;
     private static final int UA_ANGLE_FOR_SECOND_GLYPH = 48;
-    private static final double CW_FINAL_POS = 0.42;
+    private static final double CW_FINAL_POS = 0.5;
     private static final double CW_FOR_SECOND_GLYPH = 0.3;
     private static final int VUFORIA_LOCK_BALL_X_OFFSET = 230; // pixels offset from the center
     private static final int VUFORIA_LOCK_BALL_Y_OFFSET = 120; // of the Vuforia image
