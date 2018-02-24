@@ -6,6 +6,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.SeekBar;
+import android.widget.TextView;
 
 import com.qualcomm.ftcrobotcontroller.R;
 import com.qualcomm.robotcore.util.ReadWriteFile;
@@ -27,11 +29,63 @@ public class FtcBlueSettingsActivity extends ThemedActivity {
         setContentView(R.layout.blue_settings);
         final Button btnSave = (Button)findViewById(R.id.blueSave);
         final CheckBox chkRight = (CheckBox)findViewById(R.id.cbBlueRight);
-        final EditText angRight = (EditText)findViewById(R.id.textBlueRight);
+        final TextView angRightVal = (TextView)findViewById(R.id.textViewBlueRight);
+        final SeekBar angRight = (SeekBar)findViewById(R.id.seekBarBlueRight);
+        final TextView angCenterVal = (TextView)findViewById(R.id.textViewBlueCenter);
+        final SeekBar angCenter = (SeekBar)findViewById(R.id.seekBarBlueCenter);
         final CheckBox chkCenter = (CheckBox)findViewById(R.id.cbBlueCenter);
-        final EditText angCenter = (EditText)findViewById(R.id.textBlueCenter);
+        final TextView angLeftVal = (TextView)findViewById(R.id.textViewBlueLeft);
+        final SeekBar angLeft = (SeekBar)findViewById(R.id.seekBarBlueLeft);
         final CheckBox chkLeft = (CheckBox)findViewById(R.id.cbBlueLeft);
-        final EditText angLeft = (EditText)findViewById(R.id.textBlueLeft);
+
+        angRight.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            int progressChangedValue = 0;
+
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                progressChangedValue = (progress-20);
+                angRightVal.setText(Integer.toString(progressChangedValue));
+            }
+
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                // TODO Auto-generated method stub
+            }
+
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                angRightVal.setText(Integer.toString(progressChangedValue));
+            }
+        });
+        angCenter.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            int progressChangedValue = 0;
+
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                progressChangedValue = (progress-20);
+                angCenterVal.setText(Integer.toString(progressChangedValue));
+            }
+
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                // TODO Auto-generated method stub
+            }
+
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                angCenterVal.setText(Integer.toString(progressChangedValue));
+            }
+        });
+        angLeft.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            int progressChangedValue = 0;
+
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                progressChangedValue = (progress-20);
+                angLeftVal.setText(Integer.toString(progressChangedValue));
+            }
+
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                // TODO Auto-generated method stub
+            }
+
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                angLeftVal.setText(Integer.toString(progressChangedValue));
+            }
+        });
 
         File file = AppUtil.getInstance().getSettingsFile("BoKBlueAngles.txt");
         String value = ReadWriteFile.readFile(file);
@@ -42,11 +96,14 @@ public class FtcBlueSettingsActivity extends ThemedActivity {
             //Log.v("BOK", "Read: " + value);
             String[] tokens = value.split(",");
             chkRight.setChecked(Boolean.parseBoolean(tokens[0]));
-            angRight.setText(tokens[1]);
+            angRight.setProgress(Integer.parseInt(tokens[1])+20);
+            angRightVal.setText(tokens[1]);
             chkCenter.setChecked(Boolean.parseBoolean(tokens[2]));
-            angCenter.setText(tokens[3]);
+            angCenter.setProgress(Integer.parseInt(tokens[3])+20);
+            angCenterVal.setText(tokens[3]);
             chkLeft.setChecked(Boolean.parseBoolean(tokens[4]));
-            angLeft.setText(tokens[5]);
+            angLeft.setProgress(Integer.parseInt(tokens[5])+20);
+            angLeftVal.setText(tokens[5]);
         }
 
         btnSave.setOnClickListener(new View.OnClickListener() {
@@ -54,11 +111,11 @@ public class FtcBlueSettingsActivity extends ThemedActivity {
                 File file = AppUtil.getInstance().getSettingsFile("BoKBlueAngles.txt");
 
                 String fileText = Boolean.toString(chkRight.isChecked());
-                fileText += "," + angRight.getText();
+                fileText += "," + angRightVal.getText();
                 fileText += "," + Boolean.toString(chkCenter.isChecked());
-                fileText += "," + angCenter.getText();
+                fileText += "," + angCenterVal.getText();
                 fileText += "," + Boolean.toString(chkLeft.isChecked());
-                fileText += "," + angLeft.getText();
+                fileText += "," + angLeftVal.getText();
                 ReadWriteFile.writeFile(file,fileText);
             }
         });

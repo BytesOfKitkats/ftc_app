@@ -83,11 +83,11 @@ public abstract class BoKAutoCommon implements BoKAuto
     private static final int UA_FINAL_ANGLE = 25;
     private static final int UA_ANGLE_FOR_SECOND_GLYPH = 48;
     private static final double CW_FINAL_POS = 0.42;
-    private static final double CW_FOR_SECOND_GLYPH = 0.32;
+    private static final double CW_FOR_SECOND_GLYPH = 0.3;
     private static final int VUFORIA_LOCK_BALL_X_OFFSET = 230; // pixels offset from the center
-    private static final int VUFORIA_LOCK_BALL_Y_OFFSET = 130; // of the Vuforia image
+    private static final int VUFORIA_LOCK_BALL_Y_OFFSET = 120; // of the Vuforia image
     private static final int VUFORIA_LOCK_BALL_RECT_WIDTH = 95;
-    private static final int VUFORIA_LOCK_BALL_RECT_HEIGHT = 100;
+    private static final int VUFORIA_LOCK_BALL_RECT_HEIGHT = 95;
     protected static final boolean DEBUG_OPEN_CV = false;
     private static final String VUFORIA_LOCK_IMG = "vuImage.png";
     private static final String ROI_IMG = "roiImage.png";
@@ -1248,11 +1248,11 @@ public abstract class BoKAutoCommon implements BoKAuto
                     //Log.v("BOK", "Read: " + value);
                     String[] tokens = anglesTxt.split(",");
                     boolean chkRight = Boolean.parseBoolean(tokens[0]);
-                    int angRight = Integer.getInteger(tokens[1]);
+                    int angRight = Integer.parseInt(tokens[1]);
                     boolean chkCenter = Boolean.parseBoolean(tokens[2]);
-                    int angCenter = Integer.getInteger(tokens[3]);
+                    int angCenter = Integer.parseInt(tokens[3]);
                     boolean chkLeft = Boolean.parseBoolean(tokens[4]);
-                    int angLeft = Integer.getInteger(tokens[5]);
+                    int angLeft = Integer.parseInt(tokens[5]);
 
                     if ((cryptoColumn == RelicRecoveryVuMark.RIGHT) && chkRight) {
                         angleSecGlyph = angRight;
