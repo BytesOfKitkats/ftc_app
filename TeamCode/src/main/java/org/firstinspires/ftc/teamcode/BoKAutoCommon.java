@@ -1172,6 +1172,40 @@ public abstract class BoKAutoCommon implements BoKAuto
             opMode.sleep(waitForServoMs);
             robot.glyphArm.clawWrist.setPosition(robot.wristInitPosFromFile);
             opMode.sleep(waitForServoMs);
+            int angleSecGlyph = Integer.MAX_VALUE;
+            if (secondGlyph) {
+                String anglesTxt;
+                if (allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED) {
+                    File file = AppUtil.getInstance().getSettingsFile("BoKRedAngles.txt");
+                    anglesTxt = ReadWriteFile.readFile(file);
+                } else {
+                    File file = AppUtil.getInstance().getSettingsFile("BoKBlueAngles.txt");
+                    anglesTxt = ReadWriteFile.readFile(file);
+                }
+                if (anglesTxt.isEmpty()) {
+                    secondGlyph = false;
+                } else {
+                    //Log.v("BOK", "Read: " + value);
+                    String[] tokens = anglesTxt.split(",");
+                    boolean chkRight = Boolean.parseBoolean(tokens[0]);
+                    int angRight = Integer.parseInt(tokens[1]);
+                    boolean chkCenter = Boolean.parseBoolean(tokens[2]);
+                    int angCenter = Integer.parseInt(tokens[3]);
+                    boolean chkLeft = Boolean.parseBoolean(tokens[4]);
+                    int angLeft = Integer.parseInt(tokens[5]);
+
+                    if ((cryptoColumn == RelicRecoveryVuMark.RIGHT) && chkRight) {
+                        angleSecGlyph = angRight;
+                    } else if (cryptoColumn == RelicRecoveryVuMark.CENTER && chkCenter) {
+                        angleSecGlyph = angCenter;
+                    } else if (cryptoColumn == RelicRecoveryVuMark.LEFT && chkLeft) {
+                        angleSecGlyph = angLeft;
+                    }
+                    else
+                        secondGlyph = false;
+                }
+            } // if (secondGlyph)
+
 
             int uaDegrees = (secondGlyph) ? UA_ANGLE_FOR_SECOND_GLYPH : 0;
             ResetUA_TT_CW resetUA_TT_CW = new ResetUA_TT_CW(uaDegrees, true, false);
@@ -1231,40 +1265,6 @@ public abstract class BoKAutoCommon implements BoKAuto
             resetCW.start();
 
             moveRamp(DT_POWER_HIGH, distBack, false, DT_TIMEOUT_4S);
-
-            int angleSecGlyph = Integer.MAX_VALUE;
-            if (secondGlyph) {
-                String anglesTxt;
-                if (allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED) {
-                    File file = AppUtil.getInstance().getSettingsFile("BoKRedAngles.txt");
-                    anglesTxt = ReadWriteFile.readFile(file);
-                } else {
-                    File file = AppUtil.getInstance().getSettingsFile("BoKBlueAngles.txt");
-                    anglesTxt = ReadWriteFile.readFile(file);
-                }
-                if (anglesTxt.isEmpty()) {
-                    secondGlyph = false;
-                } else {
-                    //Log.v("BOK", "Read: " + value);
-                    String[] tokens = anglesTxt.split(",");
-                    boolean chkRight = Boolean.parseBoolean(tokens[0]);
-                    int angRight = Integer.parseInt(tokens[1]);
-                    boolean chkCenter = Boolean.parseBoolean(tokens[2]);
-                    int angCenter = Integer.parseInt(tokens[3]);
-                    boolean chkLeft = Boolean.parseBoolean(tokens[4]);
-                    int angLeft = Integer.parseInt(tokens[5]);
-
-                    if ((cryptoColumn == RelicRecoveryVuMark.RIGHT) && chkRight) {
-                        angleSecGlyph = angRight;
-                    } else if (cryptoColumn == RelicRecoveryVuMark.CENTER && chkCenter) {
-                        angleSecGlyph = angCenter;
-                    } else if (cryptoColumn == RelicRecoveryVuMark.LEFT && chkLeft) {
-                        angleSecGlyph = angLeft;
-                    }
-                    else
-                        secondGlyph = false;
-                }
-            } // if (secondGlyph)
 
             double timeElapsed = BoKAuto.runTimeOpMode.seconds();
             Log.v("BOK", "Second: " + secondGlyph +
