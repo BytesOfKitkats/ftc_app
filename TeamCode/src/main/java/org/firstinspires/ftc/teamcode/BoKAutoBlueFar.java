@@ -80,9 +80,13 @@ public class BoKAutoBlueFar extends BoKAutoCommon
         }
 
         // Move towards the crypto
-        moveWithRangeSensor(DT_POWER_FOR_RS, distance, true, timeout); // CM
+        boolean success = moveWithRangeSensor(DT_POWER_FOR_RS, distance, true, timeout); // CM
 
-        // Prepare to unload the glyph
-        moveToCrypto(currentAngle, WAIT_FOR_JEWEL_FLICKER_MS, false);
+        if (success) {
+            // Prepare to unload the glyph
+            moveToCrypto(currentAngle, WAIT_FOR_JEWEL_FLICKER_MS, false);
+        }
+        else
+            robot.glyphArm.moveUpperArmDegrees(0, 0.4);
     }
 }

@@ -848,13 +848,21 @@ public abstract class BoKAutoCommon implements BoKAuto
         }
     }
     
-    public void moveWithRangeSensor(double power,
+    public boolean moveWithRangeSensor(double power,
                                     int targetDistanceCm,
                                     boolean sensorFront,
                                     double waitForSec)
     {
+        boolean result = true;
         double cmCurrent, diffFromTarget, pCoeff, wheelPower = power;
+        robot.setModeForDTMotors(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.setModeForDTMotors(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        double encTarget;
+        if(allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED)
+            encTarget = robot.getTargetEncCount(42);
+        else
+            encTarget = robot.getTargetEncCount(52);
 
         ModernRoboticsI2cRangeSensor rangeSensor; // First choose which range sensor to use
         if(sensorFront) {
@@ -872,6 +880,13 @@ public abstract class BoKAutoCommon implements BoKAuto
                 (Math.abs(diffFromTarget) >= RS_DIFF_THRESHOLD_CM)) {
             if (runTime.seconds() >= waitForSec) {
                 Log.v("BOK", "moveWithRS timed out!" + String.format(" %.1f", waitForSec));
+                result = false;
+                break;
+            }
+
+            if (robot.getLFEncCount() >= encTarget) {
+                Log.v("BOK", "moveWithRS moved too far!" + String.format(" %.1f", robot.getLFEncCount()));
+                result = false;
                 break;
             }
 
@@ -904,11 +919,14 @@ public abstract class BoKAutoCommon implements BoKAuto
             }
         }
 
+
+
         if (sensorFront)
             Log.v("BOK", "Front current RS: " + cmCurrent);
         else
             Log.v("BOK", "Back current RS: " + cmCurrent);
         robot.setPowerToDTMotors(0, 0, 0, 0);
+        return result;
     }
 
     // Code copied from the sample PushbotAutoDriveByGyro_Linear
