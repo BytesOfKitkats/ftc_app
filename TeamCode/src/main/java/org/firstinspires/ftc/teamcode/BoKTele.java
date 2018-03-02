@@ -24,9 +24,9 @@ public class BoKTele
     private static final double TURNTABLE_MOTOR_POWER = 0.2;
     private static final int TURNTABLE_COUNTS_PER_MOTOR_REV = 1120; // AndyMark 40
     private static final double UPPER_ARM_MOTOR_POWER_SLOW = 0.4;//0.2
-    private static final double UPPER_ARM_MOTOR_POWER_FAST = 0.6;//0.4
+    private static final double UPPER_ARM_MOTOR_POWER_FAST = 0.8;//0.4
     private static final double SPEED_COEFF_SLOW = 0.25;
-    private static final double SPEED_COEFF_FAST = 0.6;
+    private static final double SPEED_COEFF_FAST = 0.8;
     private static final int RA_JOYSTICK_RATIO = 500;
     private static final double RELIC_DEPLOY_POWER = 0.6;
     private static final float GLYPH_FLICKER_INCREMENT = 0.01F;
@@ -351,7 +351,7 @@ public class BoKTele
                     //if (clawClosed)
                     //    robot.upperArm.setPower(UPPER_ARM_MOTOR_POWER_FAST);
                     //else
-                    robot.upperArm.setPower(UPPER_ARM_MOTOR_POWER_SLOW);
+                    robot.upperArm.setPower(UPPER_ARM_MOTOR_POWER_FAST);
 
                     //Log.v("BoK","Upper arm pos: " + robot.upperArm.getCurrentPosition()  +
                     //        " wrist at: " + robot.glyphArm.clawWrist.getPosition());
@@ -381,7 +381,7 @@ public class BoKTele
 
                     //Log.v("BoK","Upper arm DOWN: " + robot.upperArm.getCurrentPosition()  +
                     //        " wrist at: " + robot.glyphArm.clawWrist.getPosition());
-                    robot.upperArm.setPower(-UPPER_ARM_MOTOR_POWER_SLOW);
+                    robot.upperArm.setPower(-UPPER_ARM_MOTOR_POWER_FAST);
 
                     //Log.v("BoK","Upper arm position: " + robot.upperArm.getCurrentPosition());
                 } else if (relic_mode) {
