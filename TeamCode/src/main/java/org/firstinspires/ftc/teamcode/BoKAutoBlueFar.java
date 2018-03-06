@@ -54,7 +54,7 @@ public class BoKAutoBlueFar extends BoKAutoCommon
                                 DT_TURN_THRESHOLD_HIGH,
                                 true,  // Tank turn
                                 false, // turn right
-                                DT_TURN_TIMEOUT/2);
+                                DT_TURN_TIMEOUT);
         // And reset back to 90 degrees!
         currentAngle = gyroTurn(DT_TURN_SPEED_HIGH,
                                 currentAngle,

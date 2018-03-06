@@ -7,10 +7,10 @@
     android:orientation="vertical">
 
     <TextView
-        android:id="@+id/textViewBlueSettings"
+        android:id="@+id/textViewSettings"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="BLUE Settings"
+        android:text="GLYPH Settings"
         android:textAlignment="center"
         android:textAppearance="@android:style/TextAppearance.DeviceDefault.DialogWindowTitle"
         android:visibility="visible" />
@@ -20,27 +20,27 @@
         android:layout_height="wrap_content">
 
         <CheckBox
-            android:id="@+id/cbBlueRight"
+            android:id="@+id/cbRight"
             android:layout_width="159dp"
             android:layout_height="wrap_content"
             android:text="RIGHT"
             android:textAppearance="@android:style/TextAppearance.DeviceDefault.DialogWindowTitle" />
 
         <TextView
-            android:id="@+id/textViewBlueRight"
+            android:id="@+id/textViewRight"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignBottom="@+id/cbBlueRight"
+            android:layout_alignBottom="@+id/cbRight"
             android:layout_alignParentEnd="true"
             android:layout_alignParentTop="true"
-            android:layout_toEndOf="@+id/cbBlueRight"
+            android:layout_toEndOf="@+id/cbRight"
             android:text="-20"
             android:textAppearance="@android:style/TextAppearance.DeviceDefault.Large"
             android:textStyle="bold" />
     </RelativeLayout>
 
     <SeekBar
-        android:id="@+id/seekBarBlueRight"
+        android:id="@+id/seekBarRight"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="20dp"
@@ -53,20 +53,20 @@
         android:layout_height="wrap_content">
 
         <CheckBox
-            android:id="@+id/cbBlueCenter"
+            android:id="@+id/cbCenter"
             android:layout_width="159dp"
             android:layout_height="wrap_content"
             android:text="CENTER"
             android:textAppearance="@android:style/TextAppearance.DeviceDefault.DialogWindowTitle" />
 
         <TextView
-            android:id="@+id/textViewBlueCenter"
+            android:id="@+id/textViewCenter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignBottom="@+id/cbBlueCenter"
+            android:layout_alignBottom="@+id/cbCenter"
             android:layout_alignParentEnd="true"
             android:layout_alignParentTop="true"
-            android:layout_toEndOf="@+id/cbBlueCenter"
+            android:layout_toEndOf="@+id/cbCenter"
             android:text="-20"
             android:textAppearance="@android:style/TextAppearance.DeviceDefault.Large"
             android:textStyle="bold" />
@@ -74,7 +74,7 @@
 
 
     <SeekBar
-        android:id="@+id/seekBarBlueCenter"
+        android:id="@+id/seekBarCenter"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="20dp"
@@ -87,20 +87,20 @@
         android:layout_height="wrap_content">
 
         <CheckBox
-            android:id="@+id/cbBlueLeft"
+            android:id="@+id/cbLeft"
             android:layout_width="159dp"
             android:layout_height="wrap_content"
             android:text="LEFT"
             android:textAppearance="@android:style/TextAppearance.DeviceDefault.DialogWindowTitle" />
 
         <TextView
-            android:id="@+id/textViewBlueLeft"
+            android:id="@+id/textViewLeft"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignBottom="@+id/cbBlueLeft"
+            android:layout_alignBottom="@+id/cbLeft"
             android:layout_alignParentEnd="true"
             android:layout_alignParentTop="true"
-            android:layout_toEndOf="@+id/cbBlueLeft"
+            android:layout_toEndOf="@+id/cbLeft"
             android:text="-20"
             android:textAppearance="@android:style/TextAppearance.DeviceDefault.Large"
             android:textStyle="bold" />
@@ -108,7 +108,7 @@
 
 
     <SeekBar
-        android:id="@+id/seekBarBlueLeft"
+        android:id="@+id/seekBarLeft"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="20dp"
@@ -117,7 +117,7 @@
         android:progress="1" />
 
     <Button
-        android:id="@+id/blueSave"
+        android:id="@+id/glyphSave"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="20dp"

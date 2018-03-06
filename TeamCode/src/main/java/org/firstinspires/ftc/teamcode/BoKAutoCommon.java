@@ -1192,14 +1192,8 @@ public abstract class BoKAutoCommon implements BoKAuto
             opMode.sleep(waitForServoMs);
             int angleSecGlyph = Integer.MAX_VALUE;
             if (secondGlyph) {
-                String anglesTxt;
-                if (allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED) {
-                    File file = AppUtil.getInstance().getSettingsFile("BoKRedAngles.txt");
-                    anglesTxt = ReadWriteFile.readFile(file);
-                } else {
-                    File file = AppUtil.getInstance().getSettingsFile("BoKBlueAngles.txt");
-                    anglesTxt = ReadWriteFile.readFile(file);
-                }
+                File file = AppUtil.getInstance().getSettingsFile("BoKAngles.txt");
+                String anglesTxt = ReadWriteFile.readFile(file);
                 if (anglesTxt.isEmpty()) {
                     secondGlyph = false;
                 } else {

@@ -2,11 +2,9 @@ package org.firstinspires.ftc.robotcontroller.internal;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -22,23 +20,23 @@ import java.io.File;
  * Created by shiv on 2/23/2018.
  */
 
-public class FtcRedSettingsActivity extends ThemedActivity {
+public class FtcGlyph2SettingsActivity extends ThemedActivity {
     @Override public String getTag() { return this.getClass().getSimpleName(); }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.red_settings);
-        final Button btnSave = (Button)findViewById(R.id.redSave);
-        final CheckBox chkRight = (CheckBox)findViewById(R.id.cbRedRight);
-        final TextView angRightVal = (TextView)findViewById(R.id.textViewRedRight);
-        final SeekBar angRight = (SeekBar)findViewById(R.id.seekBarRedRight);
-        final TextView angCenterVal = (TextView)findViewById(R.id.textViewRedCenter);
-        final SeekBar angCenter = (SeekBar)findViewById(R.id.seekBarRedCenter);
-        final CheckBox chkCenter = (CheckBox)findViewById(R.id.cbRedCenter);
-        final TextView angLeftVal = (TextView)findViewById(R.id.textViewRedLeft);
-        final SeekBar angLeft = (SeekBar)findViewById(R.id.seekBarRedLeft);
-        final CheckBox chkLeft = (CheckBox)findViewById(R.id.cbRedLeft);
+        setContentView(R.layout.glyph2_settings);
+        final Button btnSave = (Button)findViewById(R.id.glyphSave);
+        final CheckBox chkRight = (CheckBox)findViewById(R.id.cbRight);
+        final TextView angRightVal = (TextView)findViewById(R.id.textViewRight);
+        final SeekBar angRight = (SeekBar)findViewById(R.id.seekBarRight);
+        final TextView angCenterVal = (TextView)findViewById(R.id.textViewCenter);
+        final SeekBar angCenter = (SeekBar)findViewById(R.id.seekBarCenter);
+        final CheckBox chkCenter = (CheckBox)findViewById(R.id.cbCenter);
+        final TextView angLeftVal = (TextView)findViewById(R.id.textViewLeft);
+        final SeekBar angLeft = (SeekBar)findViewById(R.id.seekBarLeft);
+        final CheckBox chkLeft = (CheckBox)findViewById(R.id.cbLeft);
 
         angRight.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             int progressChangedValue = 0;
@@ -89,7 +87,7 @@ public class FtcRedSettingsActivity extends ThemedActivity {
             }
         });
 
-        File file = AppUtil.getInstance().getSettingsFile("BoKRedAngles.txt");
+        File file = AppUtil.getInstance().getSettingsFile("BoKAngles.txt");
         String value = ReadWriteFile.readFile(file);
         if (value.isEmpty()) {
 
@@ -110,7 +108,7 @@ public class FtcRedSettingsActivity extends ThemedActivity {
 
         btnSave.setOnClickListener(new View.OnClickListener() {
            public void onClick(View v) {
-               File file = AppUtil.getInstance().getSettingsFile("BoKRedAngles.txt");
+               File file = AppUtil.getInstance().getSettingsFile("BoKAngles.txt");
 
                String fileText = Boolean.toString(chkRight.isChecked());
                fileText += "," + angRightVal.getText();
