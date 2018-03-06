@@ -854,7 +854,7 @@ public abstract class BoKAutoCommon implements BoKAuto
                                     double waitForSec)
     {
         boolean result = true;
-        double cmCurrent, diffFromTarget, pCoeff, wheelPower = power;
+        double cmCurrent, diffFromTarget = targetDistanceCm, pCoeff, wheelPower;
         robot.setModeForDTMotors(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.setModeForDTMotors(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
@@ -873,7 +873,8 @@ public abstract class BoKAutoCommon implements BoKAuto
         }
 
         cmCurrent = rangeSensor.getDistance(DistanceUnit.CM);
-        diffFromTarget = targetDistanceCm - cmCurrent;
+        if (!Double.isNaN(cmCurrent))
+            diffFromTarget = targetDistanceCm - cmCurrent;
         runTime.reset();
 
         while (opMode.opModeIsActive() &&
@@ -885,13 +886,13 @@ public abstract class BoKAutoCommon implements BoKAuto
             }
 
             if (robot.getLFEncCount() >= encTarget) {
-                Log.v("BOK", "moveWithRS moved too far!" + String.format(" %.1f", robot.getLFEncCount()));
+                Log.v("BOK", "moveWithRS moved too far!" + robot.getLFEncCount());
                 result = false;
                 break;
             }
 
             cmCurrent = rangeSensor.getDistance(DistanceUnit.CM);
-            if (cmCurrent >= 255) // Invalid sensor reading
+            if (Double.isNaN(cmCurrent) || (cmCurrent >= 255)) // Invalid sensor reading
                 continue;
 
             diffFromTarget = targetDistanceCm - cmCurrent;
