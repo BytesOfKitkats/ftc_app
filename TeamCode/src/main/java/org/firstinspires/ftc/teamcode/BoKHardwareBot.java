@@ -58,9 +58,9 @@ public abstract class BoKHardwareBot
     // Relic lift arm
     protected static final double RA_INIT = 0.13;
     protected static final double RA_UPPER_LIMIT = 0.32;
-    protected static final double RA_LOWER_LIMIT = 0.65;
-    protected static final double RA_HIGH_POS = 0.54;
-    protected static final double RA_DEPLOY_POS = 0.60;
+    protected static final double RA_LOWER_LIMIT = 0.64;
+    protected static final double RA_HIGH_POS = 0.52;
+    protected static final double RA_DEPLOY_POS = 0.59;
     // Relic claw
     protected static final double RC_UNLOCK = 1.0; // initially unlocked
     protected static final double RC_LOCK = 0.2;

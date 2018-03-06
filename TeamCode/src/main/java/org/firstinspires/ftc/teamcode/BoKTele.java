@@ -25,8 +25,8 @@ public class BoKTele
     private static final int TURNTABLE_COUNTS_PER_MOTOR_REV = 1120; // AndyMark 40
     private static final double UPPER_ARM_MOTOR_POWER_SLOW = 0.4;//0.2
     private static final double UPPER_ARM_MOTOR_POWER_FAST = 0.8;//0.4
-    private static final double SPEED_COEFF_SLOW = 0.25;
-    private static final double SPEED_COEFF_FAST = 0.8;
+    private static final double SPEED_COEFF_SLOW = 0.35;
+    private static final double SPEED_COEFF_FAST = 0.7;
     private static final int RA_JOYSTICK_RATIO = 500;
     private static final double RELIC_DEPLOY_POWER = 0.6;
     private static final float GLYPH_FLICKER_INCREMENT = 0.01F;
@@ -151,9 +151,11 @@ public class BoKTele
                     relic_mode = true;
                     // set mode to RUN_USING_ENCODER
                     robot.setModeForDTMotors(DcMotor.RunMode.RUN_USING_ENCODER);
+                    speedCoef = SPEED_COEFF_SLOW;
                     // open the glyph flipper
                     robot.flipperGate.setPosition(robot.FG_DOWN);
                     robot.glyphFlipper.setPosition(0.72);
+
                     // turn the relic arm
                     robot.relicArm.setPosition(robot.RA_DEPLOY_POS);
                     g2_left_bumper_pressed = false;
@@ -461,6 +463,11 @@ public class BoKTele
         double gamePad1LeftStickY = opMode.gamepad1.left_stick_y;
         double gamePad1LeftStickX = opMode.gamepad1.left_stick_x;
         double gamePad1RightStickX = opMode.gamepad1.right_stick_x;
+
+        if(speedCoef == SPEED_COEFF_FAST) {
+            gamePad1LeftStickX = Math.pow(gamePad1LeftStickX, 3);
+            gamePad1LeftStickY = Math.pow(gamePad1LeftStickY, 3);
+        }
 
         double motorPowerLF = 0;
         double motorPowerLB = 0;

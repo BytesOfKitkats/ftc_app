@@ -19,7 +19,7 @@ public class BoKGlyphArm
     protected static final double ARM_DEGREES_PER_ENC_COUNT = 0.064;
     protected static final int ARM_AT_90_DEGREES_ENC_COUNT = 1400;
     protected static final int WRIST_SERVO_MAX_DEGREES = 240; // programmed for Rev Smart Servo
-    private static final int WRIST_JOYSTICK_RATIO = 100;
+    private static final int WRIST_JOYSTICK_RATIO = 50;
 
     private BoKHardwareBot robot;
     private LinearOpMode opMode;
