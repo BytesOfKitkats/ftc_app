@@ -43,7 +43,7 @@ public abstract class BoKHardwareBot
     protected static final double JA_MID = 0.65;
     protected static final double JA_FINAL = 0.72;
     // Jewel flicker
-    protected static final double JF_INIT = 0.9;
+    protected static final double JF_INIT = 0.47;
     protected static final double JF_FINAL = 0.47;
     protected static final double JF_RIGHT = 1;
     protected static final double JF_LEFT = 0;
@@ -56,14 +56,15 @@ public abstract class BoKHardwareBot
     protected static final double FG_UP = 1;
     protected static final double FG_DOWN = 0.22;
     // Relic lift arm
-    protected static final double RA_INIT = 0.13;
-    protected static final double RA_UPPER_LIMIT = 0.32;
+    protected static final double RA_INIT = 0.247;
+    protected static final double RA_UPPER_LIMIT = 0.23;
     protected static final double RA_LOWER_LIMIT = 0.64;
-    protected static final double RA_HIGH_POS = 0.52;
-    protected static final double RA_DEPLOY_POS = 0.59;
+    protected static final double RA_PICKUP_POS = 0.496;
+    protected static final double RA_DEPLOY_POS = 0.476;
+    // 0.295 is the RA lift position
     // Relic claw
-    protected static final double RC_UNLOCK = 1.0; // initially unlocked
-    protected static final double RC_LOCK = 0.2;
+    protected static final double RC_UNLOCK = 0.6;
+    protected static final double RC_LOCK = 0.9;
     // Glyph arm positions to place the glyph
     protected static final int UA_GLYPH_AT_TIP = 138;
     protected static final int UA_GLYPH_AT_MID = 160;
