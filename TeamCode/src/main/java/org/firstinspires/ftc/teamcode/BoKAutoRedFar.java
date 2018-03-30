@@ -61,7 +61,5 @@ public class BoKAutoRedFar extends BoKAutoCommon {
             // Prepare to unload the glyph
             moveToCrypto(currentAngle, WAIT_FOR_JEWEL_FLICKER_MS, false);
         }
-        else
-            robot.glyphArm.moveUpperArmDegrees(0, 0.4);
     }
 }

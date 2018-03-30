@@ -30,109 +30,89 @@ public abstract class BoKHardwareBot
 {
     // CONSTANTS
     protected static final int OPMODE_SLEEP_INTERVAL_MS_SHORT  = 10;
-    // Claw wrist
-    protected static final double CW_INIT = 0.5;
-    protected static final double CW_MIN = 0.1;
-    protected static final double CW_MID = 0.4;
-    // Claw grab
-    protected static final double CG_INIT = 0.6; // Partially open at initialization
-    protected static final double CG_OPEN = 1;
-    protected static final double CG_CLOSE = 0;
     // Jewel flicker arm
     protected static final double JA_INIT = 0.2;
     protected static final double JA_MID = 0.65;
     protected static final double JA_FINAL = 0.72;
     // Jewel flicker
-    protected static final double JF_INIT = 0.47;
+    protected static final double JF_INIT = 1;
     protected static final double JF_FINAL = 0.47;
     protected static final double JF_RIGHT = 1;
     protected static final double JF_LEFT = 0;
     // Glyph flipper
-    protected static final double GF_INIT = 0.34;
-    protected static final double GF_MID = 0.5;
-    protected static final double GF_FINAL_AUTO = 0.6;
-    protected static final double GF_FINAL_TELE = 0.7;
-    // Glyph flipper gate
-    protected static final double FG_UP = 1;
-    protected static final double FG_DOWN = 0.22;
+    protected static final double FLIPPER_DOWN_POS = 0.95;
+    protected static final double FLIPPER_UP_POS = 0.5;
+    protected static final double FLIPPER_ANGLE_POS = 0.76;
+    protected static final double FLIPPER_INIT_POS = 0.95;
+    // Roller motor power
+    protected static final double ROLLER_POWER = 0.95;
     // Relic lift arm
-    protected static final double RA_INIT = 0.247;
-    protected static final double RA_UPPER_LIMIT = 0.23;
-    protected static final double RA_LOWER_LIMIT = 0.64;
-    protected static final double RA_PICKUP_POS = 0.496;
-    protected static final double RA_DEPLOY_POS = 0.476;
-    // 0.295 is the RA lift position
+    protected static final double RA_INIT = 0.755;
+    protected static final double RA_RAISED_POS = 0.638;
+    protected static final double RA_NEAR_POS = 0.52;
+    protected static final double RA_FAR_POS = 0.54;
     // Relic claw
-    protected static final double RC_UNLOCK = 0.6;
+    protected static final double RC_UNLOCK = 0.5;
     protected static final double RC_LOCK = 0.9;
-    // Glyph arm positions to place the glyph
-    protected static final int UA_GLYPH_AT_TIP = 138;
-    protected static final int UA_GLYPH_AT_MID = 160;
-    protected static final int UA_GLYPH_AT_END = 170;
-    // Wrist positions to place the glyph
-    //protected static final double CW_GLYPH_AT_TIP = 0.8;
-    protected static final double CW_GLYPH_AT_MID = 0.65;
-    protected static final double CW_GLYPH_AT_END = 0.65;
-    // Glyph arm placement power
-    protected static final double UA_MOVE_POWER_UP = 0.8;
-    protected static final double UA_MOVE_POWER_DN = 0.8;
+    // Roller gates right
+    protected static final double RGR_UNLOCK = 1;
+    protected static final double RGR_LOCK = 0.6;
+    // Roller gates left
+    protected static final double RGL_UNLOCK = 0.04;
+    protected static final double RGL_LOCK = 0.37;
 
-    private static final String TURN_TABLE_MOTOR = "tt";
-    private static final String UPPER_ARM_MOTOR  = "ua";
     private static final String RELIC_SPOOL_MOTOR = "sp";
-    private static final String CLAW_WRIST_SERVO = "cw";
-    private static final String CLAW_GRAB_SERVO  = "cg";
     private static final String JEWEL_ARM_SERVO  = "ja";
     private static final String JEWEL_FLICKER_SERVO  = "jf";
-    private static final String RELIC_ARM_SERVO = "ra";
-    private static final String RELIC_CLAW_SERVO = "rc";
-    private static final String GLYPH_FLICKER = "gf";
-    private static final String FLIPPER_GATE = "fg";
+    private static final String RELIC_ARM_SERVO = "rp";
+    private static final String RELIC_CLAW_SERVO = "rg";
     private static final String RANGE_SENSOR_JA = "rs";
     private static final String RANGE_SENSOR_FRONT_CFG  = "rsf";
     private static final String RANGE_SENSOR_BACK_CFG   = "rsb";
-    private static final String RANGE_SENSOR_GA_CFG = "rsg";
     private static final String COLOR_SENSOR_FRONT_CFG = "csf";
     private static final String COLOR_SENSOR_BACK_CFG = "csb";
     private static final String IMU_TOP = "imu_top";
+    // robot2
+    private static final String LEFT_ROLLER_MOTOR = "il";
+    private static final String RIGHT_ROLLER_MOTOR = "ir";
+    private static final String FLIPPER_LIFT_MOTOR = "fl";
+    private static final String FLIPPER_SERVO = "fls";
+    private static final String FLIPPER_RIDING_GATE_LEFT = "rgl";
+    private static final String FLIPPER_RIDING_GATE_RIGHT = "rgr";
 
     protected static final int WAIT_PERIOD = 40; // 40 ms
     // sometimes it helps to multiply the raw RGB values with a scale factor
     // to amplify/attentuate the measured values.
     private static final double CS_SCALE_FACTOR = 255;
-
     LinearOpMode opMode; // current opMode
 
     // DC motors
-    protected DcMotor turnTable;
-    protected DcMotor upperArm;
     protected DcMotor relicSpool;
-
+    protected DcMotor leftRoller;
+    protected DcMotor rightRoller;
+    protected DcMotor flipperLift;
 
     // Servos
-    protected Servo glyphClawWrist; // These are used in the GlyphArm
-    protected Servo glyphClawGrab;
     protected Servo jewelArm;
     protected Servo jewelFlicker;
     protected Servo relicArm;
     protected Servo relicClaw;
-    protected Servo glyphFlipper;
-    protected Servo flipperGate;
+    protected Servo ridingGateLeft;
+    protected Servo ridingGateRight;
+    protected Servo flipper;
 
     // Sensors
     protected BNO055IMU imu;
 
     protected ModernRoboticsI2cRangeSensor rangeSensorJA;
+/*
     protected ModernRoboticsI2cRangeSensor rangeSensorFront;
     protected ModernRoboticsI2cRangeSensor rangeSensorBack;
     protected ModernRoboticsI2cRangeSensor rangeSensorGA;
 
     protected ColorSensor sensorColorFront;
     protected ColorSensor sensorColorBack;
-
-    // Glyph Arm
-    BoKGlyphArm glyphArm;
-    protected double wristInitPosFromFile = CW_INIT;
+*/
     private Orientation angles;
 
     // waitForTicks
@@ -171,13 +151,44 @@ public abstract class BoKHardwareBot
      */
     private BoKHardwareStatus initMotorsAndSensors()
     {
-        glyphClawWrist = opMode.hardwareMap.servo.get(CLAW_WRIST_SERVO);
-        if(glyphClawWrist == null){
+        // type here
+        leftRoller = opMode.hardwareMap.dcMotor.get(LEFT_ROLLER_MOTOR);
+        if(leftRoller == null){
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 
-        glyphClawGrab = opMode.hardwareMap.servo.get(CLAW_GRAB_SERVO);
-        if(glyphClawGrab == null){
+        rightRoller = opMode.hardwareMap.dcMotor.get(RIGHT_ROLLER_MOTOR);
+        if(rightRoller == null){
+            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
+        }
+
+        flipperLift = opMode.hardwareMap.dcMotor.get(FLIPPER_LIFT_MOTOR);
+        if(flipperLift == null){
+            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
+        }
+        relicSpool = opMode.hardwareMap.dcMotor.get(RELIC_SPOOL_MOTOR);
+        if(relicSpool == null){
+            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
+        }
+
+        flipper = opMode.hardwareMap.servo.get(FLIPPER_SERVO);
+        if(flipper == null){
+            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
+        }
+
+
+        ridingGateLeft = opMode.hardwareMap.servo.get(FLIPPER_RIDING_GATE_LEFT);
+        if(ridingGateLeft == null){
+            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
+        }
+
+        ridingGateRight = opMode.hardwareMap.servo.get(FLIPPER_RIDING_GATE_RIGHT);
+        if(ridingGateRight == null){
+            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
+        }
+
+        relicArm = opMode.hardwareMap.servo.get(RELIC_ARM_SERVO);
+        if(relicArm == null){
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 
@@ -191,38 +202,8 @@ public abstract class BoKHardwareBot
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 
-        relicArm = opMode.hardwareMap.servo.get(RELIC_ARM_SERVO);
-        if(relicArm == null){
-            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
-        }
-
-        relicSpool = opMode.hardwareMap.dcMotor.get(RELIC_SPOOL_MOTOR);
-        if(relicSpool == null){
-            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
-        }
-
         relicClaw = opMode.hardwareMap.servo.get(RELIC_CLAW_SERVO);
         if(relicClaw == null){
-            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
-        }
-
-        glyphFlipper = opMode.hardwareMap.servo.get(GLYPH_FLICKER);
-        if(glyphFlipper == null){
-            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
-        }
-
-        flipperGate = opMode.hardwareMap.servo.get(FLIPPER_GATE);
-        if(flipperGate == null){
-            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
-        }
-
-        upperArm = opMode.hardwareMap.dcMotor.get(UPPER_ARM_MOTOR);
-        if(upperArm == null){
-            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
-        }
-
-        turnTable = opMode.hardwareMap.dcMotor.get(TURN_TABLE_MOTOR);
-        if(turnTable == null){
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 
@@ -231,12 +212,28 @@ public abstract class BoKHardwareBot
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 
+
+        leftRoller.setDirection(DcMotorSimple.Direction.REVERSE);
+        rightRoller.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftRoller.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        flipper.setPosition(FLIPPER_INIT_POS);
+        relicSpool.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        relicSpool.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        relicSpool.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        relicSpool.setPower(0);
+        flipperLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        flipperLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        flipperLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        flipperLift.setDirection(DcMotorSimple.Direction.REVERSE);
+        flipperLift.setPower(0);
+
+
         rangeSensorJA = opMode.hardwareMap.get(ModernRoboticsI2cRangeSensor.class,
                 RANGE_SENSOR_JA);
         if (rangeSensorJA == null) {
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
-
+/*
         rangeSensorFront = opMode.hardwareMap.get(ModernRoboticsI2cRangeSensor.class,
                 RANGE_SENSOR_FRONT_CFG);
         if (rangeSensorFront == null) {
@@ -258,63 +255,17 @@ public abstract class BoKHardwareBot
         if (sensorColorBack == null) {
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
-
-        rangeSensorGA = opMode.hardwareMap.get(ModernRoboticsI2cRangeSensor.class, RANGE_SENSOR_GA_CFG);
-        if (rangeSensorGA == null) {
-            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
-        }
-
+*/
         if (!opMode.getClass().getName().contains("Tele")) {
-            //Make sure that the jewel flicker is open
-            jewelFlicker.setPosition(JF_FINAL);
-
-
-            File file = AppUtil.getInstance().getSettingsFile("BoKArmCalibration.txt");
-            String value = ReadWriteFile.readFile(file);
-            if (value.isEmpty()) {
-                Log.v("BOK", "File not found");
-                glyphClawWrist.setPosition(CW_INIT);
-            } else {
-                Log.v("BOK", "Calibration data: " + value);
-                wristInitPosFromFile = Double.parseDouble(value);
-                glyphClawWrist.setPosition(wristInitPosFromFile);
-            }
-        }
-
-        turnTable.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        turnTable.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        turnTable.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        turnTable.setPower(0);
-
-        if (!opMode.getClass().getName().contains("Tele")) {
-            glyphClawGrab.setPosition(CG_INIT);
             jewelArm.setPosition(JA_INIT);
             jewelFlicker.setPosition(JF_INIT);
             relicArm.setPosition(RA_INIT);
             relicClaw.setPosition(RC_LOCK);
-            glyphFlipper.setPosition(GF_INIT);
-            flipperGate.setPosition(FG_DOWN);
         }
         else {
-            // IMPORTANT: Do not move the servos during initialization of Teleop
-            relicArm.setPosition(RA_INIT);
-            flipperGate.setPosition(FG_DOWN);
+           // IMPORTANT: Do not move the servos during initialization of Teleop
         }
 
-        //upperArm.setDirection(DcMotorSimple.Direction.REVERSE);
-        upperArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        //upperArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        upperArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        upperArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        upperArm.setPower(0);
-
-        relicSpool.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        relicSpool.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        relicSpool.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        relicSpool.setPower(0);
-
-        glyphArm = new BoKGlyphArm(this, opMode, glyphClawWrist, glyphClawGrab);
-       
         return BoKHardwareStatus.BOK_HARDWARE_SUCCESS;
     }
 

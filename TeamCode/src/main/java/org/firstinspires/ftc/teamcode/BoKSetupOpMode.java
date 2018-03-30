@@ -26,7 +26,7 @@ public class BoKSetupOpMode extends LinearOpMode
     BoKHardwareBot robot = new BoKMecanumDT();
 
     private void moveUpperArm(double targetAngleDegrees, double power)
-    {
+    {/*
         int target = (int) robot.glyphArm.getTargetEncCount(targetAngleDegrees);
         Log.v("BOK", "Target (arm): " + target);
 
@@ -39,7 +39,7 @@ public class BoKSetupOpMode extends LinearOpMode
         }
         robot.upperArm.setPower(0);
         // Turn off RUN_TO_POSITION
-        robot.upperArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        robot.upperArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);*/
     }
 
     public void runOpMode()
@@ -62,14 +62,15 @@ public class BoKSetupOpMode extends LinearOpMode
             // Y:                    Save wrist position to file
 
             if (gamepad2.left_stick_y < -UPPER_ARM_STICK_DEAD_ZONE) {
-                robot.upperArm.setPower(UPPER_ARM_MOTOR_POWER_SLOW);
+                //robot.upperArm.setPower(UPPER_ARM_MOTOR_POWER_SLOW);
+                //robot.relicArm.setPosition();
             }
             else if (gamepad2.left_stick_y > UPPER_ARM_STICK_DEAD_ZONE) {
-                robot.upperArm.setPower(-UPPER_ARM_MOTOR_POWER_SLOW);
+                //robot.upperArm.setPower(-UPPER_ARM_MOTOR_POWER_SLOW);
             }
             else {
-                robot.upperArm.setPower(0);
-                robot.upperArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                //robot.upperArm.setPower(0);
+                //robot.upperArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             }
 
             if (gamepad2.a && !moveOnce) {
@@ -82,22 +83,22 @@ public class BoKSetupOpMode extends LinearOpMode
             }
 
             if (gamepad2.left_trigger > GAME_TRIGGER_DEAD_ZONE) {
-               robot.glyphArm.decreaseClawWristPos(gamepad2.left_trigger);
+               //robot.glyphArm.decreaseClawWristPos(gamepad2.left_trigger);
                 //Log.v("BOK", String.format("%f", opMode.gamepad2.right_stick_y) );
             }
 
             if (gamepad2.right_trigger > GAME_TRIGGER_DEAD_ZONE) {
-                robot.glyphArm.increaseClawWristPos(gamepad2.right_trigger);
+                //robot.glyphArm.increaseClawWristPos(gamepad2.right_trigger);
                 //Log.v("BOK", String.format("%f", opMode.gamepad2.right_stick_y) );
             }
 
             if (gamepad2.y && !writeOnce) {
                 writeOnce = true;
                 File file = AppUtil.getInstance().getSettingsFile("BoKArmCalibration.txt");
-                ReadWriteFile.writeFile(file,
-                       Double.toString(robot.glyphArm.clawWrist.getPosition()));
-                Log.v("BOK", "Value written to file: " +
-                       Double.toString(robot.glyphArm.clawWrist.getPosition()));
+                //ReadWriteFile.writeFile(file,
+                //       Double.toString(robot.glyphArm.clawWrist.getPosition()));
+                //Log.v("BOK", "Value written to file: " +
+                //       Double.toString(robot.glyphArm.clawWrist.getPosition()));
             }
 
             if (gamepad1.a) {
