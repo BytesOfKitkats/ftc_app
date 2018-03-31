@@ -88,6 +88,7 @@ public abstract class BoKAutoCommon implements BoKAuto
     private static final int VUFORIA_LOCK_BALL_Y_OFFSET = 120; // of the Vuforia image
     private static final int VUFORIA_LOCK_BALL_RECT_WIDTH = 95;
     private static final int VUFORIA_LOCK_BALL_RECT_HEIGHT = 95;
+    protected static final double FLIPPER_ANGLE_INIT_POS = 0.85;
     protected static final boolean DEBUG_OPEN_CV = false;
     private static final String VUFORIA_LOCK_IMG = "vuImage.png";
     private static final String ROI_IMG = "roiImage.png";
@@ -239,6 +240,8 @@ public abstract class BoKAutoCommon implements BoKAuto
                 }
                 opMode.telemetry.update();
             }
+
+            flipFlipper(1);
 
             if (opMode.gamepad1.y) {
                 relicTrackables.deactivate();
@@ -745,27 +748,28 @@ public abstract class BoKAutoCommon implements BoKAuto
                     if (far) {
                         distanceToMove = (cmCurrent / 2.54) - 0.8;
                     } else {
-                        distanceToMove = (cmCurrent / 2.54) - 1.75;
+                        distanceToMove = (cmCurrent / 2.54) + 4.25;
                     }
                 }
                 else if (cryptoColumn == RelicRecoveryVuMark.CENTER) {
-                    distanceToMove = (cmCurrent / 2.54) - 1.25;
+                    distanceToMove = (cmCurrent / 2.54) + 4.75;
                 }
                 else {
                     if (far) {
                         distanceToMove = (cmCurrent / 2.54) - 1.5;
                     }
                     else {
-                        distanceToMove = (cmCurrent / 2.54) - 1.25;
+                        distanceToMove = (cmCurrent / 2.54) + 4.75;
                     }
                 }
             }
             Log.v("BOK", "Red targetReached: " + targetEncCountReached +
                     ", dist: " + String.format("%.2f", distanceToMove));
+
             move(DT_POWER_FOR_CRYPTO,
                  DT_POWER_FOR_CRYPTO,
-                 distanceToMove,
-                 true,
+                 Math.abs(distanceToMove),
+                    (distanceToMove > 0) ? true: false,
                  DT_TIMEOUT_4S);
 
             // take a picture
@@ -994,7 +998,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         return Range.clip(error * PCoeff, -1, 1);
     }
 
-    protected void moveToCrypto(double initGyroAngle, int waitForServoMs, boolean secondGlyph)
+    protected void moveToCrypto(double initGyroAngle, int waitForServoMs)
     {
         if (opMode.opModeIsActive()) {
             // take a picture
@@ -1019,7 +1023,7 @@ public abstract class BoKAutoCommon implements BoKAuto
             // move the jewel flicker to init and slowly move the wrist down
             robot.jewelFlicker.setPosition(robot.JF_INIT);
             opMode.sleep(waitForServoMs);
-            double distBack = 10.0;
+            double distBack = 8.0;
             if (far) {
                 // check if we have space?
                 if (allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED) {
@@ -1045,19 +1049,12 @@ public abstract class BoKAutoCommon implements BoKAuto
                 }
             }
             else {
-                distBack += 2;
                 if(allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED){
-                    if (secondGlyph)
-                        move(DT_POWER_HIGH, DT_POWER_HIGH, 10, true, DT_TIMEOUT_2S);
-                    else
-                        move(DT_POWER_HIGH, DT_POWER_HIGH, 5, true, DT_TIMEOUT_2S);
+                    //move(DT_POWER_HIGH, DT_POWER_HIGH, 2, true, DT_TIMEOUT_2S);
                 }
                 else {
                     distBack += 1;
-                    if (secondGlyph)
-                        move(DT_POWER_HIGH, DT_POWER_HIGH, 11, true, DT_TIMEOUT_4S);
-                    else
-                        move(DT_POWER_HIGH, DT_POWER_HIGH, 9, true, DT_TIMEOUT_4S);
+                    move(DT_POWER_HIGH, DT_POWER_HIGH, 9, true, DT_TIMEOUT_4S);
                 }
                 gyroTurn(DT_TURN_SPEED_HIGH,
                          initGyroAngle,
@@ -1069,12 +1066,44 @@ public abstract class BoKAutoCommon implements BoKAuto
             }
 
             moveRamp(DT_POWER_HIGH, distBack, false, DT_TIMEOUT_4S);
-            if (!secondGlyph) {
-                // just park in the safe zone
-                moveRamp(DT_POWER_HIGH, distBack - 4.5, true, DT_TIMEOUT_4S);
-            }
+
+            flipFlipper(2);
+
+            // just park in the safe zone
+            moveRamp(DT_POWER_HIGH, distBack - 4.5, true, DT_TIMEOUT_4S);
+
 
         } // opMode.isActive
+    }
+
+    void moveFlipperGates (boolean up){
+        if (up){
+            robot.ridingGateLeft.setPosition(robot.RGL_LOCK);
+            robot.ridingGateRight.setPosition(robot.RGR_LOCK);
+        }
+        else{
+            robot.ridingGateLeft.setPosition(robot.RGL_UNLOCK);
+            robot.ridingGateRight.setPosition(robot.RGR_UNLOCK);
+        }
+    }
+
+    void flipFlipper (int state){
+        switch (state){
+            case (1):
+                robot.flipper.setPosition(FLIPPER_ANGLE_INIT_POS);
+                break;
+            case (2):
+                moveFlipperGates(false);
+                double pos = robot.flipper.getPosition();
+                for (;pos > robot.FLIPPER_UP_POS; pos -= 0.05){
+                    robot.flipper.setPosition(pos);
+                    opMode.sleep(robot.OPMODE_SLEEP_INTERVAL_MS_SHORT);
+                }
+                break;
+            case (3):
+                robot.flipper.setPosition(robot.FLIPPER_DOWN_POS);
+                break;
+        }
     }
 
     boolean targetColorReached(ColorSensor cs, boolean red)

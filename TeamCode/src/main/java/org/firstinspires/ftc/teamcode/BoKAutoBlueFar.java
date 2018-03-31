@@ -84,7 +84,7 @@ public class BoKAutoBlueFar extends BoKAutoCommon
 
         if (success) {
             // Prepare to unload the glyph
-            moveToCrypto(currentAngle, WAIT_FOR_JEWEL_FLICKER_MS, false);
+            moveToCrypto(currentAngle, WAIT_FOR_JEWEL_FLICKER_MS);
         }
     }
 }

@@ -33,7 +33,7 @@ public abstract class BoKHardwareBot
     // Jewel flicker arm
     protected static final double JA_INIT = 0.2;
     protected static final double JA_MID = 0.65;
-    protected static final double JA_FINAL = 0.72;
+    protected static final double JA_FINAL = 0.8;
     // Jewel flicker
     protected static final double JF_INIT = 1;
     protected static final double JF_FINAL = 0.47;
@@ -226,7 +226,8 @@ public abstract class BoKHardwareBot
         flipperLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         flipperLift.setDirection(DcMotorSimple.Direction.REVERSE);
         flipperLift.setPower(0);
-
+        ridingGateLeft.setPosition(RGL_LOCK);
+        ridingGateRight.setPosition(RGR_LOCK);
 
         rangeSensorJA = opMode.hardwareMap.get(ModernRoboticsI2cRangeSensor.class,
                 RANGE_SENSOR_JA);

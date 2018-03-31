@@ -47,6 +47,6 @@ public class BoKAutoRedNear extends BoKAutoCommon {
 
 
         // Prepare to unload the glyph
-        moveToCrypto(0, WAIT_FOR_JEWEL_FLICKER_MS, true);
+        moveToCrypto(0, WAIT_FOR_JEWEL_FLICKER_MS);
     }
 }
