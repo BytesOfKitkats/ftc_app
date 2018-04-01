@@ -26,8 +26,7 @@ public class BoKAutoBlueFar extends BoKAutoCommon
     @Override
     public void runSoftware()
     {
-        moveWithRangeSensor(0.4, 91, false, 5);
-        /*
+
         // NOTE: Move backwards towards crypto
         far = true;
 
@@ -37,56 +36,22 @@ public class BoKAutoBlueFar extends BoKAutoCommon
         // Move back out of the balancing stone
         move(DT_POWER_FOR_STONE, DT_POWER_FOR_STONE, DT_MOVE_TO_CRYPTO, false, DT_TIMEOUT_4S);
 
-        // Turn right 90 degrees
-        double currentAngle = gyroTurn(DT_TURN_SPEED_LOW,
-                                       0,
-                                       TURN_RIGHT_DEGREES,
-                                       DT_TURN_THRESHOLD_LOW,
-                                       false,
-                                       false,
-                                       DT_TURN_TIMEOUT);
+        gyroTurn(DT_TURN_SPEED_HIGH, 0, 0, DT_TURN_THRESHOLD_LOW, false, false, DT_TIMEOUT_2S);
 
-        move(DT_POWER_HIGH, DT_POWER_HIGH, 5, false, DT_TIMEOUT_2S);
+        double cmFromWall = robot.getDistanceCM(robot.mb1240Back);
+        if(cryptoColumn == RelicRecoveryVuMark.LEFT)
+            strafeWithRangeSensor(0.2, 51, true, 5);
+        else if (cryptoColumn == RelicRecoveryVuMark.CENTER)
+            strafeWithRangeSensor(0.2, 67, true, 5);
+        else
+            strafeWithRangeSensor(0.2, 86, true, 6);
 
-        // Make a quick tank turn in order to get some space for the flicker
-        // Instead of strafing!!
-        currentAngle = gyroTurn(DT_TURN_SPEED_HIGH,
-                                currentAngle,
-                                -45, // turn left
-                                DT_TURN_THRESHOLD_HIGH,
-                                true,  // Tank turn
-                                false, // turn right
-                                DT_TURN_TIMEOUT);
-        // And reset back to 90 degrees!
-        currentAngle = gyroTurn(DT_TURN_SPEED_HIGH,
-                                currentAngle,
-                                TURN_RIGHT_DEGREES,
-                                DT_TURN_THRESHOLD_HIGH,
-                                false, // NOT a tank turn
-                                false,
-                                DT_TURN_TIMEOUT);
+        double distBack = (cmFromWall - 20.32)/2.54; // 20.32cm = 8 inches
+        move(DT_POWER_FOR_STONE, DT_POWER_FOR_STONE, distBack, false, DT_TIMEOUT_4S);
 
-        //strafeRamp(0.5, 0.5, false, 2);
-        //gyroTurn(DT_TURN_SPEED_HIGH, currentAngle, TURN_RIGHT_DEGREES, false, false, DT_TURN_TIMEOUT);
+        flipFlipper(2);
 
-        // Distance to crypto and timeout depends on column number
-        int distance = DISTANCE_TO_RIGHT_COL_CM;
-        double timeout = TIMEOUT_RIGHT;
-        if (cryptoColumn == RelicRecoveryVuMark.CENTER) {
-            distance = DISTANCE_TO_CENTER_COL_CM;
-            timeout = TIMEOUT_CENTER;
-        }
-        else if (cryptoColumn == RelicRecoveryVuMark.LEFT) {
-            distance = DISTANCE_TO_LEFT_COL_CM;
-            timeout = TIMEOUT_LEFT;
-        }
-
-        // Move towards the crypto
-        boolean success = moveWithRangeSensor(DT_POWER_FOR_RS, distance, true, timeout); // CM
-
-        if (success) {
-            // Prepare to unload the glyph
-            moveToCrypto(currentAngle, WAIT_FOR_JEWEL_FLICKER_MS);
-        }*/
+        // just park in the safe zone
+        moveRamp(DT_POWER_HIGH, distBack, true, DT_TIMEOUT_4S);
     }
 }

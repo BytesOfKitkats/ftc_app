@@ -609,28 +609,28 @@ public abstract class BoKAutoCommon implements BoKAuto
                     double power = DT_RAMP_SPEED_INIT + ratePower*lfEncCount;
                     //Log.v("BOK", lfEncCount + " power Up: " + String.format("%.2f", power));
                     if (right) {
-                        robot.setPowerToDTMotors(power*1, -(power*1), (power*1), -power*1);
+                        robot.setPowerToDTMotors(power, -power, power, -power);
                     }
                     else {
-                        robot.setPowerToDTMotors(-power*1, power, -power, power*1);
+                        robot.setPowerToDTMotors(-power, power, -power, power);
                     }
                 }
                 else if (lfEncCount < rampdnEncCount) {
                     if (right) {
-                        robot.setPowerToDTMotors(maxPower*1, -maxPower*1, maxPower*1, -maxPower*1);
+                        robot.setPowerToDTMotors(maxPower, -maxPower, maxPower, -maxPower);
                     }
                     else {
-                        robot.setPowerToDTMotors(-maxPower*1, maxPower, -maxPower, maxPower*1);
+                        robot.setPowerToDTMotors(-maxPower, maxPower, -maxPower, maxPower);
                     }
                 }
                 else {
                     double power = DT_RAMP_SPEED_INIT - ratePower*(lfEncCount - targetEncCount);
                     //Log.v("BOK", lfEncCount + " power dn: " + String.format("%.2f", power));
                     if (right) {
-                        robot.setPowerToDTMotors(power*1, -power*1, power*1, -power*1);
+                        robot.setPowerToDTMotors(power, -power, power, -power);
                     }
                     else {
-                        robot.setPowerToDTMotors(-power*1, power, -power, power*1);
+                        robot.setPowerToDTMotors(-power, power, -power, power);
                     }
                 }
             }
@@ -857,6 +857,74 @@ public abstract class BoKAutoCommon implements BoKAuto
             Log.v("BOK", "Front current RS: " + cmCurrent);
         else
             Log.v("BOK", "Back current RS: " + cmCurrent);
+        robot.setPowerToDTMotors(0, 0, 0, 0);
+
+        return result;
+    }
+
+    public boolean strafeWithRangeSensor(double power,
+                                         int targetDistanceCm,
+                                         boolean strafeLeft,
+                                         double waitForSec)
+    {
+        boolean result = true;
+
+        double cmCurrent, diffFromTarget = targetDistanceCm, pCoeff, wheelPower;
+        robot.resetDTEncoders();
+        //robot.setModeForDTMotors(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //robot.setModeForDTMotors(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        AnalogInput rangeSensor, backSensor; // First choose which range sensor to use
+        rangeSensor = robot.mb1240Side;
+        backSensor = robot.mb1240Back;
+
+        cmCurrent = robot.getDistanceCM(rangeSensor);
+        if (!Double.isNaN(cmCurrent))
+            diffFromTarget = targetDistanceCm - cmCurrent;
+        runTime.reset();
+
+        while (opMode.opModeIsActive() &&
+                (Math.abs(diffFromTarget) >= RS_DIFF_THRESHOLD_CM)) {
+            if (runTime.seconds() >= waitForSec) {
+                Log.v("BOK", "moveWithRS timed out!" + String.format(" %.1f", waitForSec));
+                result = false;
+                break;
+            }
+
+            cmCurrent = robot.getDistanceCM(rangeSensor);
+            if (Double.isNaN(cmCurrent) || (cmCurrent >= 255)) // Invalid sensor reading
+                continue;
+
+            diffFromTarget = targetDistanceCm - cmCurrent;
+            pCoeff = diffFromTarget/15;
+            wheelPower = Range.clip(power*pCoeff, -power, power);
+            if (wheelPower > 0 && wheelPower < DT_POWER_FOR_RS_MIN)
+                wheelPower = DT_POWER_FOR_RS_MIN; // min power to move
+            if (wheelPower < 0 && wheelPower > -DT_POWER_FOR_RS_MIN)
+                wheelPower = -DT_POWER_FOR_RS_MIN;
+
+            if (strafeLeft) {
+                // if diffFromTarget > 0 then wheelPower is +ve, but we need to move
+                // backward (BLUE FAR).
+                //Log.v("BOK", "Left current RS: " + cmCurrent +
+                //        " Difference: " + diffFromTarget +
+                //        " Power: " + wheelPower +
+                //        " Back RS " + robot.getDistanceCM(backSensor));
+                robot.setPowerToDTMotors(-wheelPower, wheelPower, -wheelPower, wheelPower);
+            }
+            else { // back range sensor
+                // if diffFromTarget > 0 then wheelPower is +ve
+                Log.v("BOK", "Right current RS: " + cmCurrent +
+                        " Difference: " + diffFromTarget +
+                        " Power: (move fwd) " + wheelPower +
+                        " Back RS " + robot.getDistanceCM(backSensor));
+                robot.setPowerToDTMotors(wheelPower, -wheelPower, wheelPower, -wheelPower);
+            }
+        }
+
+
+
+        Log.v("BOK", "Back current RS: " + cmCurrent);
         robot.setPowerToDTMotors(0, 0, 0, 0);
 
         return result;

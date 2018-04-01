@@ -14,7 +14,7 @@ public class ReadMaxBotix extends LinearOpMode{
     @Override
     public void runOpMode() throws InterruptedException {
         AnalogInput mb1240;
-        mb1240 = hardwareMap.analogInput.get("mbb");
+        mb1240 = hardwareMap.analogInput.get("mbs");
         waitForStart();
         while (opModeIsActive()) {
             telemetry.addData("AI: ", mb1240.getVoltage() / 0.00189);
