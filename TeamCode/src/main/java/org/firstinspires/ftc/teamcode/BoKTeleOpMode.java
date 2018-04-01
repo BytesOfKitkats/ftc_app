@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
  * Registers the opMode with the driver station.
  * It uses BoKMecanumDT and BoKTele objects
  */
-@TeleOp(name="BOK TELEOP 1", group="BoKTele")
+@TeleOp(name="BOK TELEOP", group="BoKTele")
 public class BoKTeleOpMode extends LinearOpMode
 {
     protected boolean trigger_left_decrease = true;

@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.util.Range;
 
@@ -84,10 +85,10 @@ public abstract class BoKAutoCommon implements BoKAuto
     private static final int UA_ANGLE_FOR_SECOND_GLYPH = 48;
     private static final double CW_FINAL_POS = 0.5;
     private static final double CW_FOR_SECOND_GLYPH = 0.3;
-    private static final int VUFORIA_LOCK_BALL_X_OFFSET = 230; // pixels offset from the center
-    private static final int VUFORIA_LOCK_BALL_Y_OFFSET = 120; // of the Vuforia image
+    private static final int VUFORIA_LOCK_BALL_X_OFFSET = 240; // pixels offset from the center
+    private static final int VUFORIA_LOCK_BALL_Y_OFFSET = 110; // of the Vuforia image
     private static final int VUFORIA_LOCK_BALL_RECT_WIDTH = 95;
-    private static final int VUFORIA_LOCK_BALL_RECT_HEIGHT = 95;
+    private static final int VUFORIA_LOCK_BALL_RECT_HEIGHT = 90;
     protected static final double FLIPPER_ANGLE_INIT_POS = 0.85;
     protected static final boolean DEBUG_OPEN_CV = false;
     private static final String VUFORIA_LOCK_IMG = "vuImage.png";
@@ -718,22 +719,22 @@ public abstract class BoKAutoCommon implements BoKAuto
             if (!targetEncCountReached) {
                 Log.v("BOK", "Blue: cmCurrent: " + cmCurrent);
                 // we got a valid ultrasonic value
-                distanceToMove = (cmCurrent/2.54) + 2.4;
+                distanceToMove = (cmCurrent/2.54)-5;// + 2.4;
                 if (far) {
                     distanceToMove += 1.5;
                     //if (cryptoColumn == RelicRecoveryVuMark.LEFT)
                     //    distanceToMove += 1;
                 }
                 else {
-                    distanceToMove += 1.25;
+                    //distanceToMove += 1.25;
                 }
             }
             Log.v("BOK", "Blue targetReached: " + targetEncCountReached +
                   ", dist: " + String.format("%.2f", distanceToMove));
             move(DT_POWER_FOR_CRYPTO,
                  DT_POWER_FOR_CRYPTO,
-                 distanceToMove,
-                 false,
+                 Math.abs(distanceToMove),
+                    (distanceToMove < 0) ? true : false,
                  DT_TIMEOUT_5S);
 
             // take a picture
@@ -783,7 +784,7 @@ public abstract class BoKAutoCommon implements BoKAuto
                                     double waitForSec)
     {
         boolean result = true;
-        /*
+
         double cmCurrent, diffFromTarget = targetDistanceCm, pCoeff, wheelPower;
         robot.setModeForDTMotors(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.setModeForDTMotors(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -794,15 +795,15 @@ public abstract class BoKAutoCommon implements BoKAuto
         else
             encTarget = robot.getTargetEncCount(52);
 
-        ModernRoboticsI2cRangeSensor rangeSensor; // First choose which range sensor to use
+        AnalogInput rangeSensor; // First choose which range sensor to use
         if(sensorFront) {
-            rangeSensor = robot.rangeSensorFront;
+            rangeSensor = robot.mb1240Front;
         }
         else {
-            rangeSensor = robot.rangeSensorBack;
+            rangeSensor = robot.mb1240Back;
         }
 
-        cmCurrent = rangeSensor.getDistance(DistanceUnit.CM);
+        cmCurrent = robot.getDistanceCM(rangeSensor);
         if (!Double.isNaN(cmCurrent))
             diffFromTarget = targetDistanceCm - cmCurrent;
         runTime.reset();
@@ -821,7 +822,7 @@ public abstract class BoKAutoCommon implements BoKAuto
                 break;
             }
 
-            cmCurrent = rangeSensor.getDistance(DistanceUnit.CM);
+            cmCurrent = robot.getDistanceCM(rangeSensor);
             if (Double.isNaN(cmCurrent) || (cmCurrent >= 255)) // Invalid sensor reading
                 continue;
 
@@ -857,7 +858,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         else
             Log.v("BOK", "Back current RS: " + cmCurrent);
         robot.setPowerToDTMotors(0, 0, 0, 0);
-        */
+
         return result;
     }
 
@@ -1053,8 +1054,8 @@ public abstract class BoKAutoCommon implements BoKAuto
                     //move(DT_POWER_HIGH, DT_POWER_HIGH, 2, true, DT_TIMEOUT_2S);
                 }
                 else {
-                    distBack += 1;
-                    move(DT_POWER_HIGH, DT_POWER_HIGH, 9, true, DT_TIMEOUT_4S);
+                    distBack += 2;
+                    //move(DT_POWER_HIGH, DT_POWER_HIGH, 9, true, DT_TIMEOUT_4S);
                 }
                 gyroTurn(DT_TURN_SPEED_HIGH,
                          initGyroAngle,

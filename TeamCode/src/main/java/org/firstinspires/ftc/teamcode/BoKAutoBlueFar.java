@@ -26,6 +26,8 @@ public class BoKAutoBlueFar extends BoKAutoCommon
     @Override
     public void runSoftware()
     {
+        moveWithRangeSensor(0.4, 91, false, 5);
+        /*
         // NOTE: Move backwards towards crypto
         far = true;
 
@@ -85,6 +87,6 @@ public class BoKAutoBlueFar extends BoKAutoCommon
         if (success) {
             // Prepare to unload the glyph
             moveToCrypto(currentAngle, WAIT_FOR_JEWEL_FLICKER_MS);
-        }
+        }*/
     }
 }

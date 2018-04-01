@@ -48,10 +48,10 @@ public class BoKAutoBlueNear extends BoKAutoCommon
         // Move backward out of balancing stone
         // Distance and timeout depends on column number;
         move(DT_POWER_FOR_STONE,
-             DT_POWER_FOR_STONE,
-             distance,
-             false,
-             timeout);
+            DT_POWER_FOR_STONE,
+            distance,
+            false,
+            timeout);
 
         // Move towards the crypto
         moveToCrypto(0, WAIT_FOR_JEWEL_FLICKER_MS);

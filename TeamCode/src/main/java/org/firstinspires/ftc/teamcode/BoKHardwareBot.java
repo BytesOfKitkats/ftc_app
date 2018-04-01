@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
@@ -31,7 +32,7 @@ public abstract class BoKHardwareBot
     // CONSTANTS
     protected static final int OPMODE_SLEEP_INTERVAL_MS_SHORT  = 10;
     // Jewel flicker arm
-    protected static final double JA_INIT = 0.2;
+    protected static final double JA_INIT = 0.26;
     protected static final double JA_MID = 0.65;
     protected static final double JA_FINAL = 0.8;
     // Jewel flicker
@@ -67,10 +68,9 @@ public abstract class BoKHardwareBot
     private static final String RELIC_ARM_SERVO = "rp";
     private static final String RELIC_CLAW_SERVO = "rg";
     private static final String RANGE_SENSOR_JA = "rs";
-    private static final String RANGE_SENSOR_FRONT_CFG  = "rsf";
-    private static final String RANGE_SENSOR_BACK_CFG   = "rsb";
-    private static final String COLOR_SENSOR_FRONT_CFG = "csf";
-    private static final String COLOR_SENSOR_BACK_CFG = "csb";
+    private static final String MAX_BOTIX_BACK_CFG = "mbb";
+    private static final String MAX_BOTIX_SIDE_CFG = "mbs";
+    private static final String MAX_BOTIX_FRONT_CFG = "mbf";
     private static final String IMU_TOP = "imu_top";
     // robot2
     private static final String LEFT_ROLLER_MOTOR = "il";
@@ -103,7 +103,7 @@ public abstract class BoKHardwareBot
 
     // Sensors
     protected BNO055IMU imu;
-
+    protected AnalogInput mb1240Back, mb1240Side, mb1240Front;
     protected ModernRoboticsI2cRangeSensor rangeSensorJA;
 /*
     protected ModernRoboticsI2cRangeSensor rangeSensorFront;
@@ -212,6 +212,20 @@ public abstract class BoKHardwareBot
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 
+        mb1240Back = opMode.hardwareMap.analogInput.get(MAX_BOTIX_BACK_CFG);
+        if(mb1240Back == null){
+            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
+        }
+
+        mb1240Front = opMode.hardwareMap.analogInput.get(MAX_BOTIX_FRONT_CFG);
+        if(mb1240Front == null){
+            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
+        }
+
+        mb1240Side = opMode.hardwareMap.analogInput.get(MAX_BOTIX_SIDE_CFG);
+        if(mb1240Side == null){
+            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
+        }
 
         leftRoller.setDirection(DcMotorSimple.Direction.REVERSE);
         rightRoller.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -355,5 +369,10 @@ public abstract class BoKHardwareBot
                 hsvValues);
         // Log.v("BOK", "Hue: " + hsvValues[0] + ", sat: " + hsvValues[1] + ", val: " + hsvValues[2]);
         return hsvValues;
+    }
+
+    protected double getDistanceCM(AnalogInput mb1240)
+    {
+        return mb1240.getVoltage() / 0.00189;
     }
 }

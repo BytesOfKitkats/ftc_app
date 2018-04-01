@@ -19,18 +19,12 @@ public class BoKTele
     // CONSTANTS
     private static final double GAME_STICK_DEAD_ZONE = 0.05;
     private static final double GAME_TRIGGER_DEAD_ZONE = 0.2;
-    private static final double TURNTABLE_STICK_DEAD_ZONE = 0.8;
-    private static final double UPPER_ARM_STICK_DEAD_ZONE = 0.2;
-    private static final double TURNTABLE_MOTOR_POWER = 0.2;
-    private static final int TURNTABLE_COUNTS_PER_MOTOR_REV = 1120; // AndyMark 40
-    private static final double UPPER_ARM_MOTOR_POWER_SLOW = 0.4;//0.2
-    private static final double UPPER_ARM_MOTOR_POWER_FAST = 0.8;//0.4
     private static final double SPEED_COEFF_SLOW = 0.35;
     private static final double SPEED_COEFF_FAST = 0.9;
     private static final int RA_JOYSTICK_RATIO = 200;
     private static final double RELIC_DEPLOY_POWER = 0.6;
     private static final double RELIC_RETRACT_POWER = 0.4;
-    private static final float GLYPH_FLICKER_INCREMENT = 0.01F;
+    private static final int PULSE_COUNT = 4;
 
     private BoKHardwareBot robot;
     private LinearOpMode opMode;
@@ -69,6 +63,10 @@ public class BoKTele
         //boolean glyph_at_end = false;
         boolean relic_deploying = false;
         boolean flipper_down = true;
+        boolean g2_left_trigger_pressed = false;
+        boolean g2_right_trigger_pressed = false;
+        int g2_lt_count = 0;
+        int g2_rt_count = 0;
 
         double FLIPPER_LIFT_POWER = 0.4;
 
@@ -180,7 +178,7 @@ public class BoKTele
                     g2_right_bumper_pressed = true;
                     robot.relicArm.setPosition(robot.RA_FAR_POS);
                 }
-                if (opMode.gamepad2.right_stick_y < -UPPER_ARM_STICK_DEAD_ZONE) {
+                if (opMode.gamepad2.right_stick_y < -GAME_TRIGGER_DEAD_ZONE) {
                     double posOfArm = robot.relicArm.getPosition();
                     g2_left_bumper_pressed = false;
                     g2_right_bumper_pressed = false;
@@ -189,7 +187,7 @@ public class BoKTele
                             (-opMode.gamepad2.right_stick_y / RA_JOYSTICK_RATIO));
 
                     Log.v("BOK", "Relic Arm pos: " + robot.relicArm.getPosition());
-                } else if (opMode.gamepad2.right_stick_y > UPPER_ARM_STICK_DEAD_ZONE) {
+                } else if (opMode.gamepad2.right_stick_y > GAME_TRIGGER_DEAD_ZONE) {
                     // Move relic arm down
                     double posOfArm = robot.relicArm.getPosition();
                     g2_left_bumper_pressed = false;
@@ -211,36 +209,50 @@ public class BoKTele
                 if (opMode.gamepad2.x) {
                     robot.leftRoller.setPower(-robot.ROLLER_POWER);
                     robot.rightRoller.setPower(-robot.ROLLER_POWER);
+                    g2_right_trigger_pressed = false;
+                    g2_left_trigger_pressed = false;
                 }
                 if (opMode.gamepad2.b) {
                     robot.leftRoller.setPower(0);
                     robot.rightRoller.setPower(0);
+                    g2_right_trigger_pressed = false;
+                    g2_left_trigger_pressed = false;
                 }
                 if (opMode.gamepad2.a) {
                     robot.leftRoller.setPower(robot.ROLLER_POWER);
                     robot.rightRoller.setPower(robot.ROLLER_POWER);
+                    g2_right_trigger_pressed = false;
+                    g2_left_trigger_pressed = false;
                 }
-                if (opMode.gamepad2.left_stick_y < -UPPER_ARM_STICK_DEAD_ZONE) {
+                if (opMode.gamepad2.left_stick_y < -GAME_TRIGGER_DEAD_ZONE) {
                     robot.ridingGateLeft.setPosition(robot.RGL_LOCK);
                     robot.ridingGateRight.setPosition(robot.RGR_LOCK);
                     robot.flipperLift.setPower(FLIPPER_LIFT_POWER);
-                } else if (opMode.gamepad2.left_stick_y > UPPER_ARM_STICK_DEAD_ZONE &&
+                    g2_right_trigger_pressed = false;
+                    g2_left_trigger_pressed = false;
+                } else if (opMode.gamepad2.left_stick_y > GAME_TRIGGER_DEAD_ZONE &&
                         robot.flipperLift.getCurrentPosition() > 0) {
                     robot.flipperLift.setPower(-FLIPPER_LIFT_POWER);
+                    g2_right_trigger_pressed = false;
+                    g2_left_trigger_pressed = false;
                 } else {
                     robot.flipperLift.setPower(0);
                 }
 
-                if (opMode.gamepad2.right_stick_y < -UPPER_ARM_STICK_DEAD_ZONE
+                if (opMode.gamepad2.right_stick_y < -GAME_TRIGGER_DEAD_ZONE
                         && robot.flipper.getPosition() > 0.5) {
                     double pos = robot.flipper.getPosition();
                     //Log.v("BOK", "Flipper Up " + pos);
                     robot.flipper.setPosition(pos - 0.005);
-                } else if (opMode.gamepad2.right_stick_y > UPPER_ARM_STICK_DEAD_ZONE
+                    g2_right_trigger_pressed = false;
+                    g2_left_trigger_pressed = false;
+                } else if (opMode.gamepad2.right_stick_y > GAME_TRIGGER_DEAD_ZONE
                         && robot.flipper.getPosition() < 0.95) {
                     double pos = robot.flipper.getPosition();
                     //Log.v("BOK", "Flipper Down " + pos);
                     robot.flipper.setPosition(pos + 0.005);
+                    g2_right_trigger_pressed = false;
+                    g2_left_trigger_pressed = false;
                 }
 
                 if (opMode.gamepad2.left_bumper) {
@@ -258,12 +270,12 @@ public class BoKTele
                     //Log.v ("BOK", "flipper up pos");
                 }
                 if (!g2_right_bumper_pressed && flipper_down &&
-                        Math.abs((robot.flipperLift.getCurrentPosition())) >= 175) {
+                        Math.abs((robot.flipperLift.getCurrentPosition())) >= 100) {
                     robot.flipper.setPosition(robot.FLIPPER_ANGLE_POS);
                     flipper_down = false;
                     g2_right_bumper_pressed = false;
                 } else if (!g2_right_bumper_pressed && !flipper_down &&
-                        Math.abs((robot.flipperLift.getCurrentPosition())) <= 175) {
+                        Math.abs((robot.flipperLift.getCurrentPosition())) <= 100) {
                     robot.ridingGateLeft.setPosition(robot.RGL_LOCK);
                     robot.ridingGateRight.setPosition(robot.RGR_LOCK);
                     opMode.sleep(robot.OPMODE_SLEEP_INTERVAL_MS_SHORT);
@@ -280,6 +292,42 @@ public class BoKTele
                 if (opMode.gamepad2.dpad_right) {
                     robot.ridingGateLeft.setPosition(robot.RGL_UNLOCK);
                     robot.ridingGateRight.setPosition(robot.RGR_UNLOCK);
+                }
+                if (opMode.gamepad2.left_trigger > GAME_TRIGGER_DEAD_ZONE) {
+                    if (g2_left_trigger_pressed) {
+                        if (g2_lt_count > 0) {
+                            g2_lt_count--;
+                        }
+                        else {
+                            robot.rightRoller.setPower(robot.ROLLER_POWER);
+                            robot.leftRoller.setPower(robot.ROLLER_POWER);
+                            //g2_left_trigger_pressed = false;
+                        }
+                    }
+                    else {
+                        robot.rightRoller.setPower(0);
+                        robot.leftRoller.setPower(-opMode.gamepad2.left_trigger);
+                        g2_left_trigger_pressed = true;
+                        g2_lt_count = PULSE_COUNT;
+                    }
+                }
+                if (opMode.gamepad2.right_trigger > GAME_TRIGGER_DEAD_ZONE) {
+                    if (g2_right_trigger_pressed) {
+                        if (g2_rt_count > 0) {
+                            g2_rt_count--;
+                        }
+                        else {
+                            robot.rightRoller.setPower(robot.ROLLER_POWER);
+                            robot.leftRoller.setPower(robot.ROLLER_POWER);
+                            //g2_right_trigger_pressed = false;
+                        }
+                    }
+                    else {
+                        robot.leftRoller.setPower(0);
+                        robot.rightRoller.setPower(-opMode.gamepad2.right_trigger);
+                        g2_right_trigger_pressed = true;
+                        g2_rt_count = PULSE_COUNT;
+                    }
                 }
 
             }
