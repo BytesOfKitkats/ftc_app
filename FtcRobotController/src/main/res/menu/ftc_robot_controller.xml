@@ -77,12 +77,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       android:title="@string/inspection_mode_menu_item"/>
 
   <item
-    android:id="@+id/glyph2_settings"
-    android:orderInCategory="700"
-    android:icon="@android:drawable/ic_menu_info_details"
-    android:title="@string/glyph2_settings_menu_item"/>
-
-  <item
     android:id="@+id/action_about"
     android:orderInCategory="999"
     android:icon="@android:drawable/ic_menu_info_details"

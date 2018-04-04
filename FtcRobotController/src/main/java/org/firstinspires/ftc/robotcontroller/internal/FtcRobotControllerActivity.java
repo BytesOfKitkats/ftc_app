@@ -497,11 +497,6 @@ public class FtcRobotControllerActivity extends Activity
       startActivityForResult(settingsIntent, RequestCode.SETTINGS_ROBOT_CONTROLLER.ordinal());
       return true;
     }
-    else if (id == R.id.glyph2_settings) {
-      Intent settingsIntent = new Intent(AppUtil.getDefContext(), FtcGlyph2SettingsActivity.class);
-      startActivityForResult(settingsIntent, 700);
-      return true;
-    }
     else if (id == R.id.action_about) {
       Intent intent = new Intent(AppUtil.getDefContext(), AboutActivity.class);
       intent.putExtra(LaunchActivityConstantsList.ABOUT_ACTIVITY_CONNECTION_TYPE, networkType);
