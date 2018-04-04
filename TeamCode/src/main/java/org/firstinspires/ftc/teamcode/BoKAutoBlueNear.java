@@ -14,7 +14,7 @@ public class BoKAutoBlueNear extends BoKAutoCommon
     private static final double TIMEOUT_CENTER = 5;
     private static final double TIMEOUT_RIGHT = 6;
 
-    private static final double DISTANCE_TO_LEFT_COL = 26; // inches!!
+    private static final double DISTANCE_TO_LEFT_COL = 24; // inches!!
     private static final double DISTANCE_TO_CENTER_COL = 34;
     private static final double DISTANCE_TO_RIGHT_COL = 42;
 
@@ -30,7 +30,9 @@ public class BoKAutoBlueNear extends BoKAutoCommon
         // NOTE: Move backwards towards crypto
 
         // Detect Vuforia image and flick the jewel
-        detectVuforiaImgAndFlick(WAIT_FOR_JEWEL_FLICKER_MS);
+        detectVuforiaImgAndDrop(WAIT_FOR_JEWEL_FLICKER_MS);
+        moveAndFlick();
+
 
         // Move backward out of balancing stone
         // Distance and timeout to the cryptobox depends on column number
@@ -49,7 +51,7 @@ public class BoKAutoBlueNear extends BoKAutoCommon
         // Distance and timeout depends on column number;
         move(DT_POWER_FOR_STONE,
             DT_POWER_FOR_STONE,
-            distance,
+            distance-distToMoveFlick,
             false,
             timeout);
 

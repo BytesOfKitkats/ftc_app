@@ -18,18 +18,15 @@ public interface BoKAuto
         BOK_AUTO_SUCCESS
     }
 
-    // Initial setup (upper arm, turntable)
-    public static int UA_INIT_ANGLE = 12;
-    public static int TT_INIT_ANGLE = -90;
     // Jewel flicker wait
-    public static int WAIT_FOR_JEWEL_FLICKER_MS = 500;
+    public static int WAIT_FOR_JEWEL_FLICKER_MS = 250;
     // Vuforia
     public static int VUFORIA_TIMEOUT = 4;
     // Drive train
     public static double DT_POWER_FOR_STONE = 0.25;
     public static double DT_POWER_HIGH = 0.4;
     public static double DT_RAMP_SPEED_INIT = 0.15;
-    public static double DT_POWER_FOR_RS = 0.2;
+    public static double DT_POWER_FOR_FLICK = 0.2;
     public static double DT_POWER_FOR_CRYPTO = 0.15;
     public static int DT_TIMEOUT_2S = 2;
     public static int DT_TIMEOUT_4S = 4;
@@ -43,8 +40,17 @@ public interface BoKAuto
     public static double DT_TURN_SPEED_LOW  = 0.25;
     public static double DT_TURN_SPEED_HIGH = 0.4;
     public static int TURN_LEFT_DEGREES = 90;
-    //public static double DT_POWER_FOR_STRAFE = 0.2;
+    public static double DT_POWER_FOR_STRAFE = 0.2;
     //public static double ROTATIONS_STRAFE_TO_WALL = 0.15;
+
+    // flipFlipper constants
+    public static int FLIP_FLIPPER_INIT = 1;
+    public static int FLIP_FLIPPER_DUMP = 2;
+    public static int FLIP_FLIPPER_LOWER = 3;
+
+    // Rollers constants
+    public static int INTAKE_ROLLERS = 1;
+    public static int REVERSE_ROLLERS = 2;
 
     public static ElapsedTime runTimeOpMode = new ElapsedTime();
     public BoKAutoStatus initSoftware(BoKAutoOpMode opMode,

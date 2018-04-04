@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.lynx.LynxI2cColorRangeSensor;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -46,9 +47,12 @@ public abstract class BoKHardwareBot
     protected static final double FLIPPER_ANGLE_POS = 0.76;
     protected static final double FLIPPER_INIT_POS = 0.95;
     // Roller motor power
-    protected static final double ROLLER_POWER = 0.95;
+    protected static final double ROLLER_POWER_HIGH = 0.95;
+    protected static final double ROLLER_POWER_MED = 0.8;
+    protected static final double ROLLER_POWER_LOW = 0.65;
     // Relic lift arm
     protected static final double RA_INIT = 0.755;
+    protected static final double RA_PLAY = 0.75; // Both Auto and Teleop
     protected static final double RA_RAISED_POS = 0.638;
     protected static final double RA_NEAR_POS = 0.52;
     protected static final double RA_FAR_POS = 0.54;
@@ -62,25 +66,35 @@ public abstract class BoKHardwareBot
     protected static final double RGL_UNLOCK = 0.04;
     protected static final double RGL_LOCK = 0.37;
 
+    // DC Motors
     private static final String RELIC_SPOOL_MOTOR = "sp";
+    private static final String LEFT_ROLLER_MOTOR = "il";
+    private static final String RIGHT_ROLLER_MOTOR = "ir";
+    private static final String FLIPPER_LIFT_MOTOR = "fl";
+
+    // Servos
     private static final String JEWEL_ARM_SERVO  = "ja";
     private static final String JEWEL_FLICKER_SERVO  = "jf";
     private static final String RELIC_ARM_SERVO = "rp";
     private static final String RELIC_CLAW_SERVO = "rg";
-    private static final String RANGE_SENSOR_JA = "rs";
-    private static final String MAX_BOTIX_BACK_CFG = "mbb";
+    private static final String FLIPPER_SERVO = "fls";
+    private static final String FLIPPER_RIDING_GATE_LEFT_SERVO = "rgl";
+    private static final String FLIPPER_RIDING_GATE_RIGHT_SERVO = "rgr";
+
+    // Sensors
+    private static final String RANGE_SENSOR_JA = "rs";     // Modern Robotics
+    private static final String MAX_BOTIX_BACK_CFG = "mbb"; // Analog
     private static final String MAX_BOTIX_SIDE_CFG = "mbs";
     private static final String MAX_BOTIX_FRONT_CFG = "mbf";
-    private static final String IMU_TOP = "imu_top";
-    // robot2
-    private static final String LEFT_ROLLER_MOTOR = "il";
-    private static final String RIGHT_ROLLER_MOTOR = "ir";
-    private static final String FLIPPER_LIFT_MOTOR = "fl";
-    private static final String FLIPPER_SERVO = "fls";
-    private static final String FLIPPER_RIDING_GATE_LEFT = "rgl";
-    private static final String FLIPPER_RIDING_GATE_RIGHT = "rgr";
+    private static final String COLOR_SENSOR_NEAR = "crn";  // REV color/proximity
+    private static final String COLOR_SENSOR_FAR = "crf";
+    private static final String COLOR_SENSOR_BOTTOM = "crb";
+    private static final String IMU_TOP = "imu_top";        // IMU
 
     protected static final int WAIT_PERIOD = 40; // 40 ms
+    private static final int RELIC_SPOOL_PLAY_POS = 150;
+    private static final double RELIC_SPOOL_PLAY_POWER = 0.2;
+
     // sometimes it helps to multiply the raw RGB values with a scale factor
     // to amplify/attentuate the measured values.
     private static final double CS_SCALE_FACTOR = 255;
@@ -105,14 +119,9 @@ public abstract class BoKHardwareBot
     protected BNO055IMU imu;
     protected AnalogInput mb1240Back, mb1240Side, mb1240Front;
     protected ModernRoboticsI2cRangeSensor rangeSensorJA;
-/*
-    protected ModernRoboticsI2cRangeSensor rangeSensorFront;
-    protected ModernRoboticsI2cRangeSensor rangeSensorBack;
-    protected ModernRoboticsI2cRangeSensor rangeSensorGA;
+    protected DistanceSensor distNear, distFar;
+    protected ColorSensor colorNear, colorFar, colorBottom;
 
-    protected ColorSensor sensorColorFront;
-    protected ColorSensor sensorColorBack;
-*/
     private Orientation angles;
 
     // waitForTicks
@@ -177,12 +186,12 @@ public abstract class BoKHardwareBot
         }
 
 
-        ridingGateLeft = opMode.hardwareMap.servo.get(FLIPPER_RIDING_GATE_LEFT);
+        ridingGateLeft = opMode.hardwareMap.servo.get(FLIPPER_RIDING_GATE_LEFT_SERVO);
         if(ridingGateLeft == null){
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 
-        ridingGateRight = opMode.hardwareMap.servo.get(FLIPPER_RIDING_GATE_RIGHT);
+        ridingGateRight = opMode.hardwareMap.servo.get(FLIPPER_RIDING_GATE_RIGHT_SERVO);
         if(ridingGateRight == null){
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
@@ -227,51 +236,52 @@ public abstract class BoKHardwareBot
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 
-        leftRoller.setDirection(DcMotorSimple.Direction.REVERSE);
+        distNear = opMode.hardwareMap.get(DistanceSensor.class, COLOR_SENSOR_NEAR);
+        if(distNear == null){
+            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
+        }
+        colorNear = opMode.hardwareMap.get(ColorSensor.class, COLOR_SENSOR_NEAR);
+
+        distFar = opMode.hardwareMap.get(DistanceSensor.class, COLOR_SENSOR_FAR);
+        if(distFar == null){
+            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
+        }
+        colorFar = opMode.hardwareMap.get(ColorSensor.class, COLOR_SENSOR_FAR);
+
+        colorBottom = opMode.hardwareMap.get(ColorSensor.class, COLOR_SENSOR_BOTTOM);
+        if(colorBottom == null){
+            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
+        }
+
+        // Rollers DC Motors
         rightRoller.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightRoller.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftRoller.setDirection(DcMotorSimple.Direction.REVERSE);
         leftRoller.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        flipper.setPosition(FLIPPER_INIT_POS);
+        leftRoller.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        // Relic spool DC Motor
         relicSpool.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         relicSpool.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         relicSpool.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         relicSpool.setPower(0);
+        // Flipper lift DC Motor
         flipperLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         flipperLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flipperLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         flipperLift.setDirection(DcMotorSimple.Direction.REVERSE);
         flipperLift.setPower(0);
-        ridingGateLeft.setPosition(RGL_LOCK);
-        ridingGateRight.setPosition(RGR_LOCK);
 
         rangeSensorJA = opMode.hardwareMap.get(ModernRoboticsI2cRangeSensor.class,
                 RANGE_SENSOR_JA);
         if (rangeSensorJA == null) {
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
-/*
-        rangeSensorFront = opMode.hardwareMap.get(ModernRoboticsI2cRangeSensor.class,
-                RANGE_SENSOR_FRONT_CFG);
-        if (rangeSensorFront == null) {
-            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
-        }
 
-        rangeSensorBack = opMode.hardwareMap.get(ModernRoboticsI2cRangeSensor.class,
-            RANGE_SENSOR_BACK_CFG);
-        if (rangeSensorBack == null) {
-            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
-        }
-
-        sensorColorFront = opMode.hardwareMap.get(ColorSensor.class, COLOR_SENSOR_FRONT_CFG);
-        if (sensorColorFront == null) {
-            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
-        }
-
-        sensorColorBack = opMode.hardwareMap.get(ColorSensor.class, COLOR_SENSOR_BACK_CFG);
-        if (sensorColorBack == null) {
-            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
-        }
-*/
         if (!opMode.getClass().getName().contains("Tele")) {
+            // Servos
+            flipper.setPosition(FLIPPER_INIT_POS);
+            ridingGateLeft.setPosition(RGL_LOCK);
+            ridingGateRight.setPosition(RGR_LOCK);
             jewelArm.setPosition(JA_INIT);
             jewelFlicker.setPosition(JF_INIT);
             relicArm.setPosition(RA_INIT);
@@ -279,6 +289,7 @@ public abstract class BoKHardwareBot
         }
         else {
            // IMPORTANT: Do not move the servos during initialization of Teleop
+
         }
 
         return BoKHardwareStatus.BOK_HARDWARE_SUCCESS;
@@ -367,8 +378,24 @@ public abstract class BoKHardwareBot
                 (int) (senseColor.green() * CS_SCALE_FACTOR),
                 (int) (senseColor.blue() * CS_SCALE_FACTOR),
                 hsvValues);
-        // Log.v("BOK", "Hue: " + hsvValues[0] + ", sat: " + hsvValues[1] + ", val: " + hsvValues[2]);
+        //Log.v("BOK", "Hue: " + hsvValues[0] +
+        //             ", Sat: " + hsvValues[1] +
+        //             ", Val: " + hsvValues[2] +
+        //            ", Alpha: " + senseColor.alpha());
         return hsvValues;
+    }
+
+    protected void initRelicArm()
+    {
+        relicArm.setPosition(RA_PLAY); // raise the relic arm
+        relicSpool.setTargetPosition(RELIC_SPOOL_PLAY_POS);
+        relicSpool.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        relicSpool.setPower(RELIC_SPOOL_PLAY_POWER);
+        while (opMode.opModeIsActive() && relicSpool.isBusy()) {
+
+        }
+        relicSpool.setPower(0);
+        relicSpool.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
     protected double getDistanceCM(AnalogInput mb1240)

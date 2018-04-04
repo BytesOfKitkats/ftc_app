@@ -18,35 +18,10 @@ import android.util.Log;
 //@Disabled
 public class BoKSetupOpMode extends LinearOpMode
 {
-    private static final double UA_POWER = 0.2;
-    private static final double GAME_TRIGGER_DEAD_ZONE = 0.2;
-    private static final double UPPER_ARM_STICK_DEAD_ZONE = 0.2;
-    private static final double UPPER_ARM_MOTOR_POWER_SLOW = 0.2;
-
     BoKHardwareBot robot = new BoKMecanumDT();
-
-    private void moveUpperArm(double targetAngleDegrees, double power)
-    {/*
-        int target = (int) robot.glyphArm.getTargetEncCount(targetAngleDegrees);
-        Log.v("BOK", "Target (arm): " + target);
-
-        robot.upperArm.setTargetPosition(target);
-        robot.upperArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.upperArm.setPower(power);
-        while (opModeIsActive() && robot.upperArm.isBusy()) {
-            //opMode.telemetry.update();
-            //sleep(BoKHardwareBot.OPMODE_SLEEP_INTERVAL_MS_SHORT);
-        }
-        robot.upperArm.setPower(0);
-        // Turn off RUN_TO_POSITION
-        robot.upperArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);*/
-    }
 
     public void runOpMode()
     {
-        boolean writeOnce = false;
-        boolean moveOnce = false;
-
         robot.initHardware(this);
         telemetry.addData("Status", "Hardware initialized");
         telemetry.update();
@@ -54,59 +29,46 @@ public class BoKSetupOpMode extends LinearOpMode
         waitForStart();
         
         while(opModeIsActive()) {
-            // GAMEPAD 2 CONTROLS
-            // Left Stick Y:         Upper Arm
-            // A:                    Move Upper Arm INIT_ANGLE (encoder)
-            // B:                    Reset moving upper arm
-            // Left & Right Trigger: Move wrist position
-            // Y:                    Save wrist position to file
+            // GAMEPAD 1 CONTROLS
+            // X:                    Sensor values
+            // Y:                    Test DC Motors
+            if (gamepad1.x) {
+                float[] hsvValues = robot.getHue(robot.colorNear);
+                telemetry.addData("Near", "H: " + String.format("%.2f", hsvValues[0]) +
+                        ", S: " + String.format("%.2f", hsvValues[1]) +
+                        ", V: " + String.format("%.2f", hsvValues[2]) +
+                        ", A: " + String.format("%.2f", robot.colorNear.alpha()) +
+                        ", D: " + String.format("%.2f",
+                        robot.distNear.getDistance(DistanceUnit.CM)));
 
-            if (gamepad2.left_stick_y < -UPPER_ARM_STICK_DEAD_ZONE) {
-                //robot.upperArm.setPower(UPPER_ARM_MOTOR_POWER_SLOW);
-                //robot.relicArm.setPosition();
-            }
-            else if (gamepad2.left_stick_y > UPPER_ARM_STICK_DEAD_ZONE) {
-                //robot.upperArm.setPower(-UPPER_ARM_MOTOR_POWER_SLOW);
-            }
-            else {
-                //robot.upperArm.setPower(0);
-                //robot.upperArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            }
+                hsvValues = robot.getHue(robot.colorFar);
+                telemetry.addData("Far", "H: " + String.format("%.2f", hsvValues[0]) +
+                        ", S: " + String.format("%.2f", hsvValues[1]) +
+                        ", V: " + String.format("%.2f", hsvValues[2]) +
+                        ", A: " + String.format("%.2f", robot.colorFar.alpha()) +
+                        ", D: " + String.format("%.2f",
+                        robot.distNear.getDistance(DistanceUnit.CM)));
 
-            if (gamepad2.a && !moveOnce) {
-                moveOnce = true;
-                moveUpperArm(BoKAuto.UA_INIT_ANGLE, UA_POWER);
-            }
+                hsvValues = robot.getHue(robot.colorBottom);
+                telemetry.addData("Bottom", "H: " + String.format("%.2f", hsvValues[0]) +
+                        ", S: " + String.format("%.2f", hsvValues[1]) +
+                        ", V: " + String.format("%.2f", hsvValues[2]) +
+                        ", A: " + String.format("%.2f", robot.colorFar.alpha()));
 
-            if (gamepad2.b && moveOnce) {
-                moveOnce = false;
-            }
+                telemetry.addData("Front", String.format("%.2f",
+                        robot.getDistanceCM(robot.mb1240Front)));
 
-            if (gamepad2.left_trigger > GAME_TRIGGER_DEAD_ZONE) {
-               //robot.glyphArm.decreaseClawWristPos(gamepad2.left_trigger);
-                //Log.v("BOK", String.format("%f", opMode.gamepad2.right_stick_y) );
-            }
+                telemetry.addData("Back", String.format("%.2f",
+                        robot.getDistanceCM(robot.mb1240Back)));
 
-            if (gamepad2.right_trigger > GAME_TRIGGER_DEAD_ZONE) {
-                //robot.glyphArm.increaseClawWristPos(gamepad2.right_trigger);
-                //Log.v("BOK", String.format("%f", opMode.gamepad2.right_stick_y) );
+                telemetry.addData("Side", String.format("%.2f",
+                        robot.getDistanceCM(robot.mb1240Side)));
             }
 
-            if (gamepad2.y && !writeOnce) {
-                writeOnce = true;
-                File file = AppUtil.getInstance().getSettingsFile("BoKArmCalibration.txt");
-                //ReadWriteFile.writeFile(file,
-                //       Double.toString(robot.glyphArm.clawWrist.getPosition()));
-                //Log.v("BOK", "Value written to file: " +
-                //       Double.toString(robot.glyphArm.clawWrist.getPosition()));
-            }
+            if (gamepad1.y) {
 
-            if (gamepad1.a) {
-                robot.relicClaw.setPosition(robot.RC_LOCK);
             }
-            if (gamepad1.b) {
-                robot.relicClaw.setPosition(robot.RC_UNLOCK);
-            }
+            telemetry.update();
 
             robot.waitForTick(BoKHardwareBot.WAIT_PERIOD);
         }

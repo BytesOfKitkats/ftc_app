@@ -7,13 +7,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
  */
 
 public class BoKAutoRedFar extends BoKAutoCommon {
-    private static double TIMEOUT_RIGHT = 5;
-    private static double TIMEOUT_CENTER = 6;
-    private static double TIMEOUT_LEFT = 8;
+    private static double TIMEOUT_DUMP = 1;
     private static double DT_MOVE_TO_CRYPTO = 25.5;//inches
-    private static int DISTANCE_TO_CENTER_COL_CM = 43;//cm
-    private static int DISTANCE_TO_RIGHT_COL_CM = 24;//cm
-    private static int DISTANCE_TO_LEFT_COL_CM = 63;//cm
+    private static int DISTANCE_TO_RIGHT_COL_CM = 51;//cm
+    private static int DISTANCE_TO_CENTER_COL_CM = 68;//cm
+    private static int DISTANCE_TO_LEFT_COL_CM = 89;//cm
 
     // Constructor
     public BoKAutoRedFar()
@@ -27,39 +25,30 @@ public class BoKAutoRedFar extends BoKAutoCommon {
         far = true;
 
         // Detect Vuforia image, flick the jewel
-        detectVuforiaImgAndFlick(WAIT_FOR_JEWEL_FLICKER_MS);
+        detectVuforiaImgAndDrop(WAIT_FOR_JEWEL_FLICKER_MS);
+        moveAndFlick();
 
         // Move out of the balancing stone, distance
-        move(DT_POWER_FOR_STONE, DT_POWER_FOR_STONE, DT_MOVE_TO_CRYPTO, true, DT_TIMEOUT_6S);
+        move(DT_POWER_FOR_STONE, DT_POWER_FOR_STONE,
+                DT_MOVE_TO_CRYPTO-distToMoveFlick, true, DT_TIMEOUT_6S);
 
-        // turn left 90 degrees
-        double currentAngle = gyroTurn(DT_TURN_SPEED_HIGH,
-                                       0,
-                                       TURN_LEFT_DEGREES,
-                                       DT_TURN_THRESHOLD_LOW, // Threshold
-                                       false, // NOT a tank turn
-                                       false,
-                                       DT_TURN_TIMEOUT);
+        double cmFromWall = robot.getDistanceCM(robot.mb1240Front);
+        if(cryptoColumn == RelicRecoveryVuMark.LEFT)
+            strafeWithRangeSensor(DT_POWER_FOR_STRAFE,
+                                  DISTANCE_TO_LEFT_COL_CM, true, DT_TIMEOUT_6S);
+        else if (cryptoColumn == RelicRecoveryVuMark.CENTER)
+            strafeWithRangeSensor(DT_POWER_FOR_STRAFE,
+                                  DISTANCE_TO_CENTER_COL_CM, true, DT_TIMEOUT_5S);
+        else
+            strafeWithRangeSensor(DT_POWER_FOR_STRAFE,
+                                  DISTANCE_TO_RIGHT_COL_CM, true, DT_TIMEOUT_5S);
 
-        // Move forwards towards cryptobox
-        // Distance and timeout depends on column number
-        int distance = DISTANCE_TO_RIGHT_COL_CM;
-        double timeout = TIMEOUT_RIGHT;
-        if (cryptoColumn == RelicRecoveryVuMark.CENTER) {
-            distance = DISTANCE_TO_CENTER_COL_CM;
-            timeout = TIMEOUT_CENTER;
-        }
-        else if (cryptoColumn == RelicRecoveryVuMark.LEFT) {
-            distance = DISTANCE_TO_LEFT_COL_CM;
-            timeout = TIMEOUT_LEFT;
-        }
+        double distBack = (cmFromWall - 20.32)/2.54; // 20.32cm = 8 inches
+        move(DT_POWER_FOR_STONE, DT_POWER_FOR_STONE, distBack, true, DT_TIMEOUT_4S);
 
-        // Move towards the crypto
-        boolean success = moveWithRangeSensor(DT_POWER_FOR_RS, distance, false, timeout); // CM
+        flipFlipper(FLIP_FLIPPER_LOWER); // lower the flipper
+        moveRollers(REVERSE_ROLLERS, TIMEOUT_DUMP); // dump the glyph by reversing the rollers
 
-        if(success) {
-            // Prepare to unload the glyph
-            moveToCrypto(currentAngle, WAIT_FOR_JEWEL_FLICKER_MS);
-        }
+        move(DT_POWER_FOR_STONE, DT_POWER_FOR_STONE, distBack/2, false, DT_TIMEOUT_4S);
     }
 }

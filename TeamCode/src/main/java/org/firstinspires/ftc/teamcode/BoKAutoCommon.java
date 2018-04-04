@@ -78,18 +78,13 @@ public abstract class BoKAutoCommon implements BoKAuto
     //private static final double HEADING_THRESHOLD = 1;
     private static final int RS_DIFF_THRESHOLD_CM = 1;
     private static final double DT_POWER_FOR_RS_MIN = 0.12;
-    private static final double TT_POWER = 0.4;
-    private static final double UA_POWER = 0.4;
     private static final double CRS_CRYPTO_TIMEOUT = 2.5;
-    private static final int UA_FINAL_ANGLE = 25;
-    private static final int UA_ANGLE_FOR_SECOND_GLYPH = 48;
-    private static final double CW_FINAL_POS = 0.5;
-    private static final double CW_FOR_SECOND_GLYPH = 0.3;
+    protected static double distToMoveFlick = 0.5;
     private static final int VUFORIA_LOCK_BALL_X_OFFSET = 240; // pixels offset from the center
     private static final int VUFORIA_LOCK_BALL_Y_OFFSET = 110; // of the Vuforia image
     private static final int VUFORIA_LOCK_BALL_RECT_WIDTH = 95;
     private static final int VUFORIA_LOCK_BALL_RECT_HEIGHT = 90;
-    protected static final double FLIPPER_ANGLE_INIT_POS = 0.85;
+    protected static final double FLIPPER_ANGLE_INIT_POS = 0.85; // FLIPPER_INIT_POS = 0.95
     protected static final boolean DEBUG_OPEN_CV = false;
     private static final String VUFORIA_LOCK_IMG = "vuImage.png";
     private static final String ROI_IMG = "roiImage.png";
@@ -242,7 +237,7 @@ public abstract class BoKAutoCommon implements BoKAuto
                 opMode.telemetry.update();
             }
 
-            flipFlipper(1);
+            flipFlipper(FLIP_FLIPPER_INIT); // initialize the flipper to stay parallel
 
             if (opMode.gamepad1.y) {
                 relicTrackables.deactivate();
@@ -447,7 +442,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         return vuforiaSuccess;
     }
 
-    public void detectVuforiaImgAndFlick(int waitForServoMs)
+    public void detectVuforiaImgAndDrop(int waitForServoMs)
     {
         if (getCryptoColumn(VUFORIA_TIMEOUT)) {
             // Straighten the jewel flicker
@@ -455,33 +450,56 @@ public abstract class BoKAutoCommon implements BoKAuto
             robot.jewelFlicker.setPosition(robot.JF_FINAL);
             // Lower the jewel arm
             robot.jewelArm.setPosition(robot.JA_FINAL);
-            opMode.sleep(waitForServoMs);
+            //opMode.sleep(waitForServoMs);
 
             if (allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED) {
                 if (foundRedOnLeft) { // we are red
-                    robot.jewelFlicker.setPosition(robot.JF_RIGHT);
+                    //robot.jewelFlicker.setPosition(robot.JF_RIGHT);
+                    distToMoveFlick = -1;
                 } else {
-                    robot.jewelFlicker.setPosition(robot.JF_LEFT);
+                    //robot.jewelFlicker.setPosition(robot.JF_LEFT);
+                    distToMoveFlick = 1;
                 }
-                opMode.sleep(waitForServoMs);
+                //opMode.sleep(waitForServoMs);
             }
             else {
                 if (foundRedOnLeft) // we are blue
-                    robot.jewelFlicker.setPosition(robot.JF_LEFT);
+                    //robot.jewelFlicker.setPosition(robot.JF_LEFT);
+                    distToMoveFlick = 1;
                 else
-                    robot.jewelFlicker.setPosition(robot.JF_RIGHT);
-                opMode.sleep(waitForServoMs);
+                    //robot.jewelFlicker.setPosition(robot.JF_RIGHT);
+                    distToMoveFlick = -1;
+                //opMode.sleep(waitForServoMs);
             }
-
-            // Straighten the jewel flicker
-            robot.jewelFlicker.setPosition(robot.JF_FINAL);
-            // Raise the jewel arm
-            robot.jewelArm.setPosition(robot.JA_INIT);
         }
         else { // failed to detect Vuforia image
             // Position the jewel flicker to face the cryptobox
+            robot.jewelArm.setPosition(robot.JA_INIT);
             robot.jewelFlicker.setPosition(robot.JF_FINAL);
         }
+    }
+
+    public void moveAndFlick()
+    {
+        move(DT_POWER_FOR_FLICK, DT_POWER_FOR_FLICK, Math.abs(distToMoveFlick),
+                (distToMoveFlick > 0 ? true : false), DT_TIMEOUT_2S);
+
+        if (allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED) {
+            if (foundRedOnLeft) // we are red
+                robot.jewelFlicker.setPosition(robot.JF_RIGHT);
+            else
+                robot.jewelFlicker.setPosition(robot.JF_LEFT);
+        }
+        else {
+            if (foundRedOnLeft) // we are blue
+                robot.jewelFlicker.setPosition(robot.JF_LEFT);
+            else
+                robot.jewelFlicker.setPosition(robot.JF_RIGHT);
+        }
+        opMode.sleep(WAIT_FOR_JEWEL_FLICKER_MS);
+
+        robot.jewelArm.setPosition(robot.JA_INIT);
+        robot.jewelFlicker.setPosition(robot.JF_FINAL);
     }
 
     // Algorithm to move forward using encoder sensor on the DC motors on the drive train
@@ -720,14 +738,6 @@ public abstract class BoKAutoCommon implements BoKAuto
                 Log.v("BOK", "Blue: cmCurrent: " + cmCurrent);
                 // we got a valid ultrasonic value
                 distanceToMove = (cmCurrent/2.54)-5;// + 2.4;
-                if (far) {
-                    distanceToMove += 1.5;
-                    //if (cryptoColumn == RelicRecoveryVuMark.LEFT)
-                    //    distanceToMove += 1;
-                }
-                else {
-                    //distanceToMove += 1.25;
-                }
             }
             Log.v("BOK", "Blue targetReached: " + targetEncCountReached +
                   ", dist: " + String.format("%.2f", distanceToMove));
@@ -749,11 +759,11 @@ public abstract class BoKAutoCommon implements BoKAuto
                     if (far) {
                         distanceToMove = (cmCurrent / 2.54) - 0.8;
                     } else {
-                        distanceToMove = (cmCurrent / 2.54) + 4.25;
+                        distanceToMove = (cmCurrent / 2.54) + 5.75;
                     }
                 }
                 else if (cryptoColumn == RelicRecoveryVuMark.CENTER) {
-                    distanceToMove = (cmCurrent / 2.54) + 4.75;
+                    distanceToMove = (cmCurrent / 2.54) + 5.75;
                 }
                 else {
                     if (far) {
@@ -924,7 +934,7 @@ public abstract class BoKAutoCommon implements BoKAuto
 
 
 
-        Log.v("BOK", "Back current RS: " + cmCurrent);
+        Log.v("BOK", "Side current RS: " + cmCurrent);
         robot.setPowerToDTMotors(0, 0, 0, 0);
 
         return result;
@@ -1136,7 +1146,7 @@ public abstract class BoKAutoCommon implements BoKAuto
 
             moveRamp(DT_POWER_HIGH, distBack, false, DT_TIMEOUT_4S);
 
-            flipFlipper(2);
+            flipFlipper(FLIP_FLIPPER_DUMP); // dump the glyph
 
             // just park in the safe zone
             moveRamp(DT_POWER_HIGH, distBack - 4.5, true, DT_TIMEOUT_4S);
@@ -1158,10 +1168,10 @@ public abstract class BoKAutoCommon implements BoKAuto
 
     void flipFlipper (int state){
         switch (state){
-            case (1):
+            case (FLIP_FLIPPER_INIT): // setupRobot
                 robot.flipper.setPosition(FLIPPER_ANGLE_INIT_POS);
                 break;
-            case (2):
+            case (FLIP_FLIPPER_DUMP): // dump
                 moveFlipperGates(false);
                 double pos = robot.flipper.getPosition();
                 for (;pos > robot.FLIPPER_UP_POS; pos -= 0.05){
@@ -1169,10 +1179,31 @@ public abstract class BoKAutoCommon implements BoKAuto
                     opMode.sleep(robot.OPMODE_SLEEP_INTERVAL_MS_SHORT);
                 }
                 break;
-            case (3):
+            case (FLIP_FLIPPER_LOWER):
                 robot.flipper.setPosition(robot.FLIPPER_DOWN_POS);
                 break;
         }
+    }
+
+    void moveRollers(int direction, double waitForSeconds)
+    {
+        runTime.reset();
+        switch (direction) {
+            case (INTAKE_ROLLERS):
+                robot.leftRoller.setPower(robot.ROLLER_POWER_HIGH);
+                robot.rightRoller.setPower(robot.ROLLER_POWER_HIGH);
+                while (opMode.opModeIsActive() && (runTime.seconds() < waitForSeconds)){
+                }
+                break;
+            case (2):
+                robot.leftRoller.setPower(-robot.ROLLER_POWER_HIGH);
+                robot.rightRoller.setPower(-robot.ROLLER_POWER_HIGH);
+                while (opMode.opModeIsActive() && (runTime.seconds() < waitForSeconds)){
+                }
+                break;
+        }
+        robot.leftRoller.setPower(0);
+        robot.rightRoller.setPower(0);
     }
 
     boolean targetColorReached(ColorSensor cs, boolean red)
@@ -1198,24 +1229,17 @@ public abstract class BoKAutoCommon implements BoKAuto
                               double inches,
                               boolean forward,
                               double waitForSec)
-    {/*
+    {
         // Ensure that the opmode is still active
         if (opMode.opModeIsActive()) {
-            ColorSensor cs;
+            ColorSensor cs = robot.colorBottom;
             boolean red = (allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED);
-            if (forward) {
-                cs = robot.sensorColorFront;
-            }
-            else {
-                cs = robot.sensorColorBack;
-            }
 
             robot.resetDTEncoders();
             robot.startMove(maxPower, maxPower, inches, forward);
 
             runTime.reset();
             while (opMode.opModeIsActive() &&
-                    /*(robot.getDTCurrentPosition() == false) &&*//*
                     robot.areDTMotorsBusy()) {
                 if (runTime.seconds() >= waitForSec) {
                     Log.v("BOK", "moveWColor timed out!" + String.format(" %.1f", waitForSec));
@@ -1228,14 +1252,14 @@ public abstract class BoKAutoCommon implements BoKAuto
             }
 
             robot.stopMove();
-        }*/
+        }
     }
 
     protected void moveRampWColor(double maxPower,
                                   double inches,
                                   boolean forward,
                                   double waitForSec)
-    {/*
+    {
         // Ensure that the opmode is still active
         if (opMode.opModeIsActive()) {
 
@@ -1244,25 +1268,18 @@ public abstract class BoKAutoCommon implements BoKAuto
             int targetEncCount = robot.startMove(DT_RAMP_SPEED_INIT,
                     DT_RAMP_SPEED_INIT,
                     inches,
-                    forward);
+                    true);
             // speed up during the initial 1/4 enc counts
             // maintain max power during the next 1/2 enc counts
             // speed down during the last 1/4 enc counts
             int rampupEncCount = targetEncCount/4;
             int rampdnEncCount = targetEncCount - rampupEncCount;
             double ratePower = (maxPower - DT_RAMP_SPEED_INIT)/rampupEncCount;
-            ColorSensor cs;
+            ColorSensor cs = robot.colorBottom;
             boolean red = (allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED);
-            if (forward) {
-                cs = robot.sensorColorFront;
-            }
-            else {
-                cs = robot.sensorColorBack;
-            }
 
             runTime.reset();
             while (opMode.opModeIsActive() &&
-                    (robot.getDTCurrentPosition() == false) &&
                     robot.areDTMotorsBusy()) {
                 if (runTime.seconds() >= waitForSec) {
                     Log.v("BOK", "moveRampWColor timed out!" + String.format(" %.1f", waitForSec));
@@ -1307,6 +1324,5 @@ public abstract class BoKAutoCommon implements BoKAuto
 
             robot.stopMove();
         }
-        */
     }
 }

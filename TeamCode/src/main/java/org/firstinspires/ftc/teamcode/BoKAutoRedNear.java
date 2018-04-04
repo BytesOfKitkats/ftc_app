@@ -25,7 +25,8 @@ public class BoKAutoRedNear extends BoKAutoCommon {
     public void runSoftware()
     {
         // Detect Vuforia image and flick the jewel
-        detectVuforiaImgAndFlick(WAIT_FOR_JEWEL_FLICKER_MS);
+        detectVuforiaImgAndDrop(WAIT_FOR_JEWEL_FLICKER_MS);
+        moveAndFlick();
 
         // Move forward out of balancing stone
         // Distance and timeout depends on column number; TBD
@@ -41,7 +42,7 @@ public class BoKAutoRedNear extends BoKAutoCommon {
 
         move(DT_POWER_FOR_STONE,
              DT_POWER_FOR_STONE,
-             distance,
+             distance-distToMoveFlick,
              true,
              timeout);
 
