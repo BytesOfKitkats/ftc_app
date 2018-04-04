@@ -68,6 +68,7 @@ public class BoKTele
         int FLIPPER_LIFT_DOWN_TARGET_ENC_COUNT = 100;
         double roller_power = robot.ROLLER_POWER_HIGH;
         double FLIPPER_LIFT_POWER = 0.6;
+        boolean ridingGatesLocked = true;
 
         robot.jewelArm.setPosition(robot.JA_INIT);
         robot.jewelFlicker.setPosition(robot.JF_INIT);
@@ -140,6 +141,7 @@ public class BoKTele
                     // Make sure the roller gates are down
                     robot.ridingGateLeft.setPosition(robot.RGL_UNLOCK);
                     robot.ridingGateRight.setPosition(robot.RGR_UNLOCK);
+                    ridingGatesLocked = false;
 
                     // turn the relic arm
                     robot.relicArm.setPosition(robot.RA_NEAR_POS);
@@ -238,8 +240,11 @@ public class BoKTele
                     g2_left_trigger_pressed = false;
                 }
                 if (opMode.gamepad2.left_stick_y < -GAME_TRIGGER_DEAD_ZONE) {
-                    robot.ridingGateLeft.setPosition(robot.RGL_LOCK);
-                    robot.ridingGateRight.setPosition(robot.RGR_LOCK);
+                    if (!ridingGatesLocked) {
+                        robot.ridingGateLeft.setPosition(robot.RGL_LOCK);
+                        robot.ridingGateRight.setPosition(robot.RGR_LOCK);
+                        ridingGatesLocked = true;
+                    }
                     if (!flipperLiftPower)
                         robot.flipperLift.setPower(FLIPPER_LIFT_POWER);
                     g2_right_trigger_pressed = false;
@@ -255,6 +260,7 @@ public class BoKTele
                 } else {
                     robot.flipperLift.setPower(0);
                     if (robot.flipperLift.getCurrentPosition() < 0) {
+                        Log.v("BOK", "Flipper Lift: " + robot.flipperLift.getCurrentPosition());
                         robot.flipperLift.setTargetPosition(0);
                         robot.flipperLift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                         robot.flipperLift.setPower(FLIPPER_LIFT_POWER);
@@ -309,8 +315,11 @@ public class BoKTele
                 }
 
                 if (opMode.gamepad2.right_bumper) {
-                    robot.ridingGateLeft.setPosition(robot.RGL_UNLOCK);
-                    robot.ridingGateRight.setPosition(robot.RGR_UNLOCK);
+                    if (ridingGatesLocked) {
+                        robot.ridingGateLeft.setPosition(robot.RGL_UNLOCK);
+                        robot.ridingGateRight.setPosition(robot.RGR_UNLOCK);
+                        ridingGatesLocked = false;
+                    }
                     opMode.sleep(robot.OPMODE_SLEEP_INTERVAL_MS_SHORT);
                     robot.flipper.setPosition(robot.FLIPPER_UP_POS);
                     g2_right_bumper_pressed = true;
@@ -330,9 +339,12 @@ public class BoKTele
                     robot.rightRoller.setPower(roller_power);
                 } else if (!g2_right_bumper_pressed && !flipper_down &&
                         Math.abs((robot.flipperLift.getCurrentPosition())) <= 175) {
-                    robot.ridingGateLeft.setPosition(robot.RGL_LOCK);
-                    robot.ridingGateRight.setPosition(robot.RGR_LOCK);
-                    opMode.sleep(robot.OPMODE_SLEEP_INTERVAL_MS_SHORT);
+                    if (!ridingGatesLocked) {
+                        robot.ridingGateLeft.setPosition(robot.RGL_LOCK);
+                        robot.ridingGateRight.setPosition(robot.RGR_LOCK);
+                        opMode.sleep(robot.OPMODE_SLEEP_INTERVAL_MS_SHORT);
+                        ridingGatesLocked = true;
+                    }
                     robot.flipper.setPosition(robot.FLIPPER_DOWN_POS);
                     roller_power = robot.ROLLER_POWER_HIGH;
                     g2_right_bumper_pressed = false;
@@ -340,13 +352,19 @@ public class BoKTele
                 }
 
                 if (opMode.gamepad2.dpad_left) {
-                    robot.ridingGateLeft.setPosition(robot.RGL_LOCK);
-                    robot.ridingGateRight.setPosition(robot.RGR_LOCK);
+                    if (!ridingGatesLocked) {
+                        robot.ridingGateLeft.setPosition(robot.RGL_LOCK);
+                        robot.ridingGateRight.setPosition(robot.RGR_LOCK);
+                        ridingGatesLocked = true;
+                    }
                 }
 
                 if (opMode.gamepad2.dpad_right) {
-                    robot.ridingGateLeft.setPosition(robot.RGL_UNLOCK);
-                    robot.ridingGateRight.setPosition(robot.RGR_UNLOCK);
+                    if (ridingGatesLocked) {
+                        robot.ridingGateLeft.setPosition(robot.RGL_UNLOCK);
+                        robot.ridingGateRight.setPosition(robot.RGR_UNLOCK);
+                        ridingGatesLocked = false;
+                    }
                 }
                 if (opMode.gamepad2.left_trigger > GAME_TRIGGER_DEAD_ZONE) {
                     if (g2_left_trigger_pressed) {

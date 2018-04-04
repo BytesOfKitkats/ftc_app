@@ -66,7 +66,36 @@ public class BoKSetupOpMode extends LinearOpMode
             }
 
             if (gamepad1.y) {
+                robot.leftRoller.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                robot.leftRoller.setTargetPosition(250);
+                robot.leftRoller.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                robot.leftRoller.setPower(0.2);
 
+                while (opModeIsActive() && robot.leftRoller.isBusy()) {
+
+                }
+                robot.leftRoller.setPower(0);
+                robot.leftRoller.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+                robot.rightRoller.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                robot.rightRoller.setTargetPosition(250);
+                robot.rightRoller.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                robot.rightRoller.setPower(0.2);
+
+                while (opModeIsActive() && robot.rightRoller.isBusy()) {
+
+                }
+                robot.rightRoller.setPower(0);
+                robot.rightRoller.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+                robot.relicSpool.setTargetPosition(250);
+                robot.relicSpool.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                robot.relicSpool.setPower(0.2);
+                while (opModeIsActive() && robot.relicSpool.isBusy()) {
+
+                }
+                robot.relicSpool.setPower(0);
+                robot.relicSpool.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             }
             telemetry.update();
 
