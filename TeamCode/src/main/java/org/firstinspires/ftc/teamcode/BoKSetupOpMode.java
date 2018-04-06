@@ -22,6 +22,7 @@ public class BoKSetupOpMode extends LinearOpMode
 
     public void runOpMode()
     {
+        boolean test_sensors = false;
         robot.initHardware(this);
         telemetry.addData("Status", "Hardware initialized");
         telemetry.update();
@@ -32,12 +33,13 @@ public class BoKSetupOpMode extends LinearOpMode
             // GAMEPAD 1 CONTROLS
             // X:                    Sensor values
             // Y:                    Test DC Motors
-            if (gamepad1.x) {
+            if (gamepad1.x || test_sensors) {
+                test_sensors = true;
                 float[] hsvValues = robot.getHue(robot.colorNear);
                 telemetry.addData("Near", "H: " + String.format("%.2f", hsvValues[0]) +
                         ", S: " + String.format("%.2f", hsvValues[1]) +
                         ", V: " + String.format("%.2f", hsvValues[2]) +
-                        ", A: " + String.format("%.2f", robot.colorNear.alpha()) +
+                        ", A: " + robot.colorNear.alpha() +
                         ", D: " + String.format("%.2f",
                         robot.distNear.getDistance(DistanceUnit.CM)));
 
@@ -45,15 +47,15 @@ public class BoKSetupOpMode extends LinearOpMode
                 telemetry.addData("Far", "H: " + String.format("%.2f", hsvValues[0]) +
                         ", S: " + String.format("%.2f", hsvValues[1]) +
                         ", V: " + String.format("%.2f", hsvValues[2]) +
-                        ", A: " + String.format("%.2f", robot.colorFar.alpha()) +
+                        ", A: " + robot.colorFar.alpha() +
                         ", D: " + String.format("%.2f",
-                        robot.distNear.getDistance(DistanceUnit.CM)));
+                        robot.distFar.getDistance(DistanceUnit.CM)));
 
                 hsvValues = robot.getHue(robot.colorBottom);
                 telemetry.addData("Bottom", "H: " + String.format("%.2f", hsvValues[0]) +
                         ", S: " + String.format("%.2f", hsvValues[1]) +
                         ", V: " + String.format("%.2f", hsvValues[2]) +
-                        ", A: " + String.format("%.2f", robot.colorFar.alpha()));
+                        ", A: " + robot.colorFar.alpha());
 
                 telemetry.addData("Front", String.format("%.2f",
                         robot.getDistanceCM(robot.mb1240Front)));
@@ -66,6 +68,7 @@ public class BoKSetupOpMode extends LinearOpMode
             }
 
             if (gamepad1.y) {
+                test_sensors = false;
                 robot.leftRoller.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 robot.leftRoller.setTargetPosition(250);
                 robot.leftRoller.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -88,14 +91,14 @@ public class BoKSetupOpMode extends LinearOpMode
                 robot.rightRoller.setPower(0);
                 robot.rightRoller.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-                robot.relicSpool.setTargetPosition(250);
-                robot.relicSpool.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                robot.relicSpool.setPower(0.2);
-                while (opModeIsActive() && robot.relicSpool.isBusy()) {
+                robot.flipperLift.setTargetPosition(250);
+                robot.flipperLift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                robot.flipperLift.setPower(0.2);
+                while (opModeIsActive() && robot.flipperLift.isBusy()) {
 
                 }
-                robot.relicSpool.setPower(0);
-                robot.relicSpool.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                robot.flipperLift.setPower(0);
+                robot.flipperLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             }
             telemetry.update();
 
