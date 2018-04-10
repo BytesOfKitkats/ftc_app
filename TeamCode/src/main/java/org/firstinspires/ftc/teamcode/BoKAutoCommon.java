@@ -88,6 +88,17 @@ public abstract class BoKAutoCommon implements BoKAuto
     protected static final boolean DEBUG_OPEN_CV = false;
     private static final String VUFORIA_LOCK_IMG = "vuImage.png";
     private static final String ROI_IMG = "roiImage.png";
+
+    // Second & third glyphs during autonomous
+    private static final double TIMEOUT_8S = 8.0; // Total time available
+    private static final double TIMEOUT_ROLLERS_BURST = 0.5;
+    private static final double ROLLER_POWER = 0.95;
+    protected int numGlyphs = 0;
+    protected int encCountsTillLine = 0;
+    protected double turnAngle = 0;
+    private int lastPosL, lastPosR;
+    private int THRESHOLD_ROLLER_ENC_COUNT = 5;
+    //int encCountSecGlyph = 0;
     //private static final String HSV_IMG = "hsvImage.png";
 
     private AppUtil appUtil = AppUtil.getInstance();
@@ -107,7 +118,7 @@ public abstract class BoKAutoCommon implements BoKAuto
     protected RelicRecoveryVuMark cryptoColumn = RelicRecoveryVuMark.LEFT;
     protected boolean foundRedOnLeft = false;
 
-    private Orientation angles;
+    protected Orientation angles;
 
     private BaseLoaderCallback loaderCallback = new BaseLoaderCallback(appUtil.getActivity())
     {
@@ -180,8 +191,48 @@ public abstract class BoKAutoCommon implements BoKAuto
         RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.UNKNOWN;
         String robotPosition = "", vuMarkInfo = "";
 
-        //moveUpperArm(UA_INIT_ANGLE, UA_POWER, -1); // no timeout
+        // Show X, Z and Rotation on Y axis on the main activity
+        Activity act = AppUtil.getInstance().getActivity();
+        // Need to access xzPosView & layout in a separate thread, must declare these final
+        final RelativeLayout layout = (RelativeLayout)act.findViewById(R.id.RelativeLayout);
+        final TextView xzPosView = new TextView(act);
+        // setup the text view and set its relative position in the relative layout
+        xzPosView.setText("Setup");
+        xzPosView.setRotation(90); // Rotate to landscape mode
+        xzPosView.setTextColor(0xFFFFFF00); // Yellow (A: 0xFF, Red: 0xFF, Green: 0xFF, Blue: 0x00)
+        // Make it bold & big (size 64)
+        xzPosView.setTypeface(xzPosView.getTypeface(), Typeface.BOLD);
+        xzPosView.setTextSize(
+                act.getResources().getDimension(R.dimen.activity_horizontal_margin)*2);
+        RelativeLayout.LayoutParams params =
+                new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT,
+                        RelativeLayout.LayoutParams.WRAP_CONTENT);
+        // above textGamepad1 in the relative layout
+        params.addRule(RelativeLayout.ABOVE, R.id.textGamepad1);
+        xzPosView.setLayoutParams(params);
 
+        // we can only add the text view in the main UI thread
+        act.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                xzPosView.setVisibility(View.VISIBLE);
+                layout.addView(xzPosView);
+            }
+        });
+
+        // Must pass String in the constructor of the Runnable object
+        class UpdateRobotPosition implements Runnable
+        {
+            String pos;
+            UpdateRobotPosition(String s)
+            {
+                pos = s;
+            }
+            public void run()
+            {
+                xzPosView.setText(pos);
+            }
+        }
         // activate
         relicTrackables.activate();
         CameraDevice.getInstance().setFlashTorchMode(true);
@@ -227,6 +278,10 @@ public abstract class BoKAutoCommon implements BoKAuto
                                                   tZ,// - tZOffset,
                                                   rY);
 
+                    // we can only update the text in the main UI thread
+                    act.runOnUiThread(new UpdateRobotPosition(String.format("Z: %.1f\n" +
+                            "S: %.1f", tZ/10, robot.getDistanceCM(robot.mb1240Side))));
+
                     opMode.telemetry.addData("Trans", robotPosition);
                     vuMarkInfo = vuMark + " at :(" +
                                  (int)pointCenter.getData()[0] + ", " +
@@ -251,8 +306,17 @@ public abstract class BoKAutoCommon implements BoKAuto
             robot.waitForTick(BoKHardwareBot.WAIT_PERIOD);
         }
 
-        // now initialize the IMU
+        // we can only remove the text view in the main UI thread
+        act.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                xzPosView.setVisibility(View.INVISIBLE);
+                layout.removeView(xzPosView);
+                layout.refreshDrawableState();
+            }
+        });
 
+        // now initialize the IMU
         robot.initializeImu();
     }
 
@@ -744,7 +808,7 @@ public abstract class BoKAutoCommon implements BoKAuto
             move(DT_POWER_FOR_CRYPTO,
                  DT_POWER_FOR_CRYPTO,
                  Math.abs(distanceToMove),
-                    (distanceToMove < 0) ? true : false,
+                 (distanceToMove < 0) ? true : false,
                  DT_TIMEOUT_5S);
 
             // take a picture
@@ -1077,7 +1141,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         return Range.clip(error * PCoeff, -1, 1);
     }
 
-    protected void moveToCrypto(double initGyroAngle, int waitForServoMs)
+    protected void moveToCrypto(double initGyroAngle, int waitForServoMs, boolean secGlyph)
     {
         if (opMode.opModeIsActive()) {
             // take a picture
@@ -1086,7 +1150,6 @@ public abstract class BoKAutoCommon implements BoKAuto
             // Lower the jewel arm & the range sensor
             robot.jewelArm.setPosition(robot.JA_MID);
             opMode.sleep(waitForServoMs*3); // let the flicker settle down
-
             angles = robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
                                                      AxesOrder.XYZ,
                                                      AngleUnit.DEGREES);
@@ -1102,56 +1165,30 @@ public abstract class BoKAutoCommon implements BoKAuto
             // move the jewel flicker to init and slowly move the wrist down
             robot.jewelFlicker.setPosition(robot.JF_INIT);
             opMode.sleep(waitForServoMs);
+
             double distBack = 8.0;
-            if (far) {
-                // check if we have space?
-                if (allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED) {
-                    move(DT_POWER_FOR_STONE, DT_POWER_FOR_STONE, 5, true, DT_TIMEOUT_2S);
-                    gyroTurn(DT_TURN_SPEED_HIGH,
-                             initGyroAngle,
-                             180,   // final angle RED Far
-                             DT_TURN_THRESHOLD_HIGH, // threshold
-                             false, // NOT a tank turn
-                             false,
-                             DT_TURN_TIMEOUT);
-                }
-                else {
-                    distBack += 1;
-                    move(DT_POWER_FOR_STONE, DT_POWER_FOR_STONE, 9, true, DT_TIMEOUT_4S);
-                    gyroTurn(DT_TURN_SPEED_HIGH,
-                             initGyroAngle,
-                             0,     // final angle BLUE Far
-                             DT_TURN_THRESHOLD_HIGH, // threshold
-                             false, // NOT a tank turn
-                             false,
-                             DT_TURN_TIMEOUT);
-                }
+            if(allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED){
+                //move(DT_POWER_HIGH, DT_POWER_HIGH, 2, true, DT_TIMEOUT_2S);
             }
             else {
-                if(allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED){
-                    //move(DT_POWER_HIGH, DT_POWER_HIGH, 2, true, DT_TIMEOUT_2S);
-                }
-                else {
-                    distBack += 2;
-                    //move(DT_POWER_HIGH, DT_POWER_HIGH, 9, true, DT_TIMEOUT_4S);
-                }
-                gyroTurn(DT_TURN_SPEED_HIGH,
-                         initGyroAngle,
-                         TURN_LEFT_DEGREES, // final angle RED and BLUE Near
-                         DT_TURN_THRESHOLD_HIGH, // threshold,
-                         false, // NOT a tank turn
-                         false,
-                         DT_TURN_TIMEOUT);
+                distBack += 2;
+                //move(DT_POWER_HIGH, DT_POWER_HIGH, 9, true, DT_TIMEOUT_4S);
             }
+            turnAngle = gyroTurn(DT_TURN_SPEED_HIGH,
+                                 initGyroAngle,
+                                 TURN_LEFT_DEGREES, // final angle RED and BLUE Near
+                                 DT_TURN_THRESHOLD_HIGH, // threshold,
+                                 false, // NOT a tank turn
+                                 false,
+                                 DT_TURN_TIMEOUT);
 
             moveRamp(DT_POWER_HIGH, distBack, false, DT_TIMEOUT_4S);
 
             flipFlipper(FLIP_FLIPPER_DUMP); // dump the glyph
 
             // just park in the safe zone
-            moveRamp(DT_POWER_HIGH, distBack - 4.5, true, DT_TIMEOUT_4S);
-
-
+            if (!secGlyph)
+                moveRamp(DT_POWER_HIGH, distBack - 4.5, true, DT_TIMEOUT_4S);
         } // opMode.isActive
     }
 
@@ -1166,7 +1203,19 @@ public abstract class BoKAutoCommon implements BoKAuto
         }
     }
 
-    void flipFlipper (int state){
+    void moveLiftEnc(int encCount){
+        robot.flipperLift.setTargetPosition(encCount);
+        robot.flipperLift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        robot.flipperLift.setPower(0.4);
+        while (robot. flipperLift.isBusy()){
+
+        }
+        robot.flipperLift.setPower(0);
+    }
+
+    void flipFlipper (int state)
+    {
+        int RAISE_LIFT_ENC_COUNTS = 700;
         switch (state){
             case (FLIP_FLIPPER_INIT): // setupRobot
                 robot.flipper.setPosition(FLIPPER_ANGLE_INIT_POS);
@@ -1176,29 +1225,40 @@ public abstract class BoKAutoCommon implements BoKAuto
                 double pos = robot.flipper.getPosition();
                 for (;pos > robot.FLIPPER_UP_POS; pos -= 0.05){
                     robot.flipper.setPosition(pos);
-                    opMode.sleep(robot.OPMODE_SLEEP_INTERVAL_MS_SHORT);
+                    opMode.sleep(robot.OPMODE_SLEEP_INTERVAL_MS_SHORT*2);
                 }
                 break;
             case (FLIP_FLIPPER_LOWER):
                 robot.flipper.setPosition(robot.FLIPPER_DOWN_POS);
                 break;
+            case (RAISE_LIFT):
+                robot.flipper.setPosition(robot.FLIPPER_ANGLE_POS);
+                moveLiftEnc(RAISE_LIFT_ENC_COUNTS);
+                //flipFlipper(FLIP_FLIPPER_DUMP);
+                break;
+            case (LOWER_LIFT_AND_RESET_FLIPPER):
+                moveLiftEnc(0);
+                robot.flipper.setPosition(robot.FLIPPER_DOWN_POS);
+                break;
         }
     }
 
-    void moveRollers(int direction, double waitForSeconds)
+    void moveRollers(int direction, double power, double waitForSeconds, ElapsedTime timeKeeper)
     {
-        runTime.reset();
+        double startTime = timeKeeper.seconds();
         switch (direction) {
             case (INTAKE_ROLLERS):
-                robot.leftRoller.setPower(robot.ROLLER_POWER_HIGH);
-                robot.rightRoller.setPower(robot.ROLLER_POWER_HIGH);
-                while (opMode.opModeIsActive() && (runTime.seconds() < waitForSeconds)){
+                robot.leftRoller.setPower(power);
+                robot.rightRoller.setPower(power);
+                while (opMode.opModeIsActive() &&
+                        ((timeKeeper.seconds() - startTime) < waitForSeconds)) {
                 }
                 break;
-            case (2):
-                robot.leftRoller.setPower(-robot.ROLLER_POWER_HIGH);
-                robot.rightRoller.setPower(-robot.ROLLER_POWER_HIGH);
-                while (opMode.opModeIsActive() && (runTime.seconds() < waitForSeconds)){
+            case (REVERSE_ROLLERS):
+                robot.leftRoller.setPower(-power);
+                robot.rightRoller.setPower(-power);
+                while (opMode.opModeIsActive() &&
+                        ((timeKeeper.seconds() - startTime) < waitForSeconds)) {
                 }
                 break;
         }
@@ -1209,6 +1269,7 @@ public abstract class BoKAutoCommon implements BoKAuto
     boolean targetColorReached(ColorSensor cs, boolean red)
     {
         float [] currentColor = robot.getHue(cs);
+        //Log.v("BOK", "Hue val " + currentColor[0]);
         if (red) {
             if ((currentColor[0] > 300) || (currentColor[0] < 5)) {
                 Log.v("BOK", "Reached RED!");
@@ -1216,7 +1277,7 @@ public abstract class BoKAutoCommon implements BoKAuto
             }
         }
         else {
-            if (currentColor[0] > 200) {
+            if (currentColor[0] > 175) {
                 Log.v("BOK", "Reached BLUE!");
                 return true;
             }
@@ -1252,77 +1313,178 @@ public abstract class BoKAutoCommon implements BoKAuto
             }
 
             robot.stopMove();
+
+            if (forward) {
+                encCountsTillLine = (Math.abs(robot.getLFEncCount()) +
+                                     Math.abs(robot.getRFEncCount())) / 2;
+                Log.v("BOK", "encCountsTillLine " + encCountsTillLine);
+            }
         }
     }
 
-    protected void moveRampWColor(double maxPower,
-                                  double inches,
-                                  boolean forward,
-                                  double waitForSec)
+    class PulseRollersThread extends Thread {
+        @Override
+        public void run() {
+            ElapsedTime rTime = new ElapsedTime();
+            rTime.reset();
+            // Move rollers in & out slowly
+            moveRollers(INTAKE_ROLLERS,
+                    robot.ROLLER_POWER_LOW,
+                    TIMEOUT_ROLLERS_BURST,
+                    rTime);
+            moveRollers(REVERSE_ROLLERS,
+                    robot.ROLLER_POWER_LOW,
+                    TIMEOUT_ROLLERS_BURST,
+                    rTime);
+        }
+    }
+
+    private void moveRobotForIntake(double power, double distance, boolean forward)
     {
-        // Ensure that the opmode is still active
-        if (opMode.opModeIsActive()) {
+        boolean stuck = false, reverse = false;
+        double timeStuckStart = 0, timeReverseStart = 0;
+        double CRAWL_POWER = 0.01;
+        float STUCK_TIME_BEFORE_REVERSE = 0.5f;
+        float REVERSE_TIME = 0.25f;
 
-            boolean steady = false;
-            robot.resetDTEncoders();
-            int targetEncCount = robot.startMove(DT_RAMP_SPEED_INIT,
-                    DT_RAMP_SPEED_INIT,
-                    inches,
-                    true);
-            // speed up during the initial 1/4 enc counts
-            // maintain max power during the next 1/2 enc counts
-            // speed down during the last 1/4 enc counts
-            int rampupEncCount = targetEncCount/4;
-            int rampdnEncCount = targetEncCount - rampupEncCount;
-            double ratePower = (maxPower - DT_RAMP_SPEED_INIT)/rampupEncCount;
-            ColorSensor cs = robot.colorBottom;
-            boolean red = (allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED);
+        robot.flipper.setPosition(FLIP_FLIPPER_LOWER);
+        robot.resetDTEncoders();
+        robot.startMove(power, power, distance, forward);
 
-            runTime.reset();
-            while (opMode.opModeIsActive() &&
-                    robot.areDTMotorsBusy()) {
-                if (runTime.seconds() >= waitForSec) {
-                    Log.v("BOK", "moveRampWColor timed out!" + String.format(" %.1f", waitForSec));
-                    break;
-                }
-                if (targetColorReached(cs, red)) {
-                    Log.v("BOK", "moveRampWColor Line detected");
-                    break;
-                }
+        Log.v("BOK", "MoveRobotForIntake");
+        while (opMode.opModeIsActive() &&
+                robot.areDTMotorsBusy()) {
 
-                int lfEncCount = Math.abs(robot.getLFEncCount());
-                if (lfEncCount < rampupEncCount) {
-                    double power = DT_RAMP_SPEED_INIT + ratePower * lfEncCount;
-                    //Log.v("BOK", lfEncCount + " power Up: " + String.format("%.2f", power));
-                    if (forward) {
-                        robot.setPowerToDTMotors(power, power, -power, -power);
-                    } else {
-                        robot.setPowerToDTMotors(-power, -power, power, power);
-                    }
-                }
-                else if (lfEncCount < rampdnEncCount) {
-                    if (!steady) {
-                        if (forward) {
-                            robot.setPowerToDTMotors(maxPower, maxPower, -maxPower, -maxPower);
-                        } else {
-                            robot.setPowerToDTMotors(-maxPower, -maxPower, maxPower, maxPower);
-                        }
-                        steady = true;
-                    }
-                }
-                else {
-                    double power = DT_RAMP_SPEED_INIT -
-                            ratePower * (lfEncCount - targetEncCount);
-                    //Log.v("BOK", lfEncCount + " power dn: " + String.format("%.2f", power));
-                    if (forward) {
-                        robot.setPowerToDTMotors(power, power, -power, -power);
-                    } else {
-                        robot.setPowerToDTMotors(-power, -power, power, power);
-                    }
-                }
+            if ((runTime2ndGlyph.seconds() >= TIMEOUT_8S)) {
+                Log.v("BOK", "Ran out of time!");
+                break;
             }
 
-            robot.stopMove();
+            double distFar = robot.distFar.getDistance(DistanceUnit.CM);
+            double distNear = robot.distNear.getDistance(DistanceUnit.CM);
+            boolean glyphFound = !Double.isNaN(distFar) && !Double.isNaN(distNear);
+            if (glyphFound) {
+                Log.v("BOK", "Near: " + distNear + ", Far: " + distFar);
+                numGlyphs = 2;
+                robot.stopMove();
+                break;
+            }
+
+            int currentPosL = robot.leftRoller.getCurrentPosition();
+            int currentPosR = robot.rightRoller.getCurrentPosition();
+
+            int deltaL = Math.abs(currentPosL - lastPosL);
+            int deltaR = Math.abs(currentPosR - lastPosR);
+
+            //Log.v("BOK", "CL: " + currentPosL + ", DL: " + deltaL +
+            //             ", CR: " + currentPosR + ", DR: " + deltaR);
+            if (reverse) {
+                if ((runTime2ndGlyph.seconds() - timeReverseStart ) > REVERSE_TIME) {
+                    reverse = false;
+                }
+                lastPosL = currentPosL;
+                lastPosR = currentPosR;
+            }
+            else {
+                if ((deltaL <= THRESHOLD_ROLLER_ENC_COUNT) ||
+                        (deltaR <= THRESHOLD_ROLLER_ENC_COUNT)) {
+                    lastPosL = currentPosL;
+                    lastPosR = currentPosR;
+                    if (!stuck) {
+                        stuck = true;
+                        Log.v("BOK", "Stuck");
+                        timeStuckStart = runTime2ndGlyph.seconds();
+                    } else {
+                        if ((runTime2ndGlyph.seconds() - timeStuckStart)
+                                > STUCK_TIME_BEFORE_REVERSE) {
+                            if (!reverse) {
+                                Log.v("BOK", "Reversing");
+                                timeReverseStart = runTime2ndGlyph.seconds();
+                                reverse = true;
+                                robot.setPowerToDTMotors(CRAWL_POWER, CRAWL_POWER,
+                                                         CRAWL_POWER, CRAWL_POWER);
+                            }
+                            robot.leftRoller.setPower(-ROLLER_POWER);
+                            robot.rightRoller.setPower(-ROLLER_POWER);
+                        }
+                    }
+                } else {
+                    lastPosL = currentPosL;
+                    lastPosR = currentPosR;
+                    stuck = false;
+                    reverse = false;
+                    //Log.v("BOK", "Forward");
+                    robot.setPowerToDTMotors(0.1, 0.1, 0.1, 0.1);
+                    robot.leftRoller.setPower(ROLLER_POWER);
+                    robot.rightRoller.setPower(ROLLER_POWER);
+                }
+            }
+        } // while
+
+        Log.v("BOK", "Stop");
+        robot.stopMove();
+    }
+
+    protected void getSecondGlyph()
+    {
+        double POWER_FORWARD = 0.15;
+        double POWER_BACK = 0.3;
+        int FORWARD_DISTANCE = 6;
+        int BACKWARD_DISTANCE = 3;
+        int SLEEP_MS = 250;
+        int NUM_TRIES = 3;
+
+        robot.leftRoller.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rightRoller.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.leftRoller.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        robot.rightRoller.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        robot.leftRoller.setPower(ROLLER_POWER);
+        robot.rightRoller.setPower(ROLLER_POWER);
+
+        lastPosL = -(THRESHOLD_ROLLER_ENC_COUNT*2);
+        lastPosR = -(THRESHOLD_ROLLER_ENC_COUNT*2);
+
+        runTime2ndGlyph.reset();
+        Log.v("BOK", "Start 2nd glyph intake");
+
+        for (int i = 0; i < NUM_TRIES; i++) {
+            if (numGlyphs == 2)
+                break;
+            moveRobotForIntake(POWER_FORWARD, FORWARD_DISTANCE, true);
+            if (numGlyphs == 2)
+                break;
+            opMode.sleep(SLEEP_MS);
+            moveRobotForIntake(POWER_BACK, BACKWARD_DISTANCE, false);
+        }
+
+        robot.leftRoller.setPower(0);
+        robot.rightRoller.setPower(0);
+
+        if (numGlyphs == 0) {
+            double distNear = robot.distNear.getDistance(DistanceUnit.CM);
+            double distFar = robot.distFar.getDistance(DistanceUnit.CM);
+            boolean glyphFound = !Double.isNaN(distNear) ||
+                    !Double.isNaN(distFar);
+            if (glyphFound) {
+                Log.v("BOK", "Check near: " + distNear + ", far: " + distFar);
+                numGlyphs = 1;
+                if(!Double.isNaN(distFar))
+                    numGlyphs = 2;
+            }
+        }
+        if (numGlyphs > 0) {
+            PulseRollersThread pulseRollers = new PulseRollersThread();
+            pulseRollers.start();
+        }
+
+        Log.v("BOK", "Num of glyphs: " + numGlyphs);
+    }
+
+    class InitRelicArmThread extends Thread {
+        @Override
+        public void run()
+        {
+            robot.initRelicArm();
         }
     }
 }

@@ -47,12 +47,15 @@ public interface BoKAuto
     public static int FLIP_FLIPPER_INIT = 1;
     public static int FLIP_FLIPPER_DUMP = 2;
     public static int FLIP_FLIPPER_LOWER = 3;
+    public static int RAISE_LIFT = 4;
+    public static int LOWER_LIFT_AND_RESET_FLIPPER = 5;
 
     // Rollers constants
     public static int INTAKE_ROLLERS = 1;
     public static int REVERSE_ROLLERS = 2;
 
     public static ElapsedTime runTimeOpMode = new ElapsedTime();
+    public static ElapsedTime runTime2ndGlyph = new ElapsedTime();
     public BoKAutoStatus initSoftware(BoKAutoOpMode opMode,
                                       BoKHardwareBot robot);
 

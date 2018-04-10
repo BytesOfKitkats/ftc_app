@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.robocol.TelemetryMessage;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
 
 /**
  * Created by Krishna Saxena on 10/3/2017.
@@ -21,10 +22,10 @@ public class BoKTele
     private static final double GAME_TRIGGER_DEAD_ZONE = 0.2;
     private static final double SPEED_COEFF_SLOW = 0.35;
     private static final double SPEED_COEFF_FAST = 0.9;
-    private static final int RA_JOYSTICK_RATIO = 200;
-    private static final double RELIC_DEPLOY_POWER = 0.6;
+    private static final double SPEED_COEFF_TURN = 0.6;
+    private static final int RA_JOYSTICK_RATIO = 350;
+    private static final double RELIC_DEPLOY_POWER = 0.8;
     private static final double RELIC_RETRACT_POWER = 0.4;
-    private static final int PULSE_COUNT = 4;
 
     private BoKHardwareBot robot;
     private LinearOpMode opMode;
@@ -56,17 +57,15 @@ public class BoKTele
 
         boolean g2_left_bumper_pressed = false;
         boolean g2_right_bumper_pressed = false;
-        boolean relic_deploying = false;
         boolean flipper_down = true;
+        boolean bring_flipper_down = false;
         boolean g2_left_trigger_pressed = false;
         boolean g2_right_trigger_pressed = false;
-        int g2_lt_count = 0;
-        int g2_rt_count = 0;
         int flipperCount = -1;
-        boolean countDebounce = false;
-        int FLIPPER_LIFT_DOWN_TARGET_ENC_COUNT = 100;
         double roller_power = robot.ROLLER_POWER_HIGH;
         double FLIPPER_LIFT_POWER = 0.6;
+        double FLIPPER_LIFT_POWER_LOW = 0.4;
+        int FLIPPER_LIFT_LOW = 0;
         boolean ridingGatesLocked = true;
 
         robot.jewelArm.setPosition(robot.JA_INIT);
@@ -77,8 +76,10 @@ public class BoKTele
         robot.leftRoller.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         robot.rightRoller.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         //robot.flipperLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        robot.initRelicArm();
+        //robot.initRelicArm();
+        robot.relicArm.setPosition(robot.RA_INIT);
         robot.relicSpool.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        robot.relicSpool.setPower(0);
 
         // run until the end of the match (driver presses STOP)
         while (opMode.opModeIsActive()) {
@@ -109,6 +110,8 @@ public class BoKTele
             // Y:					   Throw glyphs out
             // Left bumper:            Raise glyph flipper
             // Right bumper:           Lower glyph flipper
+            // Left trigger:           Short burst of left roller motor reversed
+            // Right trigger:          Short burst of right roller motor reversed
             // Relic Mode:
             // Left Stick:             Relic Lift
             // Right Stick:            Relic Arm
@@ -129,13 +132,14 @@ public class BoKTele
                     //robot.setModeForDTMotors(DcMotor.RunMode.RUN_USING_ENCODER);
                     speedCoef = SPEED_COEFF_SLOW;
                     // Make sure that the flipper lift is down
-                    robot.flipperLift.setTargetPosition(FLIPPER_LIFT_DOWN_TARGET_ENC_COUNT);
+                    robot.flipperLift.setTargetPosition(FLIPPER_LIFT_LOW);
                     robot.flipperLift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     robot.flipperLift.setPower(FLIPPER_LIFT_POWER);
 
 					// Stop the intake rollers
                     robot.leftRoller.setPower(0);
                     robot.rightRoller.setPower(0);
+
                     // Make sure the roller gates are down
                     robot.ridingGateLeft.setPosition(robot.RGL_UNLOCK);
                     robot.ridingGateRight.setPosition(robot.RGR_UNLOCK);
@@ -149,10 +153,9 @@ public class BoKTele
                     Log.v("BOK", "Relic mode started");
                 }
 
-                if (opMode.gamepad2.dpad_up) {
+                if (opMode.gamepad2.dpad_up && relic_mode) {
                     relic_mode = false;
                     end_game = false;
-                    relic_deploying = false;
                     robot.setModeForDTMotors(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     speedCoef = SPEED_COEFF_FAST;
                     robot.flipperLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -162,18 +165,19 @@ public class BoKTele
             }
 
             if (relic_mode) {
+                // Relic lift deploying/retracting
                 if ((opMode.gamepad2.left_stick_y) <= -GAME_TRIGGER_DEAD_ZONE) {
-                    relic_deploying = false; // manual control enabled!
                     robot.relicSpool.setPower(-opMode.gamepad2.left_stick_y*RELIC_DEPLOY_POWER);
                     //Log.v("BOK","Relic Spool Position: " + robot.relicSpool.getCurrentPosition());
                 } else if (opMode.gamepad2.left_stick_y >= GAME_TRIGGER_DEAD_ZONE) {
-                    relic_deploying = false; // manual control enabled!
                     robot.relicSpool.setPower(-opMode.gamepad2.left_stick_y*RELIC_RETRACT_POWER);
                     //Log.v("BOK","Relic Spool Position: " + robot.relicSpool.getCurrentPosition());
                 }
-                else if (!relic_deploying) { // manual mode
+                else {
                     robot.relicSpool.setPower(0);
                 }
+
+                // Relic arm preset positions
                 if (!g2_left_bumper_pressed && opMode.gamepad2.left_bumper ) {
                     //Log.v("BOK", "Left bumper pressed"); // raise the relic arm to RA_HIGH_POS
                     g2_left_bumper_pressed = true;
@@ -184,7 +188,7 @@ public class BoKTele
                     g2_right_bumper_pressed = true;
                     robot.relicArm.setPosition(robot.RA_FAR_POS);
                 }
-
+                // Relic arm rotation
                 if (opMode.gamepad2.right_stick_y < -GAME_TRIGGER_DEAD_ZONE) {
                     double posOfArm = robot.relicArm.getPosition();
                     g2_left_bumper_pressed = false;
@@ -193,7 +197,7 @@ public class BoKTele
                     robot.relicArm.setPosition(posOfArm +
                             (-opMode.gamepad2.right_stick_y / RA_JOYSTICK_RATIO));
 
-                    Log.v("BOK", "Relic Arm pos: " + robot.relicArm.getPosition());
+                    //Log.v("BOK", "Relic Arm pos: " + robot.relicArm.getPosition());
                 } else if (opMode.gamepad2.right_stick_y > GAME_TRIGGER_DEAD_ZONE) {
                     // Move relic arm down
                     double posOfArm = robot.relicArm.getPosition();
@@ -203,8 +207,9 @@ public class BoKTele
                     robot.relicArm.setPosition(posOfArm -
                             (opMode.gamepad2.right_stick_y / RA_JOYSTICK_RATIO));
 
-                    Log.v("BOK", "Relic Arm pos: " + robot.relicArm.getPosition());
+                    //Log.v("BOK", "Relic Arm pos: " + robot.relicArm.getPosition());
                 }
+                // Relic claw open/close
                 if (opMode.gamepad2.b) { // open the relic claw
                     robot.relicClaw.setPosition(robot.RC_UNLOCK);
                 }
@@ -213,85 +218,119 @@ public class BoKTele
                 }
             } // if (relic_mode)
             else {
+                // Roller motors
                 if (opMode.gamepad2.y || opMode.gamepad2.dpad_up) {
+                    // Spit out the glyphs by reversing roller motors
                     robot.leftRoller.setPower(-roller_power);
                     robot.rightRoller.setPower(-roller_power);
-                    g2_right_trigger_pressed = false;
-                    g2_left_trigger_pressed = false;
                 }
                 if (opMode.gamepad2.b) {
+                    // Stop the roller motors
                     robot.leftRoller.setPower(0);
                     robot.rightRoller.setPower(0);
-                    g2_right_trigger_pressed = false;
-                    g2_left_trigger_pressed = false;
                 }
                 if (opMode.gamepad2.a || opMode.gamepad2.dpad_down) {
+                    // Intake the glyphs
                     robot.leftRoller.setPower(roller_power);
                     robot.rightRoller.setPower(roller_power);
-                    g2_right_trigger_pressed = false;
+                }
+                // Reverse the left roller as long as the left trigger is pressed
+                if (opMode.gamepad2.left_trigger > GAME_TRIGGER_DEAD_ZONE) {
+                    if (!g2_left_trigger_pressed) {
+                        robot.rightRoller.setPower(0);
+                        robot.leftRoller.setPower(-opMode.gamepad2.left_trigger);
+                        g2_left_trigger_pressed = true;
+                    }
+                }
+                else if (g2_left_trigger_pressed) { // reset
+                    robot.rightRoller.setPower(roller_power);
+                    robot.leftRoller.setPower(roller_power);
                     g2_left_trigger_pressed = false;
                 }
-                if (opMode.gamepad2.left_stick_y < -GAME_TRIGGER_DEAD_ZONE) {
-                    if (!ridingGatesLocked) {
-                        robot.ridingGateLeft.setPosition(robot.RGL_LOCK);
-                        robot.ridingGateRight.setPosition(robot.RGR_LOCK);
-                        ridingGatesLocked = true;
+
+                // Reverse the right roller as long as the right trigger is pressed
+                if (opMode.gamepad2.right_trigger > GAME_TRIGGER_DEAD_ZONE) {
+                    if (!g2_right_trigger_pressed) {
+                        robot.leftRoller.setPower(0);
+                        robot.rightRoller.setPower(-opMode.gamepad2.right_trigger);
+                        g2_right_trigger_pressed = true;
                     }
+                }
+                else if (g2_right_trigger_pressed) {// reset
+                    robot.rightRoller.setPower(roller_power);
+                    robot.leftRoller.setPower(roller_power);
+                    g2_right_trigger_pressed = false;
+                }
+
+                // Flipper lift
+                if (opMode.gamepad2.left_stick_y < -GAME_TRIGGER_DEAD_ZONE) {
+                    // Raise the flipper lift
                     robot.flipperLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                     robot.flipperLift.setPower(FLIPPER_LIFT_POWER);
-                    g2_right_trigger_pressed = false;
-                    g2_left_trigger_pressed = false;
-                    countDebounce = false;
-                    Log.v("BOK", "Lift Pos " + robot.flipperLift.getCurrentPosition());
+                    bring_flipper_down = false; // cancel the RUN_TO_POSITION
+                    // Log.v("BOK", "Lift Pos " + robot.flipperLift.getCurrentPosition());
                 } else if (opMode.gamepad2.left_stick_y > GAME_TRIGGER_DEAD_ZONE &&
                         robot.flipperLift.getCurrentPosition() > 0) {
+                    // Lower the lift
                     robot.flipperLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                     robot.flipperLift.setPower(-FLIPPER_LIFT_POWER);
-                    g2_right_trigger_pressed = false;
-                    g2_left_trigger_pressed = false;
-                    countDebounce = false;
-                } else {
+                    bring_flipper_down = false; // cancel the RUN_TO_POSITION
+
+                } else if (!bring_flipper_down) {
+                    // Hold the lift's last position, but the minimum is 100 so that the
+                    // string remains tight.
                     robot.flipperLift.setPower(0);
                     int currentLiftPosition = robot.flipperLift.getCurrentPosition();
                     if (currentLiftPosition < 0)
-                        currentLiftPosition = 100;
+                        currentLiftPosition = FLIPPER_LIFT_LOW;
                     robot.flipperLift.setTargetPosition(currentLiftPosition);
                     robot.flipperLift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     robot.flipperLift.setPower(FLIPPER_LIFT_POWER);
                 }
 
+                // Flipper
                 if (opMode.gamepad2.right_stick_y < -GAME_TRIGGER_DEAD_ZONE
-                        && robot.flipper.getPosition() > 0.5) {
+                        && robot.flipper.getPosition() > robot.FLIPPER_UP_POS) {
+                    // Raise the flipper
                     double pos = robot.flipper.getPosition();
                     //Log.v("BOK", "Flipper Up " + pos);
-                    robot.flipper.setPosition(pos - 0.005);
-                    g2_right_trigger_pressed = false;
-                    g2_left_trigger_pressed = false;
-                    countDebounce = false;
-                    roller_power = 0;
-                    robot.leftRoller.setPower(roller_power);
-                    robot.rightRoller.setPower(roller_power);
+                    robot.flipper.setPosition(pos - 0.005); // flipper goes from 0.95 to 0.5
+                    if (pos < robot.FLIPPER_ANGLE_POS) { // if the flipper is above a certain height
+                        // Stop intake/egress of glyphs
+                        roller_power = 0;
+                        robot.leftRoller.setPower(roller_power);
+                        robot.rightRoller.setPower(roller_power);
+                    }
                 } else if (opMode.gamepad2.right_stick_y > GAME_TRIGGER_DEAD_ZONE
-                        && robot.flipper.getPosition() < 0.95) {
+                        && robot.flipper.getPosition() < robot.FLIPPER_DOWN_POS) {
+                    // Lower the flipper
                     double pos = robot.flipper.getPosition();
                     //Log.v("BOK", "Flipper Down " + pos);
-                    robot.flipper.setPosition(pos + 0.005);
-                    g2_right_trigger_pressed = false;
-                    g2_left_trigger_pressed = false;
-                    countDebounce = false;
-                    roller_power = robot.ROLLER_POWER_HIGH;
-
+                    robot.flipper.setPosition(pos + 0.005); // flipper goes from 0.95 to 0.5
+                    if (pos > robot.FLIPPER_ANGLE_POS) {
+                        roller_power = robot.ROLLER_POWER_HIGH;
+                    }
                 }
 
-                if (opMode.gamepad2.left_bumper && !countDebounce) {
+                // LEFT BUMPER TO BRING THE FLIPPER DOWN CAREFULLY
+                if (opMode.gamepad2.left_bumper && !bring_flipper_down) {
+                    // Bring the flipper down, but first lower the flipper lift so that we don't
+                    // hit the relic claw
+                    bring_flipper_down = true;
+                    // But first wait for the flipper lift to be lowered
+                    robot.flipperLift.setTargetPosition(FLIPPER_LIFT_LOW);
+                    robot.flipperLift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    robot.flipperLift.setPower(FLIPPER_LIFT_POWER_LOW);
+                }
+
+                if (bring_flipper_down && !robot.flipperLift.isBusy()) {
+                    // Once the flipper lift is lowered, then slowly bring the flipper down
+                    // so that it doesn't hit the Misumi slide!
                     //robot.flipper.setPosition(robot.FLIPPER_DOWN_POS);
-                    flipperCount = 40;
-                    g2_right_bumper_pressed = false;
-                    countDebounce = true;
-
-                    //Log.v ("BOK", "flipper down pos");
+                    flipperCount = 10;
+                    bring_flipper_down = false;
                 }
-                if(flipperCount > 0){
+                if (flipperCount > 0){
                     flipperCount--;
                     double pos = robot.flipper.getPosition();
                     if(pos < robot.FLIPPER_ANGLE_POS) {
@@ -304,45 +343,63 @@ public class BoKTele
                 else if (flipperCount == 0){
                     robot.flipper.setPosition(robot.FLIPPER_DOWN_POS);
                     flipperCount = -1;
-                }
-
-                if (opMode.gamepad2.right_bumper) {
-                    if (ridingGatesLocked) {
-                        robot.ridingGateLeft.setPosition(robot.RGL_UNLOCK);
-                        robot.ridingGateRight.setPosition(robot.RGR_UNLOCK);
-                        ridingGatesLocked = false;
-                    }
-                    opMode.sleep(robot.OPMODE_SLEEP_INTERVAL_MS_SHORT);
-                    robot.flipper.setPosition(robot.FLIPPER_UP_POS);
-                    g2_right_bumper_pressed = true;
-                    countDebounce = false;
-                    roller_power = 0;
-                    robot.leftRoller.setPower(roller_power);
-                    robot.rightRoller.setPower(roller_power);
-                    //Log.v ("BOK", "flipper up pos");
-                }
-                if (!g2_right_bumper_pressed && flipper_down &&
-                        Math.abs((robot.flipperLift.getCurrentPosition())) >= 175) {
-                    robot.flipper.setPosition(robot.FLIPPER_ANGLE_POS);
-                    flipper_down = false;
-                    g2_right_bumper_pressed = false;
-                    roller_power = 0;
-                    robot.leftRoller.setPower(roller_power);
-                    robot.rightRoller.setPower(roller_power);
-                } else if (!g2_right_bumper_pressed && !flipper_down &&
-                        Math.abs((robot.flipperLift.getCurrentPosition())) <= 175) {
                     if (!ridingGatesLocked) {
                         robot.ridingGateLeft.setPosition(robot.RGL_LOCK);
                         robot.ridingGateRight.setPosition(robot.RGR_LOCK);
-                        opMode.sleep(robot.OPMODE_SLEEP_INTERVAL_MS_SHORT);
                         ridingGatesLocked = true;
                     }
-                    robot.flipper.setPosition(robot.FLIPPER_DOWN_POS);
                     roller_power = robot.ROLLER_POWER_HIGH;
-                    g2_right_bumper_pressed = false;
-                    flipper_down = true;
+                    g2_right_bumper_pressed = false; // ready to dump again!
                 }
 
+                // RIGHT BUMPER TO DUMP
+                if (opMode.gamepad2.right_bumper && !g2_right_bumper_pressed) {
+                    // Bring the flipper up in order to dump the glyphs
+                    // Unlock the gates
+                    if (ridingGatesLocked) {
+                        robot.ridingGateLeft.setPosition(robot.RGL_UNLOCK);
+                        robot.ridingGateRight.setPosition(robot.RGR_UNLOCK);
+                        opMode.sleep(robot.OPMODE_SLEEP_INTERVAL_MS_SHORT);
+                        ridingGatesLocked = false;
+                    }
+                    // stop the rollers
+                    roller_power = 0;
+                    robot.leftRoller.setPower(roller_power);
+                    robot.rightRoller.setPower(roller_power);
+
+                    robot.flipper.setPosition(robot.FLIPPER_UP_POS);
+                    g2_right_bumper_pressed = true;
+                    //Log.v ("BOK", "flipper up pos");
+                }
+
+                // If the flipper lift is higher than 175, stop the intake automatically
+                if (!g2_right_bumper_pressed) {
+                    int flipperLiftPos = Math.abs(robot.flipperLift.getCurrentPosition());
+                    if (!flipper_down && flipperLiftPos <= 175) {
+                        // Flipper lift is low, lock the gates
+                        if (!ridingGatesLocked) {
+                            robot.ridingGateLeft.setPosition(robot.RGL_LOCK);
+                            robot.ridingGateRight.setPosition(robot.RGR_LOCK);
+                            opMode.sleep(robot.OPMODE_SLEEP_INTERVAL_MS_SHORT);
+                            ridingGatesLocked = true;
+                        }
+                        // set the roller power back to high
+                        roller_power = robot.ROLLER_POWER_HIGH;
+                        // Lower the flipper
+                        robot.flipper.setPosition(robot.FLIPPER_DOWN_POS);
+                        flipper_down = true;
+                    }
+                    else if (flipper_down && (flipperLiftPos >= 175)) {
+                        // Flipper lift is high, stop intake & angle the flipper up
+                        roller_power = 0;
+                        robot.leftRoller.setPower(roller_power);
+                        robot.rightRoller.setPower(roller_power);
+                        robot.flipper.setPosition(robot.FLIPPER_ANGLE_POS);
+                        flipper_down = false;
+                    }
+                }
+
+                // Flipper gates
                 if (opMode.gamepad2.dpad_left) {
                     if (!ridingGatesLocked) {
                         robot.ridingGateLeft.setPosition(robot.RGL_LOCK);
@@ -358,48 +415,12 @@ public class BoKTele
                         ridingGatesLocked = false;
                     }
                 }
-                if (opMode.gamepad2.left_trigger > GAME_TRIGGER_DEAD_ZONE) {
-                    if (g2_left_trigger_pressed) {
-                        if (g2_lt_count > 0) {
-                            g2_lt_count--;
-                        }
-                        else {
-                            robot.rightRoller.setPower(roller_power);
-                            robot.leftRoller.setPower(roller_power);
-                            //g2_left_trigger_pressed = false;
-                        }
-                    }
-                    else {
-                        robot.rightRoller.setPower(0);
-                        robot.leftRoller.setPower(-opMode.gamepad2.left_trigger);
-                        g2_left_trigger_pressed = true;
-                        g2_lt_count = PULSE_COUNT;
-                    }
-                }
-                if (opMode.gamepad2.right_trigger > GAME_TRIGGER_DEAD_ZONE) {
-                    if (g2_right_trigger_pressed) {
-                        if (g2_rt_count > 0) {
-                            g2_rt_count--;
-                        }
-                        else {
-                            robot.rightRoller.setPower(roller_power);
-                            robot.leftRoller.setPower(roller_power);
-                            //g2_right_trigger_pressed = false;
-                        }
-                    }
-                    else {
-                        robot.leftRoller.setPower(0);
-                        robot.rightRoller.setPower(-opMode.gamepad2.right_trigger);
-                        g2_right_trigger_pressed = true;
-                        g2_rt_count = PULSE_COUNT;
-                    }
-                }
 
                 if (opMode.gamepad1.dpad_up) {
                     roller_power = robot.ROLLER_POWER_HIGH;
                 }
                 if (opMode.gamepad1.dpad_down) {
-                    roller_power = robot.ROLLER_POWER_LOW;
+                    roller_power = robot.ROLLER_POWER_MID;
                 }
             }
 
@@ -425,6 +446,7 @@ public class BoKTele
             gamePad1LeftStickY = Math.pow(gamePad1LeftStickY, 3);
         }
 
+        double speedCoefLocal = speedCoef;
         double motorPowerLF = 0;
         double motorPowerLB = 0;
         double motorPowerRF = 0;
@@ -459,15 +481,16 @@ public class BoKTele
             motorPowerRF = gamePad1RightStickX;
             motorPowerRB = gamePad1RightStickX;
 
+            speedCoefLocal = SPEED_COEFF_TURN;
             //Log.v("BOK","Turn: LF:" + String.format("%.2f", motorPowerLF) +
             //        "LB: " + String.format("%.2f", motorPowerLB) +
             //        "RF: " + String.format("%.2f", motorPowerRF) +
             //        "RB: " + String.format("%.2f", motorPowerRB));
         }
         robot.setPowerToDTMotors(
-                (motorPowerLF * speedCoef),
-                (motorPowerLB * speedCoef),
-                (motorPowerRF * speedCoef),
-                (motorPowerRB * speedCoef));
+                (motorPowerLF * speedCoefLocal),
+                (motorPowerLB * speedCoefLocal),
+                (motorPowerRF * speedCoefLocal),
+                (motorPowerRB * speedCoefLocal));
     }
 }

@@ -192,6 +192,21 @@ public class BoKMecanumDT extends BoKHardwareBot
         return (int)targetEncCount;
     }
 
+    protected void startEncMove(double leftPower,
+                            double rightPower,
+                            int encCounts,
+                            boolean forward)
+    {
+        if (forward) {
+            setDTMotorEncoderTarget(encCounts, -encCounts);
+            setPowerToDTMotors(leftPower, leftPower, -rightPower, -rightPower);
+        }
+        else {
+            setDTMotorEncoderTarget(-encCounts, encCounts);
+            setPowerToDTMotors(-leftPower, -leftPower, rightPower, rightPower);
+        }
+    }
+
     protected int startStrafe(double power, double rotations, boolean right)
     {
         double targetEncCount = (rotations*COUNTS_PER_MOTOR_REV) * DRIVE_GEAR_REDUCTION;

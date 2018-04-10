@@ -47,7 +47,8 @@ public class BoKAutoRedFar extends BoKAutoCommon {
         move(DT_POWER_FOR_STONE, DT_POWER_FOR_STONE, distBack, true, DT_TIMEOUT_4S);
 
         flipFlipper(FLIP_FLIPPER_LOWER); // lower the flipper
-        moveRollers(REVERSE_ROLLERS, TIMEOUT_DUMP); // dump the glyph by reversing the rollers
+        // dump the glyph by reversing the rollers
+        moveRollers(REVERSE_ROLLERS, robot.ROLLER_POWER_HIGH, TIMEOUT_DUMP, runTime);
 
         move(DT_POWER_FOR_STONE, DT_POWER_FOR_STONE, distBack/2, false, DT_TIMEOUT_4S);
     }

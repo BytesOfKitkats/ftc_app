@@ -44,14 +44,14 @@ public abstract class BoKHardwareBot
     // Glyph flipper
     protected static final double FLIPPER_DOWN_POS = 0.95;
     protected static final double FLIPPER_UP_POS = 0.5;
-    protected static final double FLIPPER_ANGLE_POS = 0.76;
+    protected static final double FLIPPER_ANGLE_POS = 0.8;
     protected static final double FLIPPER_INIT_POS = 0.95;
     // Roller motor power
     protected static final double ROLLER_POWER_HIGH = 0.95;
-    protected static final double ROLLER_POWER_MED = 0.8;
-    protected static final double ROLLER_POWER_LOW = 0.65;
+    protected static final double ROLLER_POWER_MID = 0.65;
+    protected static final double ROLLER_POWER_LOW = 0.4;
     // Relic lift arm
-    protected static final double RA_INIT = 0.755;
+    protected static final double RA_INIT = 0.753;
     protected static final double RA_RAISED_POS = 0.638;
     protected static final double RA_NEAR_POS = 0.52;
     protected static final double RA_FAR_POS = 0.54;
@@ -63,7 +63,7 @@ public abstract class BoKHardwareBot
     protected static final double RGR_LOCK = 0.6;
     // Roller gates left
     protected static final double RGL_UNLOCK = 0.04;
-    protected static final double RGL_LOCK = 0.37;
+    protected static final double RGL_LOCK = 0.35;
 
     // DC Motors
     private static final String RELIC_SPOOL_MOTOR = "sp";
@@ -91,7 +91,7 @@ public abstract class BoKHardwareBot
     private static final String IMU_TOP = "imu_top";        // IMU
 
     protected static final int WAIT_PERIOD = 40; // 40 ms
-    private static final int RELIC_SPOOL_PLAY_POS = 200;
+    private static final int RELIC_SPOOL_PLAY_POS = 250;
     private static final double RELIC_SPOOL_PLAY_POWER = 0.2;
 
     // sometimes it helps to multiply the raw RGB values with a scale factor
@@ -283,8 +283,9 @@ public abstract class BoKHardwareBot
             ridingGateRight.setPosition(RGR_LOCK);
             jewelArm.setPosition(JA_INIT);
             jewelFlicker.setPosition(JF_INIT);
-            relicArm.setPosition(RA_INIT);
+            //relicArm.setPosition(RA_INIT);
             relicClaw.setPosition(RC_LOCK);
+            //initRelicArm(); cannot initialize relic arm as it goes over 18"
         }
         else {
            // IMPORTANT: Do not move the servos during initialization of Teleop
@@ -327,6 +328,11 @@ public abstract class BoKHardwareBot
                                      double rightPower,
                                      double inches,
                                      boolean backward);
+
+    protected abstract void startEncMove(double leftPower,
+                                         double rightPower,
+                                         int encCount,
+                                         boolean forward);
 
     protected abstract int startStrafe(double power, double rotations,
                                        boolean right);
@@ -386,12 +392,21 @@ public abstract class BoKHardwareBot
 
     protected void initRelicArm()
     {
+        ElapsedTime trackTime = new ElapsedTime();
+
+        // Raise the relic arm
         relicArm.setPosition(RA_INIT); // raise the relic arm
+        // Bring the relic out so that it is locked
         relicSpool.setTargetPosition(RELIC_SPOOL_PLAY_POS);
         relicSpool.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         relicSpool.setPower(RELIC_SPOOL_PLAY_POWER);
-        while (opMode.opModeIsActive() && relicSpool.isBusy()) {
 
+        trackTime.reset();
+        while (relicSpool.isBusy()) {
+            if (trackTime.seconds() >= 2) {
+                Log.v("BOK", "Relic spool motor timed out during initRelicArm!");
+                break;
+            }
         }
         relicSpool.setPower(0);
         relicSpool.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
