@@ -19,10 +19,17 @@ import android.util.Log;
 public class BoKSetupOpMode extends LinearOpMode
 {
     BoKHardwareBot robot = new BoKMecanumDT();
+    class InitRelicArmThread extends Thread {
+        @Override
+        public void run()
+        {
+            robot.initRelicArm();
+        }
+    }
 
     public void runOpMode()
     {
-        boolean test_sensors = false;
+        boolean test_sensors = false, test_relic_arm = false;
         robot.initHardware(this);
         telemetry.addData("Status", "Hardware initialized");
         telemetry.update();
@@ -99,6 +106,19 @@ public class BoKSetupOpMode extends LinearOpMode
                 }
                 robot.flipperLift.setPower(0);
                 robot.flipperLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            }
+            if (gamepad1.a && !test_relic_arm) {
+                InitRelicArmThread initRA = new InitRelicArmThread();
+                initRA.start();
+                test_relic_arm = true;
+                try {
+                    initRA.join();
+                } catch (InterruptedException e) {
+
+                }
+            }
+            if (gamepad1.b) {
+                test_relic_arm = false;
             }
             telemetry.update();
 

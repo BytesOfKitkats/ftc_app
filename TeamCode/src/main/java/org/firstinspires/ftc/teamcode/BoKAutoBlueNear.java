@@ -74,8 +74,8 @@ public class BoKAutoBlueNear extends BoKAutoCommon
 
         if (secGlyph) {
             int INIT_DISTANCE_FORWARD = 15;
-            int DISTANCE_BACK_PART_1 = 12;
-            double DISTANCE_BACK_PART_2 = 1.5;
+            double DISTANCE_BACK_PART_1 = 10.5;
+            double DISTANCE_BACK_PART_2 = 3.0;
             int FINAL_DISTANCE_FORWARD = 6;
             int MAX_DISTANCE_TO_COLOR = 24;
             double MOVE_TO_LINE_POWER_HIGH = 0.25;
@@ -85,11 +85,13 @@ public class BoKAutoBlueNear extends BoKAutoCommon
 
             // move at a high speed past the safe zone triangle
             move(DT_POWER_HIGH, DT_POWER_HIGH, INIT_DISTANCE_FORWARD, true, DT_TIMEOUT_4S);
+
             // setup the flipper and the flipper gates
             robot.flipper.setPosition(FLIP_FLIPPER_LOWER);
             moveFlipperGates(true);
             // move slowly till the blue line, records encCountsTillLine
             moveWColor(MOVE_TO_LINE_POWER_HIGH, MAX_DISTANCE_TO_COLOR, true, DT_TIMEOUT_4S);
+
             // get second (& third) glyphs
             getSecondGlyph();
 
@@ -100,7 +102,7 @@ public class BoKAutoBlueNear extends BoKAutoCommon
             gyroTurn(DT_TURN_SPEED_LOW,
                      angles.thirdAngle, // current angle of the robot
                      turnAngle, // turn angle at the end of moveToCrypto
-                     DT_TURN_THRESHOLD_HIGH, false, false, DT_TIMEOUT_2S);
+                     DT_TURN_THRESHOLD_LOW, false, false, DT_TIMEOUT_2S);
 
             // move slowly back to the blue line
             moveWColor(MOVE_TO_LINE_POWER_LOW, MAX_DISTANCE_TO_COLOR, false, DT_TIMEOUT_4S);
@@ -146,7 +148,7 @@ public class BoKAutoBlueNear extends BoKAutoCommon
                 flipFlipper(LOWER_LIFT_AND_RESET_FLIPPER);
             }
             else { // No glyphs! go back & park in the safe zone
-                move(DT_POWER_HIGH, DT_POWER_HIGH, INIT_DISTANCE_FORWARD, false, DT_TIMEOUT_4S);
+                move(DT_POWER_HIGH, DT_POWER_HIGH, (INIT_DISTANCE_FORWARD-5), false, DT_TIMEOUT_4S);
             }
         }
 

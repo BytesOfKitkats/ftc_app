@@ -40,6 +40,9 @@ public class BoKAutoRedNear extends BoKAutoCommon {
             timeout = TIMEOUT_LEFT;
         }
 
+        InitRelicArmThread initRA = new InitRelicArmThread();
+        initRA.start();
+
         move(DT_POWER_FOR_STONE,
              DT_POWER_FOR_STONE,
              distance-distToMoveFlick,

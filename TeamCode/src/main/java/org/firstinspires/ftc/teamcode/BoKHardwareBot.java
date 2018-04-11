@@ -38,7 +38,7 @@ public abstract class BoKHardwareBot
     protected static final double JA_FINAL = 0.8;
     // Jewel flicker
     protected static final double JF_INIT = 1;
-    protected static final double JF_FINAL = 0.47;
+    protected static final double JF_FINAL = 0.45;
     protected static final double JF_RIGHT = 1;
     protected static final double JF_LEFT = 0;
     // Glyph flipper
@@ -51,10 +51,10 @@ public abstract class BoKHardwareBot
     protected static final double ROLLER_POWER_MID = 0.65;
     protected static final double ROLLER_POWER_LOW = 0.4;
     // Relic lift arm
-    protected static final double RA_INIT = 0.753;
+    protected static final double RA_INIT = 0.74;
     protected static final double RA_RAISED_POS = 0.638;
-    protected static final double RA_NEAR_POS = 0.52;
-    protected static final double RA_FAR_POS = 0.54;
+    protected static final double RA_NEAR_POS = 0.51;
+    protected static final double RA_FAR_POS = 0.53;
     // Relic claw
     protected static final double RC_UNLOCK = 0.5;
     protected static final double RC_LOCK = 0.9;
@@ -91,7 +91,7 @@ public abstract class BoKHardwareBot
     private static final String IMU_TOP = "imu_top";        // IMU
 
     protected static final int WAIT_PERIOD = 40; // 40 ms
-    private static final int RELIC_SPOOL_PLAY_POS = 250;
+    private static final int RELIC_SPOOL_PLAY_POS = 300;
     private static final double RELIC_SPOOL_PLAY_POWER = 0.2;
 
     // sometimes it helps to multiply the raw RGB values with a scale factor
@@ -284,12 +284,11 @@ public abstract class BoKHardwareBot
             jewelArm.setPosition(JA_INIT);
             jewelFlicker.setPosition(JF_INIT);
             //relicArm.setPosition(RA_INIT);
-            relicClaw.setPosition(RC_LOCK);
             //initRelicArm(); cannot initialize relic arm as it goes over 18"
         }
         else {
            // IMPORTANT: Do not move the servos during initialization of Teleop
-
+            relicClaw.setPosition(RC_LOCK);
         }
 
         return BoKHardwareStatus.BOK_HARDWARE_SUCCESS;
@@ -396,6 +395,7 @@ public abstract class BoKHardwareBot
 
         // Raise the relic arm
         relicArm.setPosition(RA_INIT); // raise the relic arm
+        opMode.sleep(250);
         // Bring the relic out so that it is locked
         relicSpool.setTargetPosition(RELIC_SPOOL_PLAY_POS);
         relicSpool.setMode(DcMotor.RunMode.RUN_TO_POSITION);

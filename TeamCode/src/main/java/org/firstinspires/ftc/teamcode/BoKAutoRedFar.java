@@ -28,6 +28,9 @@ public class BoKAutoRedFar extends BoKAutoCommon {
         detectVuforiaImgAndDrop(WAIT_FOR_JEWEL_FLICKER_MS);
         moveAndFlick();
 
+        InitRelicArmThread initRA = new InitRelicArmThread();
+        initRA.start();
+
         // Move out of the balancing stone, distance
         move(DT_POWER_FOR_STONE, DT_POWER_FOR_STONE,
                 DT_MOVE_TO_CRYPTO-distToMoveFlick, true, DT_TIMEOUT_6S);

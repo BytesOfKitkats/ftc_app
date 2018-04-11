@@ -31,6 +31,9 @@ public class BoKAutoBlueFar extends BoKAutoCommon
         detectVuforiaImgAndDrop(WAIT_FOR_JEWEL_FLICKER_MS);
         moveAndFlick();
 
+        InitRelicArmThread initRA = new InitRelicArmThread();
+        initRA.start();
+
         // Move back out of the balancing stone
         move(DT_POWER_FOR_STONE, DT_POWER_FOR_STONE, DT_MOVE_TO_CRYPTO-distToMoveFlick, false, DT_TIMEOUT_4S);
 

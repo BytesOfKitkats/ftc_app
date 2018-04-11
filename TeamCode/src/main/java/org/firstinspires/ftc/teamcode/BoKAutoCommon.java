@@ -272,15 +272,14 @@ public abstract class BoKAutoCommon implements BoKAuto
 
                     //double rX = rot.firstAngle;
                     double rY = rot.secondAngle;
+                    double sCM = robot.getDistanceCM(robot.mb1240Side);
                     //double rZ = rot.thirdAngle;
-                    robotPosition = String.format("X: %.1f,  Z: %.1f,  ROT Y: %.1f",
-                                                  tX,// - tXOffset,
-                                                  tZ,// - tZOffset,
-                                                  rY);
+                    robotPosition = String.format("Z: %.1f,  ROT Y: %.1f, S: %.1f",
+                                                  tZ/10, rY, sCM);
 
                     // we can only update the text in the main UI thread
                     act.runOnUiThread(new UpdateRobotPosition(String.format("Z: %.1f\n" +
-                            "S: %.1f", tZ/10, robot.getDistanceCM(robot.mb1240Side))));
+                            "S: %.1f", tZ/10, sCM)));
 
                     opMode.telemetry.addData("Trans", robotPosition);
                     vuMarkInfo = vuMark + " at :(" +
@@ -510,7 +509,6 @@ public abstract class BoKAutoCommon implements BoKAuto
     {
         if (getCryptoColumn(VUFORIA_TIMEOUT)) {
             // Straighten the jewel flicker
-            robot.jewelArm.setPosition(robot.JA_INIT+0.1);
             robot.jewelFlicker.setPosition(robot.JF_FINAL);
             // Lower the jewel arm
             robot.jewelArm.setPosition(robot.JA_FINAL);
@@ -1177,7 +1175,7 @@ public abstract class BoKAutoCommon implements BoKAuto
             turnAngle = gyroTurn(DT_TURN_SPEED_HIGH,
                                  initGyroAngle,
                                  TURN_LEFT_DEGREES, // final angle RED and BLUE Near
-                                 DT_TURN_THRESHOLD_HIGH, // threshold,
+                                 DT_TURN_THRESHOLD_LOW, // threshold,
                                  false, // NOT a tank turn
                                  false,
                                  DT_TURN_TIMEOUT);
@@ -1365,9 +1363,14 @@ public abstract class BoKAutoCommon implements BoKAuto
             boolean glyphFound = !Double.isNaN(distFar) && !Double.isNaN(distNear);
             if (glyphFound) {
                 Log.v("BOK", "Near: " + distNear + ", Far: " + distFar);
-                numGlyphs = 2;
-                robot.stopMove();
-                break;
+                opMode.sleep(robot.OPMODE_SLEEP_INTERVAL_MS_SHORT);
+                distFar = robot.distFar.getDistance(DistanceUnit.CM);
+                distNear = robot.distNear.getDistance(DistanceUnit.CM);
+                if (!Double.isNaN(distFar) && !Double.isNaN(distNear)) {
+                    numGlyphs = 2;
+                    robot.stopMove();
+                    break;
+                }
             }
 
             int currentPosL = robot.leftRoller.getCurrentPosition();

@@ -169,7 +169,8 @@ public class BoKTele
                 if ((opMode.gamepad2.left_stick_y) <= -GAME_TRIGGER_DEAD_ZONE) {
                     robot.relicSpool.setPower(-opMode.gamepad2.left_stick_y*RELIC_DEPLOY_POWER);
                     //Log.v("BOK","Relic Spool Position: " + robot.relicSpool.getCurrentPosition());
-                } else if (opMode.gamepad2.left_stick_y >= GAME_TRIGGER_DEAD_ZONE) {
+                } else if ((opMode.gamepad2.left_stick_y >= GAME_TRIGGER_DEAD_ZONE) &&
+                        (robot.relicSpool.getCurrentPosition() >= 150)){
                     robot.relicSpool.setPower(-opMode.gamepad2.left_stick_y*RELIC_RETRACT_POWER);
                     //Log.v("BOK","Relic Spool Position: " + robot.relicSpool.getCurrentPosition());
                 }
