@@ -37,7 +37,7 @@ public interface BoKAuto
     public static int DT_TURN_THRESHOLD_LOW = 1;
     public static int DT_TURN_THRESHOLD_HIGH = 2;
     public static int DT_TURN_TIMEOUT = 5;
-    public static double DT_TURN_SPEED_LOW  = 0.25;
+    public static double DT_TURN_SPEED_LOW  = 0.2;
     public static double DT_TURN_SPEED_HIGH = 0.4;
     public static int TURN_LEFT_DEGREES = 90;
     public static double DT_POWER_FOR_STRAFE = 0.2;

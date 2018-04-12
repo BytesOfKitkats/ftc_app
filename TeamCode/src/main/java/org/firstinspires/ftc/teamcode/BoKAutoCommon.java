@@ -107,12 +107,12 @@ public abstract class BoKAutoCommon implements BoKAuto
     private VuforiaTrackables relicTrackables;
 
     protected ElapsedTime runTime  = new ElapsedTime();
-    protected ElapsedTime runTimeTh = new ElapsedTime();
 
     protected BoKAllianceColor allianceColor;
     protected boolean far = false;
     protected BoKAutoOpMode opMode;  // save a copy of the current opMode and robot
     protected BoKHardwareBot robot;
+    protected boolean secGlyph = true;
 
     // NOTE: Even if we are unsuccessful with Vuforia, we will still go to the left column
     protected RelicRecoveryVuMark cryptoColumn = RelicRecoveryVuMark.LEFT;
@@ -946,9 +946,9 @@ public abstract class BoKAutoCommon implements BoKAuto
         //robot.setModeForDTMotors(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         //robot.setModeForDTMotors(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        AnalogInput rangeSensor, backSensor; // First choose which range sensor to use
+        AnalogInput rangeSensor; //, backSensor; // First choose which range sensor to use
         rangeSensor = robot.mb1240Side;
-        backSensor = robot.mb1240Back;
+        // backSensor = robot.mb1240Back;
 
         cmCurrent = robot.getDistanceCM(rangeSensor);
         if (!Double.isNaN(cmCurrent))
@@ -986,10 +986,10 @@ public abstract class BoKAutoCommon implements BoKAuto
             }
             else { // back range sensor
                 // if diffFromTarget > 0 then wheelPower is +ve
-                Log.v("BOK", "Right current RS: " + cmCurrent +
-                        " Difference: " + diffFromTarget +
-                        " Power: (move fwd) " + wheelPower +
-                        " Back RS " + robot.getDistanceCM(backSensor));
+                //Log.v("BOK", "Right current RS: " + cmCurrent +
+                //        " Difference: " + diffFromTarget +
+                //        " Power: (move fwd) " + wheelPower +
+                //        " Back RS " + robot.getDistanceCM(backSensor));
                 robot.setPowerToDTMotors(wheelPower, -wheelPower, wheelPower, -wheelPower);
             }
         }
@@ -1165,13 +1165,11 @@ public abstract class BoKAutoCommon implements BoKAuto
             opMode.sleep(waitForServoMs);
 
             double distBack = 8.0;
-            if(allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED){
+            if(allianceColor == BoKAllianceColor.BOK_ALLIANCE_BLUE){
                 //move(DT_POWER_HIGH, DT_POWER_HIGH, 2, true, DT_TIMEOUT_2S);
+                distBack += 0.5;
             }
-            else {
-                distBack += 2;
-                //move(DT_POWER_HIGH, DT_POWER_HIGH, 9, true, DT_TIMEOUT_4S);
-            }
+
             turnAngle = gyroTurn(DT_TURN_SPEED_HIGH,
                                  initGyroAngle,
                                  TURN_LEFT_DEGREES, // final angle RED and BLUE Near
@@ -1180,9 +1178,9 @@ public abstract class BoKAutoCommon implements BoKAuto
                                  false,
                                  DT_TURN_TIMEOUT);
 
-            moveRamp(DT_POWER_HIGH, distBack, false, DT_TIMEOUT_4S);
-
             flipFlipper(FLIP_FLIPPER_DUMP); // dump the glyph
+
+            moveRamp(DT_POWER_HIGH, distBack, false, DT_TIMEOUT_4S);
 
             // just park in the safe zone
             if (!secGlyph)
@@ -1456,7 +1454,7 @@ public abstract class BoKAutoCommon implements BoKAuto
             moveRobotForIntake(POWER_FORWARD, FORWARD_DISTANCE, true);
             if (numGlyphs == 2)
                 break;
-            opMode.sleep(SLEEP_MS);
+            //opMode.sleep(SLEEP_MS);
             moveRobotForIntake(POWER_BACK, BACKWARD_DISTANCE, false);
         }
 
@@ -1471,7 +1469,7 @@ public abstract class BoKAutoCommon implements BoKAuto
             if (glyphFound) {
                 Log.v("BOK", "Check near: " + distNear + ", far: " + distFar);
                 numGlyphs = 1;
-                if(!Double.isNaN(distFar))
+                if(!Double.isNaN(distNear) && !Double.isNaN(distFar))
                     numGlyphs = 2;
             }
         }
@@ -1488,6 +1486,13 @@ public abstract class BoKAutoCommon implements BoKAuto
         public void run()
         {
             robot.initRelicArm();
+        }
+    }
+
+    class FlipFlipperThread extends Thread {
+        @Override
+        public void run() {
+            flipFlipper(FLIP_FLIPPER_DUMP);
         }
     }
 }
