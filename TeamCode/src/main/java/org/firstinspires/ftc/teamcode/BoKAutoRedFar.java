@@ -38,13 +38,13 @@ public class BoKAutoRedFar extends BoKAutoCommon {
         double cmFromWall = robot.getDistanceCM(robot.mb1240Front);
         if(cryptoColumn == RelicRecoveryVuMark.LEFT)
             strafeWithRangeSensor(DT_POWER_FOR_STRAFE,
-                                  DISTANCE_TO_LEFT_COL_CM, true, DT_TIMEOUT_6S);
+                                  DISTANCE_TO_LEFT_COL_CM, DT_TIMEOUT_6S);
         else if (cryptoColumn == RelicRecoveryVuMark.CENTER)
             strafeWithRangeSensor(DT_POWER_FOR_STRAFE,
-                                  DISTANCE_TO_CENTER_COL_CM, true, DT_TIMEOUT_5S);
+                                  DISTANCE_TO_CENTER_COL_CM, DT_TIMEOUT_5S);
         else
             strafeWithRangeSensor(DT_POWER_FOR_STRAFE,
-                                  DISTANCE_TO_RIGHT_COL_CM, true, DT_TIMEOUT_5S);
+                                  DISTANCE_TO_RIGHT_COL_CM, DT_TIMEOUT_5S);
 
         double distBack = (cmFromWall - 20.32)/2.54; // 20.32cm = 8 inches
         move(DT_POWER_FOR_STONE, DT_POWER_FOR_STONE, distBack, true, DT_TIMEOUT_4S);

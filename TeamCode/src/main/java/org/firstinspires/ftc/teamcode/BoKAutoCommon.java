@@ -936,7 +936,7 @@ public abstract class BoKAutoCommon implements BoKAuto
 
     public boolean strafeWithRangeSensor(double power,
                                          int targetDistanceCm,
-                                         boolean strafeLeft,
+                                         //boolean strafeLeft,
                                          double waitForSec)
     {
         boolean result = true;
@@ -975,7 +975,7 @@ public abstract class BoKAutoCommon implements BoKAuto
             if (wheelPower < 0 && wheelPower > -DT_POWER_FOR_RS_MIN)
                 wheelPower = -DT_POWER_FOR_RS_MIN;
 
-            if (strafeLeft) {
+            //if (strafeLeft) {
                 // if diffFromTarget > 0 then wheelPower is +ve, but we need to move
                 // backward (BLUE FAR).
                 //Log.v("BOK", "Left current RS: " + cmCurrent +
@@ -983,15 +983,15 @@ public abstract class BoKAutoCommon implements BoKAuto
                 //        " Power: " + wheelPower +
                 //        " Back RS " + robot.getDistanceCM(backSensor));
                 robot.setPowerToDTMotors(-wheelPower, wheelPower, -wheelPower, wheelPower);
-            }
-            else { // back range sensor
+            //}
+            //else { // back range sensor
                 // if diffFromTarget > 0 then wheelPower is +ve
                 //Log.v("BOK", "Right current RS: " + cmCurrent +
                 //        " Difference: " + diffFromTarget +
                 //        " Power: (move fwd) " + wheelPower +
                 //        " Back RS " + robot.getDistanceCM(backSensor));
-                robot.setPowerToDTMotors(wheelPower, -wheelPower, wheelPower, -wheelPower);
-            }
+            //    robot.setPowerToDTMotors(wheelPower, -wheelPower, wheelPower, -wheelPower);
+            //}
         }
 
 
@@ -1364,7 +1364,7 @@ public abstract class BoKAutoCommon implements BoKAuto
                 opMode.sleep(robot.OPMODE_SLEEP_INTERVAL_MS_SHORT);
                 distFar = robot.distFar.getDistance(DistanceUnit.CM);
                 distNear = robot.distNear.getDistance(DistanceUnit.CM);
-                if (!Double.isNaN(distFar) && !Double.isNaN(distNear)) {
+                if (!Double.isNaN(distFar) && !Double.isNaN(distNear) && (distFar < 20)) {
                     numGlyphs = 2;
                     robot.stopMove();
                     break;

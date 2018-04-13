@@ -5,6 +5,7 @@ import android.util.Log;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 
 /**
@@ -40,20 +41,20 @@ public class BoKAutoBlueFar extends BoKAutoCommon
         initRA.start();
 
         // Move back out of the balancing stone
-        move(DT_POWER_FOR_STONE, DT_POWER_FOR_STONE, DT_MOVE_TO_CRYPTO-distToMoveFlick, false, DT_TIMEOUT_4S);
+        move(DT_POWER_FOR_STONE, DT_POWER_FOR_STONE, DT_MOVE_TO_CRYPTO+distToMoveFlick, false, DT_TIMEOUT_4S);
 
-        gyroTurn(DT_TURN_SPEED_HIGH, 0, 0, DT_TURN_THRESHOLD_LOW, false, false, DT_TIMEOUT_2S);
+        gyroTurn(DT_TURN_SPEED_LOW, 0, 0, DT_TURN_THRESHOLD_LOW, false, false, DT_TIMEOUT_2S);
 
         double cmFromWall = robot.getDistanceCM(robot.mb1240Back);
         if(cryptoColumn == RelicRecoveryVuMark.LEFT)
             strafeWithRangeSensor(DT_POWER_FOR_STRAFE,
-                                  DISTANCE_TO_LEFT_COL_CM, true, DT_TIMEOUT_5S);
+                                  DISTANCE_TO_LEFT_COL_CM, DT_TIMEOUT_5S);
         else if (cryptoColumn == RelicRecoveryVuMark.CENTER)
             strafeWithRangeSensor(DT_POWER_FOR_STRAFE,
-                                  DISTANCE_TO_CENTER_COL_CM, true, DT_TIMEOUT_5S);
+                                  DISTANCE_TO_CENTER_COL_CM, DT_TIMEOUT_5S);
         else
             strafeWithRangeSensor(DT_POWER_FOR_STRAFE,
-                                  DISTANCE_TO_RIGHT_COL_CM, true, DT_TIMEOUT_6S);
+                                  DISTANCE_TO_RIGHT_COL_CM, DT_TIMEOUT_6S);
 
         double distBack = (cmFromWall - 20.32)/2.54; // 20.32cm = 8 inches
 
@@ -66,12 +67,13 @@ public class BoKAutoBlueFar extends BoKAutoCommon
             moveRamp(DT_POWER_HIGH, distBack / 2 + 1, true, DT_TIMEOUT_4S);
         }
         else {
-            int INIT_DISTANCE_FORWARD = 15;
-            double DISTANCE_BACK_PART_1 = 10.5;
-            double DISTANCE_BACK_PART_2 = 2.5;
+            int INIT_DISTANCE_FORWARD = 20;
+            double DISTANCE_BACK_PART_1 = 15.5;
+            double DISTANCE_BACK_PART_2 = 5;
+            double DISTANCE_BACK_PART_3 = 5;
             int FINAL_DISTANCE_FORWARD = 6;
             int MAX_DISTANCE_TO_COLOR = 24;
-            int GYRO_TURN_DEGREES = -20;
+            int GYRO_TURN_DEGREES = 30;
             double MOVE_TO_LINE_POWER_HIGH = 0.25;
             double MOVE_TO_LINE_POWER_LOW = 0.2;
             double TURN_POWER_VLOW = 0.15;
@@ -82,7 +84,7 @@ public class BoKAutoBlueFar extends BoKAutoCommon
             if (cryptoColumn != RelicRecoveryVuMark.RIGHT) {
                 // First strafe to the right column
                 strafeWithRangeSensor(DT_POWER_FOR_STRAFE,
-                        DISTANCE_TO_RIGHT_COL_CM, true, DT_TIMEOUT_6S);
+                        DISTANCE_TO_RIGHT_COL_CM, DT_TIMEOUT_6S);
             }
             // Turn slightly to the left
             gyroTurn(DT_TURN_SPEED_HIGH, 0, GYRO_TURN_DEGREES,
@@ -107,10 +109,10 @@ public class BoKAutoBlueFar extends BoKAutoCommon
             angles = robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
                                                      AxesOrder.XYZ,
                                                      AngleUnit.DEGREES);
-            gyroTurn(TURN_POWER_VLOW,
+            gyroTurn(DT_TURN_SPEED_LOW,
                      angles.thirdAngle, // current angle of the robot
                      GYRO_TURN_DEGREES,
-                     DT_TURN_THRESHOLD_LOW, false, false, DT_TIMEOUT_2S);
+                     DT_TURN_THRESHOLD_LOW, false, false, DT_TIMEOUT_4S);
 
             // now go back to the crypto box by retracing the steps
             robot.resetDTEncoders();
@@ -127,8 +129,9 @@ public class BoKAutoBlueFar extends BoKAutoCommon
                 }
             }
             robot.stopMove();
-            robot.leftRoller.setPower(0);
-            robot.rightRoller.setPower(0);
+
+            // Split the INIT_DISTANCE_FORWARD, go back DISTANCE_BACK_PART_1
+            moveRamp(DT_POWER_HIGH, DISTANCE_BACK_PART_1, false, DT_TIMEOUT_4S);
 
             // Turn again to be parallel to the wall
             angles = robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
@@ -139,19 +142,32 @@ public class BoKAutoBlueFar extends BoKAutoCommon
                     0,
                     DT_TURN_THRESHOLD_LOW, false, false, DT_TIMEOUT_2S);
 
-            // Strafe ?
+            // Strafe
+            strafeWithRangeSensor(DT_POWER_FOR_STRAFE,
+                    DISTANCE_TO_RIGHT_COL_CM, DT_TIMEOUT_6S);
+
+            robot.leftRoller.setPower(0);
+            robot.rightRoller.setPower(0);
+            double distNear = robot.distNear.getDistance(DistanceUnit.CM);
+            double distFar = robot.distFar.getDistance(DistanceUnit.CM);
+            boolean glyphFound = !Double.isNaN(distNear) ||
+                    !Double.isNaN(distFar);
+
+            if (glyphFound)
+                numGlyphs = 1;
+
             if(numGlyphs > 0) {
-                // Split the INIT_DISTANCE_FORWARD, go back DISTANCE_BACK_PART_1
-                moveRamp(DT_POWER_HIGH, DISTANCE_BACK_PART_1, false, DT_TIMEOUT_4S);
                 Log.v("BOK", "Ready to flip, raise the lift");
+                moveRamp(MOVE_BACK_POWER, DISTANCE_BACK_PART_2, false, DT_TIMEOUT_2S);
+
                 // Raise the flipper lift (if there is a glyph there)
-                if (cryptoColumn == RelicRecoveryVuMark.RIGHT)
+                //if (cryptoColumn == RelicRecoveryVuMark.RIGHT)
                     flipFlipper(RAISE_LIFT);
                 // Dump glyphs
                 FlipFlipperThread dumpGlyphs = new FlipFlipperThread();
                 dumpGlyphs.start();
                 // Move back a bit and push the glyphs in
-                moveRamp(MOVE_BACK_POWER, DISTANCE_BACK_PART_2, false, DT_TIMEOUT_2S);
+                moveRamp(MOVE_BACK_POWER, DISTANCE_BACK_PART_3, false, DT_TIMEOUT_2S);
                 try {
                     dumpGlyphs.join();
                 } catch (InterruptedException e) {
@@ -165,8 +181,8 @@ public class BoKAutoBlueFar extends BoKAutoCommon
                 flipFlipper(LOWER_LIFT_AND_RESET_FLIPPER);
             }
             else { // No glyphs! go back & park in the safe zone
-                // Strafe ?
-                moveRamp(DT_POWER_HIGH, (INIT_DISTANCE_FORWARD-5), false, DT_TIMEOUT_4S);
+
+                //moveRamp(DT_POWER_HIGH, (INIT_DISTANCE_FORWARD-5), false, DT_TIMEOUT_4S);
             }
         }
     }
