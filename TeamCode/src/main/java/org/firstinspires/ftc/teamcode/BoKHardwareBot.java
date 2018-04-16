@@ -33,14 +33,14 @@ public abstract class BoKHardwareBot
     // CONSTANTS
     protected static final int OPMODE_SLEEP_INTERVAL_MS_SHORT  = 10;
     // Jewel flicker arm
-    protected static final double JA_INIT = 0.26;
-    protected static final double JA_MID = 0.65;
-    protected static final double JA_FINAL = 0.8;
+    protected static final double JA_INIT = 0.21;
+    protected static final double JA_MID = 0.52;
+    protected static final double JA_FINAL = 0.59;
     // Jewel flicker
     protected static final double JF_INIT = 1;
     protected static final double JF_FINAL = 0.45;
-    protected static final double JF_RIGHT = 1;
-    protected static final double JF_LEFT = 0;
+    protected static final double JF_RIGHT = 0.85;
+    protected static final double JF_LEFT = 0.1;
     // Glyph flipper
     protected static final double FLIPPER_DOWN_POS = 0.95;
     protected static final double FLIPPER_UP_POS = 0.5;
@@ -56,11 +56,12 @@ public abstract class BoKHardwareBot
     protected static final double RA_NEAR_POS = 0.51;
     protected static final double RA_FAR_POS = 0.53;
     // Relic claw
+    protected static final double RC_INIT = 0.8;
     protected static final double RC_UNLOCK = 0.5;
     protected static final double RC_LOCK = 0.9;
     // Roller gates right
-    protected static final double RGR_UNLOCK = 1;
-    protected static final double RGR_LOCK = 0.6;
+    protected static final double RGR_UNLOCK = 0.85;
+    protected static final double RGR_LOCK = 0.54;
     // Roller gates left
     protected static final double RGL_UNLOCK = 0.04;
     protected static final double RGL_LOCK = 0.35;
@@ -83,7 +84,8 @@ public abstract class BoKHardwareBot
     // Sensors
     private static final String RANGE_SENSOR_JA = "rs";     // Modern Robotics
     private static final String MAX_BOTIX_BACK_CFG = "mbb"; // Analog
-    private static final String MAX_BOTIX_SIDE_CFG = "mbs";
+    private static final String MAX_BOTIX_SIDE_RIGHT_CFG = "mbsr";
+    private static final String MAX_BOTIX_SIDE_LEFT_CFG = "mbsl";
     private static final String MAX_BOTIX_FRONT_CFG = "mbf";
     private static final String COLOR_SENSOR_NEAR = "crn";  // REV color/proximity
     private static final String COLOR_SENSOR_FAR = "crf";
@@ -116,7 +118,7 @@ public abstract class BoKHardwareBot
 
     // Sensors
     protected BNO055IMU imu;
-    protected AnalogInput mb1240Back, mb1240Side, mb1240Front;
+    protected AnalogInput mb1240Back, mb1240SideR, mb1240Front, mb1240SideL;
     protected ModernRoboticsI2cRangeSensor rangeSensorJA;
     protected DistanceSensor distNear, distFar;
     protected ColorSensor colorNear, colorFar, colorBottom;
@@ -230,8 +232,13 @@ public abstract class BoKHardwareBot
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 
-        mb1240Side = opMode.hardwareMap.analogInput.get(MAX_BOTIX_SIDE_CFG);
-        if(mb1240Side == null){
+        mb1240SideR = opMode.hardwareMap.analogInput.get(MAX_BOTIX_SIDE_RIGHT_CFG);
+        if(mb1240SideR == null){
+            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
+        }
+
+        mb1240SideL = opMode.hardwareMap.analogInput.get(MAX_BOTIX_SIDE_LEFT_CFG);
+        if (mb1240SideL == null) {
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 
@@ -283,12 +290,13 @@ public abstract class BoKHardwareBot
             ridingGateRight.setPosition(RGR_LOCK);
             jewelArm.setPosition(JA_INIT);
             jewelFlicker.setPosition(JF_INIT);
+            relicClaw.setPosition(RC_INIT);
             //relicArm.setPosition(RA_INIT);
             //initRelicArm(); cannot initialize relic arm as it goes over 18"
         }
         else {
            // IMPORTANT: Do not move the servos during initialization of Teleop
-            relicClaw.setPosition(RC_LOCK);
+            relicClaw.setPosition(RC_INIT);
         }
 
         return BoKHardwareStatus.BOK_HARDWARE_SUCCESS;

@@ -11,8 +11,6 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 @TeleOp(name="BOK TELEOP", group="BoKTele")
 public class BoKTeleOpMode extends LinearOpMode
 {
-    protected boolean trigger_left_decrease = true;
-
     @Override
     public void runOpMode()  throws InterruptedException
     {
@@ -35,7 +33,7 @@ public class BoKTeleOpMode extends LinearOpMode
 
             opMode = new BoKTele();
             if (BoKTele.BoKTeleStatus.BOK_TELE_FAILURE ==
-                    opMode.initSoftware(this, robot, trigger_left_decrease)) {
+                    opMode.initSoftware(this, robot)) {
                 telemetry.addData("Status", "Software NOT initialized");
                 telemetry.update();
             } else {

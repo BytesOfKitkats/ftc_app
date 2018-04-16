@@ -79,7 +79,7 @@ public abstract class BoKAutoCommon implements BoKAuto
     private static final int RS_DIFF_THRESHOLD_CM = 1;
     private static final double DT_POWER_FOR_RS_MIN = 0.12;
     private static final double CRS_CRYPTO_TIMEOUT = 2.5;
-    protected static double distToMoveFlick = 0.5;
+    protected static double distToMoveFlick = 0;
     private static final int VUFORIA_LOCK_BALL_X_OFFSET = 240; // pixels offset from the center
     private static final int VUFORIA_LOCK_BALL_Y_OFFSET = 110; // of the Vuforia image
     private static final int VUFORIA_LOCK_BALL_RECT_WIDTH = 95;
@@ -117,6 +117,8 @@ public abstract class BoKAutoCommon implements BoKAuto
     // NOTE: Even if we are unsuccessful with Vuforia, we will still go to the left column
     protected RelicRecoveryVuMark cryptoColumn = RelicRecoveryVuMark.LEFT;
     protected boolean foundRedOnLeft = false;
+    protected double additional_turn_speed = 0;
+    protected double fraction_turn_slow = 0.25;
 
     protected Orientation angles;
 
@@ -272,7 +274,7 @@ public abstract class BoKAutoCommon implements BoKAuto
 
                     //double rX = rot.firstAngle;
                     double rY = rot.secondAngle;
-                    double sCM = robot.getDistanceCM(robot.mb1240Side);
+                    double sCM = robot.getDistanceCM(robot.mb1240SideR);
                     //double rZ = rot.thirdAngle;
                     robotPosition = String.format("Z: %.1f,  ROT Y: %.1f, S: %.1f",
                                                   tZ/10, rY, sCM);
@@ -510,29 +512,10 @@ public abstract class BoKAutoCommon implements BoKAuto
         if (getCryptoColumn(VUFORIA_TIMEOUT)) {
             // Straighten the jewel flicker
             robot.jewelFlicker.setPosition(robot.JF_FINAL);
+            opMode.sleep(waitForServoMs);
             // Lower the jewel arm
             robot.jewelArm.setPosition(robot.JA_FINAL);
-            //opMode.sleep(waitForServoMs);
-
-            if (allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED) {
-                if (foundRedOnLeft) { // we are red
-                    //robot.jewelFlicker.setPosition(robot.JF_RIGHT);
-                    distToMoveFlick = -1;
-                } else {
-                    //robot.jewelFlicker.setPosition(robot.JF_LEFT);
-                    distToMoveFlick = 1;
-                }
-                //opMode.sleep(waitForServoMs);
-            }
-            else {
-                if (foundRedOnLeft) // we are blue
-                    //robot.jewelFlicker.setPosition(robot.JF_LEFT);
-                    distToMoveFlick = 1;
-                else
-                    //robot.jewelFlicker.setPosition(robot.JF_RIGHT);
-                    distToMoveFlick = -1;
-                //opMode.sleep(waitForServoMs);
-            }
+            opMode.sleep(waitForServoMs);
         }
         else { // failed to detect Vuforia image
             // Position the jewel flicker to face the cryptobox
@@ -543,7 +526,8 @@ public abstract class BoKAutoCommon implements BoKAuto
 
     public void moveAndFlick()
     {
-        move(DT_POWER_FOR_FLICK, DT_POWER_FOR_FLICK, Math.abs(distToMoveFlick),
+        if (distToMoveFlick != 0)
+            move(DT_POWER_FOR_FLICK, DT_POWER_FOR_FLICK, Math.abs(distToMoveFlick),
                 (distToMoveFlick > 0 ? true : false), DT_TIMEOUT_2S);
 
         if (allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED) {
@@ -799,7 +783,7 @@ public abstract class BoKAutoCommon implements BoKAuto
             if (!targetEncCountReached) {
                 Log.v("BOK", "Blue: cmCurrent: " + cmCurrent);
                 // we got a valid ultrasonic value
-                distanceToMove = (cmCurrent/2.54)-5;// + 2.4;
+                distanceToMove = (cmCurrent/2.54)-4;// + 2.4;
             }
             Log.v("BOK", "Blue targetReached: " + targetEncCountReached +
                   ", dist: " + String.format("%.2f", distanceToMove));
@@ -813,27 +797,18 @@ public abstract class BoKAutoCommon implements BoKAuto
             //takePicture("cb_crypto.png");
         }
         else {
-            double distanceToMove = 3; // in inches
+            double distanceToMove = 5; // in inches
             if (!targetEncCountReached) {
                 Log.v("BOK", "Red: cmCurrent: " + cmCurrent);
                 // we got a valid ultrasonic value
                 if (cryptoColumn == RelicRecoveryVuMark.RIGHT) {
-                    if (far) {
-                        distanceToMove = (cmCurrent / 2.54) - 0.8;
-                    } else {
-                        distanceToMove = (cmCurrent / 2.54) + 5.75;
-                    }
+                    distanceToMove = (cmCurrent / 2.54) - 2;
                 }
                 else if (cryptoColumn == RelicRecoveryVuMark.CENTER) {
                     distanceToMove = (cmCurrent / 2.54) + 5.75;
                 }
                 else {
-                    if (far) {
-                        distanceToMove = (cmCurrent / 2.54) - 1.5;
-                    }
-                    else {
-                        distanceToMove = (cmCurrent / 2.54) + 4.75;
-                    }
+                     distanceToMove = (cmCurrent / 2.54) + 5.75;
                 }
             }
             Log.v("BOK", "Red targetReached: " + targetEncCountReached +
@@ -936,7 +911,7 @@ public abstract class BoKAutoCommon implements BoKAuto
 
     public boolean strafeWithRangeSensor(double power,
                                          int targetDistanceCm,
-                                         //boolean strafeLeft,
+                                         boolean sensorRight,
                                          double waitForSec)
     {
         boolean result = true;
@@ -947,7 +922,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         //robot.setModeForDTMotors(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         AnalogInput rangeSensor; //, backSensor; // First choose which range sensor to use
-        rangeSensor = robot.mb1240Side;
+        rangeSensor = (sensorRight) ? robot.mb1240SideR : robot.mb1240SideL;
         // backSensor = robot.mb1240Back;
 
         cmCurrent = robot.getDistanceCM(rangeSensor);
@@ -978,11 +953,12 @@ public abstract class BoKAutoCommon implements BoKAuto
             //if (strafeLeft) {
                 // if diffFromTarget > 0 then wheelPower is +ve, but we need to move
                 // backward (BLUE FAR).
-                //Log.v("BOK", "Left current RS: " + cmCurrent +
-                //        " Difference: " + diffFromTarget +
-                //        " Power: " + wheelPower +
-                //        " Back RS " + robot.getDistanceCM(backSensor));
-                robot.setPowerToDTMotors(-wheelPower, wheelPower, -wheelPower, wheelPower);
+            //    Log.v("BOK", "Left current RS: " + cmCurrent +
+            //            " Difference: " + diffFromTarget +
+            //           " Power: " + wheelPower);
+            if(allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED)
+                wheelPower *= -1;
+            robot.setPowerToDTMotors(-wheelPower, wheelPower, -wheelPower, wheelPower);
             //}
             //else { // back range sensor
                 // if diffFromTarget > 0 then wheelPower is +ve
@@ -993,8 +969,6 @@ public abstract class BoKAutoCommon implements BoKAuto
             //    robot.setPowerToDTMotors(wheelPower, -wheelPower, wheelPower, -wheelPower);
             //}
         }
-
-
 
         Log.v("BOK", "Side current RS: " + cmCurrent);
         robot.setPowerToDTMotors(0, 0, 0, 0);
@@ -1068,8 +1042,12 @@ public abstract class BoKAutoCommon implements BoKAuto
 
         // determine turn power based on +/- error
         error = getError(angle);
-        if (Math.abs(error) <= (Math.abs(angle-init_angle)/2))
+        if (Math.abs(error) <= (Math.abs(angle-init_angle)*fraction_turn_slow)) {
+            if (speed > DT_TURN_SPEED_HIGH) {
+                speed = DT_TURN_SPEED_HIGH;
+            }
             speed /= 2;
+        }
 
         if (Math.abs(error) <= threshold) {
             steer = 0.0;
@@ -1082,9 +1060,12 @@ public abstract class BoKAutoCommon implements BoKAuto
 
             rightSpeed  = speed * steer;
             if (rightSpeed > 0)
-                rightSpeed = Range.clip(rightSpeed, DT_TURN_SPEED_LOW, DT_TURN_SPEED_HIGH);
+                rightSpeed = Range.clip(rightSpeed, DT_TURN_SPEED_LOW,
+                                        DT_TURN_SPEED_HIGH+additional_turn_speed);
             else
-                rightSpeed = Range.clip(rightSpeed, -DT_TURN_SPEED_HIGH, -DT_TURN_SPEED_LOW);
+                rightSpeed = Range.clip(rightSpeed,
+                                        -DT_TURN_SPEED_HIGH-additional_turn_speed,
+                                        -DT_TURN_SPEED_LOW);
 
             if(!tank)
                 leftSpeed   = rightSpeed;
@@ -1147,7 +1128,7 @@ public abstract class BoKAutoCommon implements BoKAuto
 
             // Lower the jewel arm & the range sensor
             robot.jewelArm.setPosition(robot.JA_MID);
-            opMode.sleep(waitForServoMs*3); // let the flicker settle down
+            opMode.sleep(waitForServoMs*2); // let the flicker settle down
             angles = robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
                                                      AxesOrder.XYZ,
                                                      AngleUnit.DEGREES);
@@ -1167,6 +1148,9 @@ public abstract class BoKAutoCommon implements BoKAuto
             double distBack = 8.0;
             if(allianceColor == BoKAllianceColor.BOK_ALLIANCE_BLUE){
                 //move(DT_POWER_HIGH, DT_POWER_HIGH, 2, true, DT_TIMEOUT_2S);
+                distBack -= 4;
+            }
+            else {
                 distBack += 0.5;
             }
 
@@ -1177,6 +1161,9 @@ public abstract class BoKAutoCommon implements BoKAuto
                                  false, // NOT a tank turn
                                  false,
                                  DT_TURN_TIMEOUT);
+
+            if(allianceColor == BoKAllianceColor.BOK_ALLIANCE_BLUE)
+                moveRamp(DT_POWER_HIGH, 5.5, false, DT_TIMEOUT_4S); // we are too far away!
 
             flipFlipper(FLIP_FLIPPER_DUMP); // dump the glyph
 
@@ -1199,12 +1186,16 @@ public abstract class BoKAutoCommon implements BoKAuto
         }
     }
 
-    void moveLiftEnc(int encCount){
+    void moveLiftEnc(int encCount)
+    {
         robot.flipperLift.setTargetPosition(encCount);
         robot.flipperLift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         robot.flipperLift.setPower(0.4);
-        while (robot. flipperLift.isBusy()){
-
+        runTime.reset();
+        while (robot. flipperLift.isBusy() && opMode.opModeIsActive()) {
+            if (runTime.seconds() >= 2) {
+                Log.v("BOK", "RAISE LIFT timed out");
+            }
         }
         robot.flipperLift.setPower(0);
     }
@@ -1364,10 +1355,12 @@ public abstract class BoKAutoCommon implements BoKAuto
                 opMode.sleep(robot.OPMODE_SLEEP_INTERVAL_MS_SHORT);
                 distFar = robot.distFar.getDistance(DistanceUnit.CM);
                 distNear = robot.distNear.getDistance(DistanceUnit.CM);
-                if (!Double.isNaN(distFar) && !Double.isNaN(distNear) && (distFar < 20)) {
-                    numGlyphs = 2;
-                    robot.stopMove();
-                    break;
+                if (!Double.isNaN(distFar) && !Double.isNaN(distNear)) {
+                    if ((distNear < 20) && (distFar < 20)) {
+                        numGlyphs = 2;
+                        robot.stopMove();
+                        break;
+                    }
                 }
             }
 
@@ -1426,10 +1419,8 @@ public abstract class BoKAutoCommon implements BoKAuto
         robot.stopMove();
     }
 
-    protected void getSecondGlyph()
+    protected void getSecondGlyph(double POWER_FORWARD, double POWER_BACK)
     {
-        double POWER_FORWARD = 0.15;
-        double POWER_BACK = 0.3;
         int FORWARD_DISTANCE = 6;
         int BACKWARD_DISTANCE = 3;
         int SLEEP_MS = 250;
@@ -1464,8 +1455,8 @@ public abstract class BoKAutoCommon implements BoKAuto
         if (numGlyphs == 0) {
             double distNear = robot.distNear.getDistance(DistanceUnit.CM);
             double distFar = robot.distFar.getDistance(DistanceUnit.CM);
-            boolean glyphFound = !Double.isNaN(distNear) ||
-                    !Double.isNaN(distFar);
+            boolean glyphFound = (!Double.isNaN(distNear) && (distNear < 20)) ||
+                    (!Double.isNaN(distFar) && (distFar < 20));
             if (glyphFound) {
                 Log.v("BOK", "Check near: " + distNear + ", far: " + distFar);
                 numGlyphs = 1;

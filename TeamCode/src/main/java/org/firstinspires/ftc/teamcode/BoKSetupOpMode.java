@@ -31,6 +31,7 @@ public class BoKSetupOpMode extends LinearOpMode
     {
         boolean test_sensors = false, test_relic_arm = false;
         robot.initHardware(this);
+
         telemetry.addData("Status", "Hardware initialized");
         telemetry.update();
 
@@ -70,8 +71,12 @@ public class BoKSetupOpMode extends LinearOpMode
                 telemetry.addData("Back", String.format("%.2f",
                         robot.getDistanceCM(robot.mb1240Back)));
 
-                telemetry.addData("Side", String.format("%.2f",
-                        robot.getDistanceCM(robot.mb1240Side)));
+                telemetry.addData("SideR", String.format("%.2f",
+                        robot.getDistanceCM(robot.mb1240SideR)));
+
+                telemetry.addData("SideL", String.format("%.2f",
+                        //robot.getDistanceCM(robot.mb1240SideL)));
+                        robot.getDistanceCM(robot.mb1240SideL)));
             }
 
             if (gamepad1.y) {
@@ -120,6 +125,28 @@ public class BoKSetupOpMode extends LinearOpMode
             if (gamepad1.b) {
                 test_relic_arm = false;
             }
+
+            if (gamepad2.y){
+                robot.jewelFlicker.setPosition(robot.JF_FINAL);
+                robot.jewelArm.setPosition(robot.JA_INIT);
+            }
+
+            if (gamepad2.a) {
+                robot.jewelArm.setPosition(robot.JA_FINAL);
+            }
+
+            if (gamepad2.x) {
+                //robot.jewelFlicker.setPosition(0.3);
+                sleep(250);
+                robot.jewelFlicker.setPosition(robot.JF_LEFT);
+            }
+
+            if (gamepad2.b) {
+                //robot.jewelFlicker.setPosition(0.6);
+                sleep(250);
+                robot.jewelFlicker.setPosition(robot.JF_RIGHT);
+            }
+
             telemetry.update();
 
             robot.waitForTick(BoKHardwareBot.WAIT_PERIOD);

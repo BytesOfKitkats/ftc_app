@@ -30,7 +30,6 @@ public class BoKTele
     private BoKHardwareBot robot;
     private LinearOpMode opMode;
     private double speedCoef = SPEED_COEFF_FAST;
-    private boolean trigger_left_decrease = false;
 
     public enum BoKTeleStatus
     {
@@ -39,10 +38,8 @@ public class BoKTele
     }
 
     public BoKTeleStatus initSoftware(LinearOpMode opMode,
-                                      BoKHardwareBot robot,
-                                      boolean trigger_left_decrease)
+                                      BoKHardwareBot robot)
     {
-        this.trigger_left_decrease = trigger_left_decrease;
         this.opMode = opMode;
         this.robot = robot;
         //robot.initializeImu();
@@ -61,6 +58,7 @@ public class BoKTele
         boolean bring_flipper_down = false;
         boolean g2_left_trigger_pressed = false;
         boolean g2_right_trigger_pressed = false;
+        boolean flipper_lift_check = true;
         int flipperCount = -1;
         double roller_power = robot.ROLLER_POWER_HIGH;
         double FLIPPER_LIFT_POWER = 0.6;
@@ -222,6 +220,8 @@ public class BoKTele
                 // Roller motors
                 if (opMode.gamepad2.y || opMode.gamepad2.dpad_up) {
                     // Spit out the glyphs by reversing roller motors
+                    if (!flipper_down)
+                        roller_power = robot.ROLLER_POWER_HIGH;
                     robot.leftRoller.setPower(-roller_power);
                     robot.rightRoller.setPower(-roller_power);
                 }
@@ -270,16 +270,19 @@ public class BoKTele
                     robot.flipperLift.setPower(FLIPPER_LIFT_POWER);
                     bring_flipper_down = false; // cancel the RUN_TO_POSITION
                     // Log.v("BOK", "Lift Pos " + robot.flipperLift.getCurrentPosition());
-                } else if (opMode.gamepad2.left_stick_y > GAME_TRIGGER_DEAD_ZONE &&
-                        robot.flipperLift.getCurrentPosition() > 0) {
-                    // Lower the lift
-                    robot.flipperLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                    robot.flipperLift.setPower(-FLIPPER_LIFT_POWER);
-                    bring_flipper_down = false; // cancel the RUN_TO_POSITION
+                } else if (opMode.gamepad2.left_stick_y > GAME_TRIGGER_DEAD_ZONE) {
+                    if (!flipper_lift_check ||
+                            (flipper_lift_check && robot.flipperLift.getCurrentPosition() > 0)) {
+                        // Lower the lift
+                        robot.flipperLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                        robot.flipperLift.setPower(-FLIPPER_LIFT_POWER);
+                        bring_flipper_down = false; // cancel the RUN_TO_POSITION
+                    }
 
-                } else if (!bring_flipper_down) {
+                } else if (!bring_flipper_down && flipper_lift_check) {
                     // Hold the lift's last position, but the minimum is 100 so that the
                     // string remains tight.
+                    //Log.v("BOK", "Flipper Lift check: " + robot.flipperLift.getCurrentPosition());
                     robot.flipperLift.setPower(0);
                     int currentLiftPosition = robot.flipperLift.getCurrentPosition();
                     if (currentLiftPosition < 0)
@@ -287,6 +290,9 @@ public class BoKTele
                     robot.flipperLift.setTargetPosition(currentLiftPosition);
                     robot.flipperLift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     robot.flipperLift.setPower(FLIPPER_LIFT_POWER);
+                }
+                else if (!flipper_lift_check) {
+                    robot.flipperLift.setPower(0);
                 }
 
                 // Flipper
@@ -420,8 +426,23 @@ public class BoKTele
                 if (opMode.gamepad1.dpad_up) {
                     roller_power = robot.ROLLER_POWER_HIGH;
                 }
+
                 if (opMode.gamepad1.dpad_down) {
                     roller_power = robot.ROLLER_POWER_MID;
+                }
+
+                if (opMode.gamepad1.left_bumper) {
+                    flipper_lift_check = false;
+                    FLIPPER_LIFT_POWER = 0.3;
+                    FLIPPER_LIFT_POWER_LOW = 0.3;
+                }
+
+                if (opMode.gamepad1.right_bumper) {
+                    robot.flipperLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    robot.flipperLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    flipper_lift_check = true;
+                    FLIPPER_LIFT_POWER = 0.6;
+                    FLIPPER_LIFT_POWER_LOW = 0.4;
                 }
             }
 

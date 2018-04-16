@@ -18,7 +18,7 @@ public class BoKAutoBlueNear extends BoKAutoCommon
     private static final double TIMEOUT_CENTER = 5;
     private static final double TIMEOUT_RIGHT = 6;
 
-    private static final double DISTANCE_TO_LEFT_COL = 24; // inches!!
+    private static final double DISTANCE_TO_LEFT_COL = 27; // inches!!
     private static final double DISTANCE_TO_CENTER_COL = 34;
     private static final double DISTANCE_TO_RIGHT_COL = 42;
 
@@ -87,7 +87,7 @@ public class BoKAutoBlueNear extends BoKAutoCommon
             moveWColor(MOVE_TO_LINE_POWER_HIGH, MAX_DISTANCE_TO_COLOR, true, DT_TIMEOUT_4S);
 
             // get second (& third) glyphs
-            getSecondGlyph();
+            getSecondGlyph(0.15, 0.3);
 
             // move slowly back to the blue line
             moveWColor(MOVE_TO_LINE_POWER_LOW, MAX_DISTANCE_TO_COLOR, false, DT_TIMEOUT_4S);

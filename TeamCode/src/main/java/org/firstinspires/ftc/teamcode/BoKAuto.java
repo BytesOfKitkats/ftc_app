@@ -19,7 +19,7 @@ public interface BoKAuto
     }
 
     // Jewel flicker wait
-    public static int WAIT_FOR_JEWEL_FLICKER_MS = 250;
+    public static int WAIT_FOR_JEWEL_FLICKER_MS = 300;
     // Vuforia
     public static int VUFORIA_TIMEOUT = 4;
     // Drive train
@@ -41,6 +41,7 @@ public interface BoKAuto
     public static double DT_TURN_SPEED_HIGH = 0.4;
     public static int TURN_LEFT_DEGREES = 90;
     public static double DT_POWER_FOR_STRAFE = 0.2;
+    public static double DT_POWER_FOR_STRAFE_HIGH = 0.25;
     //public static double ROTATIONS_STRAFE_TO_WALL = 0.15;
 
     // flipFlipper constants

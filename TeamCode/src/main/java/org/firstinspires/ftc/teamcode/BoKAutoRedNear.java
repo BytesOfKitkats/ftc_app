@@ -16,7 +16,7 @@ public class BoKAutoRedNear extends BoKAutoCommon {
     private static final double TIMEOUT_CENTER = 5;
     private static final double TIMEOUT_LEFT = 6;
     
-    private static final double DISTANCE_TO_RIGHT_COL = 18; // inches!!
+    private static final double DISTANCE_TO_RIGHT_COL = 26; // inches!!
     private static final double DISTANCE_TO_CENTER_COL = 26;
     private static final double DISTANCE_TO_LEFT_COL = 33;
 
@@ -58,7 +58,7 @@ public class BoKAutoRedNear extends BoKAutoCommon {
         moveToCrypto(0, WAIT_FOR_JEWEL_FLICKER_MS, secGlyph);
         if (secGlyph) {
             int INIT_DISTANCE_FORWARD = 15;
-            double DISTANCE_BACK_PART_1 = 10.5;
+            double DISTANCE_BACK_PART_1 = 9;
             double DISTANCE_BACK_PART_2 = 2.5;
             int FINAL_DISTANCE_FORWARD = 6;
             int MAX_DISTANCE_TO_COLOR = 24;
@@ -74,13 +74,13 @@ public class BoKAutoRedNear extends BoKAutoCommon {
             // setup the flipper and the flipper gates
             robot.flipper.setPosition(FLIP_FLIPPER_LOWER);
             moveFlipperGates(true);
-            // move slowly till the blue line, records encCountsTillLine
+            // move slowly till the red line, records encCountsTillLine
             moveWColor(MOVE_TO_LINE_POWER_HIGH, MAX_DISTANCE_TO_COLOR, true, DT_TIMEOUT_4S);
 
             // get second (& third) glyphs
-            getSecondGlyph();
+            getSecondGlyph(0.15, 0.3);
 
-            // move slowly back to the blue line
+            // move slowly back to the red line
             moveWColor(MOVE_TO_LINE_POWER_LOW, MAX_DISTANCE_TO_COLOR, false, DT_TIMEOUT_4S);
 
             // we may have rotated a bit while in the glyph pit, so turn the robot back
@@ -133,7 +133,7 @@ public class BoKAutoRedNear extends BoKAutoCommon {
                 flipFlipper(LOWER_LIFT_AND_RESET_FLIPPER);
             }
             else { // No glyphs! go back & park in the safe zone
-                moveRamp(DT_POWER_HIGH, (INIT_DISTANCE_FORWARD-5), false, DT_TIMEOUT_4S);
+                moveRamp(DT_POWER_HIGH, (INIT_DISTANCE_FORWARD-7), false, DT_TIMEOUT_4S);
             }
         } // if (SecGlyph)
     }
