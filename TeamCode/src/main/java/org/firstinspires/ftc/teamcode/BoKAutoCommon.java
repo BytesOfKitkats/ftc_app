@@ -502,7 +502,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         // deactivate
         //relicTrackables.deactivate();
         cryptoColumn = vuMark;
-        //CameraDevice.getInstance().setFlashTorchMode(false);
+        CameraDevice.getInstance().setFlashTorchMode(false);
         Log.v("BOK", "Detecting Crypto Column: " + runTime.seconds());
         return vuforiaSuccess;
     }

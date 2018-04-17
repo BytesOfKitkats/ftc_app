@@ -51,7 +51,7 @@ public abstract class BoKHardwareBot
     protected static final double ROLLER_POWER_MID = 0.65;
     protected static final double ROLLER_POWER_LOW = 0.4;
     // Relic lift arm
-    protected static final double RA_INIT = 0.74;
+    protected static final double RA_INIT = 0.75;
     protected static final double RA_RAISED_POS = 0.638;
     protected static final double RA_NEAR_POS = 0.51;
     protected static final double RA_FAR_POS = 0.53;
@@ -93,7 +93,7 @@ public abstract class BoKHardwareBot
     private static final String IMU_TOP = "imu_top";        // IMU
 
     protected static final int WAIT_PERIOD = 40; // 40 ms
-    private static final int RELIC_SPOOL_PLAY_POS = 300;
+    private static final int RELIC_SPOOL_PLAY_POS = 420;
     private static final double RELIC_SPOOL_PLAY_POWER = 0.2;
 
     // sometimes it helps to multiply the raw RGB values with a scale factor
@@ -402,7 +402,7 @@ public abstract class BoKHardwareBot
         ElapsedTime trackTime = new ElapsedTime();
 
         // Raise the relic arm
-        relicArm.setPosition(RA_INIT); // raise the relic arm
+        relicArm.setPosition(RA_INIT-0.01); // raise the relic arm
         opMode.sleep(250);
         // Bring the relic out so that it is locked
         relicSpool.setTargetPosition(RELIC_SPOOL_PLAY_POS);
@@ -418,6 +418,7 @@ public abstract class BoKHardwareBot
         }
         relicSpool.setPower(0);
         relicSpool.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        relicArm.setPosition(RA_INIT); // raise the relic arm
     }
 
     protected double getDistanceCM(AnalogInput mb1240)
