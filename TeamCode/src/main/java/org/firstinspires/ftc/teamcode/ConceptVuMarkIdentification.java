@@ -110,6 +110,7 @@ public class ConceptVuMarkIdentification extends LinearOpMode {
     VuforiaLocalizer vuforia;
 
     @Override public void runOpMode() {
+        boolean writeFileOnce = false;
         Log.v(TAG, "Initializing OpenCV");
         // Initialize OpenCV
         if (!OpenCVLoader.initDebug()) {
@@ -171,7 +172,6 @@ public class ConceptVuMarkIdentification extends LinearOpMode {
         relicTrackables.activate();
 
         while (opModeIsActive()) {
-            boolean writeFileOnce = false;
 
             /**
              * See if any of the instances of {@link relicTemplate} are currently visible.
@@ -251,8 +251,8 @@ public class ConceptVuMarkIdentification extends LinearOpMode {
                                     Imgproc.cvtColor(img, img, Imgproc.COLOR_RGB2BGR);
                                     Imgproc.cvtColor(img, img, Imgproc.COLOR_BGR2HSV);
 
-                                    String filePath = "/sdcard/FIRST/hsvFile.png";
-                                    //Log.v(TAG, "Saving image" + filePath);
+                                    String filePath = "/sdcard/FIRST/rgbFile.png";
+                                    Log.v(TAG, "Saving image" + filePath);
                                     Imgcodecs.imwrite(filePath, img);
                                     img.release();
 
