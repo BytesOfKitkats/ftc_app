@@ -5,6 +5,7 @@ import android.util.Log;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 
 /**
@@ -109,6 +110,14 @@ public class BoKAutoRedNear extends BoKAutoCommon {
             robot.stopMove();
             robot.leftRoller.setPower(0);
             robot.rightRoller.setPower(0);
+
+            double distNear = robot.distNear.getDistance(DistanceUnit.CM);
+            double distFar = robot.distFar.getDistance(DistanceUnit.CM);
+            boolean glyphFound = !Double.isNaN(distNear) ||
+                    !Double.isNaN(distFar);
+
+            if (glyphFound)
+                numGlyphs = 1;
 
             if(numGlyphs > 0) {
                 // Split the INIT_DISTANCE_FORWARD, go back DISTANCE_BACK_PART_1

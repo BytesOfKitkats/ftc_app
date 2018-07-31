@@ -43,7 +43,7 @@ public abstract class BoKHardwareBot
     protected static final double JF_LEFT = 0.1;
     // Glyph flipper
     protected static final double FLIPPER_DOWN_POS = 0.95;
-    protected static final double FLIPPER_UP_POS = 0.5;
+    protected static final double FLIPPER_UP_POS = 0.6;
     protected static final double FLIPPER_ANGLE_POS = 0.8;
     protected static final double FLIPPER_INIT_POS = 0.95;
     // Roller motor power
@@ -63,8 +63,8 @@ public abstract class BoKHardwareBot
     protected static final double RGR_UNLOCK = 0.85;
     protected static final double RGR_LOCK = 0.54;
     // Roller gates left
-    protected static final double RGL_UNLOCK = 0.04;
-    protected static final double RGL_LOCK = 0.35;
+    protected static final double RGL_UNLOCK = 0.23;
+    protected static final double RGL_LOCK = 0.56;
 
     // DC Motors
     private static final String RELIC_SPOOL_MOTOR = "sp";
@@ -140,7 +140,7 @@ public abstract class BoKHardwareBot
 
     /*
      * The initHardware() method initializes the hardware on the robot including the drive train.
-     * It calls the abstract initDriveTrainMotors() and initMotorsAndSensors() methods.
+     * It calls the abstract  n() and initMotorsAndSensors() methods.
      * Returns BOK_SUCCESS if the initialization is successful, BOK_FAILURE otherwise.
      */
     protected BoKHardwareStatus initHardware(LinearOpMode opMode)

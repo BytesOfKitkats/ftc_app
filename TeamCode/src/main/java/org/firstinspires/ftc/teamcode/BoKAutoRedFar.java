@@ -15,9 +15,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 public class BoKAutoRedFar extends BoKAutoCommon {
     private static double TIMEOUT_DUMP = 1;
     private static double DT_MOVE_TO_CRYPTO = 25.5;//inches
-    private static int DISTANCE_TO_RIGHT_COL_CM = 48;//cm
-    private static int DISTANCE_TO_CENTER_COL_CM = 64;//cm
-    private static int DISTANCE_TO_LEFT_COL_CM = 84;//cm
+    private static int DISTANCE_TO_RIGHT_COL_CM = 49;//cm
+    private static int DISTANCE_TO_CENTER_COL_CM = 66;//cm
+    private static int DISTANCE_TO_LEFT_COL_CM = 86;//cm
 
     // Constructor
     public BoKAutoRedFar()
@@ -56,7 +56,7 @@ public class BoKAutoRedFar extends BoKAutoCommon {
 
         if (cmFromWall > 35) {
             cmFromWall = robot.getDistanceCM(robot.mb1240Front);
-            Log.v("BOK", "CM from wall " + cmFromWall);
+            Log.v("BOK", "CM from wall 2 " + cmFromWall);
             if (cmFromWall > 35) cmFromWall = 35;
         }
 
@@ -80,8 +80,13 @@ public class BoKAutoRedFar extends BoKAutoCommon {
         fraction_turn_slow = 0.25;
         gyroTurn(DT_TURN_SPEED_LOW, angles.thirdAngle, 180, DT_TURN_THRESHOLD_LOW, false, false, DT_TIMEOUT_4S);
 
-        if (cryptoColumn == RelicRecoveryVuMark.LEFT)
+        if (cryptoColumn == RelicRecoveryVuMark.LEFT) {
             cmFromWall = robot.getDistanceCM(robot.mb1240Back);
+            if (cmFromWall > 50) {
+                cmFromWall = robot.getDistanceCM(robot.mb1240Back);
+                if (cmFromWall > 50) cmFromWall = 50;
+            }
+        }
         Log.v("BOK", "CM from wall " + cmFromWall);
 
         double distBack = (cmFromWall - 10.16)/2.54; // 20.32cm = 8 inches

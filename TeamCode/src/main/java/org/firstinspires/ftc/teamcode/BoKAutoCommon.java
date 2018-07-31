@@ -293,6 +293,15 @@ public abstract class BoKAutoCommon implements BoKAuto
                 opMode.telemetry.update();
             }
 
+            else{
+                double sCM = robot.getDistanceCM(robot.mb1240SideR);
+                //double rZ = rot.thirdAngle;
+                robotPosition = String.format("S: %.1f", sCM);
+
+                // we can only update the text in the main UI thread
+                act.runOnUiThread(new UpdateRobotPosition(String.format("S: %.1f", sCM)));
+            }
+
             flipFlipper(FLIP_FLIPPER_INIT); // initialize the flipper to stay parallel
 
             if (opMode.gamepad1.y) {
@@ -953,9 +962,9 @@ public abstract class BoKAutoCommon implements BoKAuto
             //if (strafeLeft) {
                 // if diffFromTarget > 0 then wheelPower is +ve, but we need to move
                 // backward (BLUE FAR).
-            //    Log.v("BOK", "Left current RS: " + cmCurrent +
-            //            " Difference: " + diffFromTarget +
-            //           " Power: " + wheelPower);
+                Log.v("BOK", "Left current RS: " + cmCurrent +
+                        " Difference: " + diffFromTarget +
+                       " Power: " + wheelPower);
             if(allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED)
                 wheelPower *= -1;
             robot.setPowerToDTMotors(-wheelPower, wheelPower, -wheelPower, wheelPower);
@@ -1145,6 +1154,7 @@ public abstract class BoKAutoCommon implements BoKAuto
             robot.jewelFlicker.setPosition(robot.JF_INIT);
             opMode.sleep(waitForServoMs);
 
+            /*
             double distBack = 8.0;
             if(allianceColor == BoKAllianceColor.BOK_ALLIANCE_BLUE){
                 //move(DT_POWER_HIGH, DT_POWER_HIGH, 2, true, DT_TIMEOUT_2S);
@@ -1172,6 +1182,7 @@ public abstract class BoKAutoCommon implements BoKAuto
             // just park in the safe zone
             if (!secGlyph)
                 moveRamp(DT_POWER_HIGH, distBack - 4.5, true, DT_TIMEOUT_4S);
+                */
         } // opMode.isActive
     }
 

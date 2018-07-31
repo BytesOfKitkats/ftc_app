@@ -18,7 +18,7 @@ public class BoKAutoBlueFar extends BoKAutoCommon
     private static double DT_MOVE_TO_CRYPTO = 22; // Inches! Must come off the balancing stone
     private static int DISTANCE_TO_LEFT_COL_CM = 51; // CM
     private static int DISTANCE_TO_CENTER_COL_CM = 68;
-    private static int DISTANCE_TO_RIGHT_COL_CM = 87;
+    private static int DISTANCE_TO_RIGHT_COL_CM = 88;
 
     // Constructor
     public BoKAutoBlueFar()
@@ -46,7 +46,11 @@ public class BoKAutoBlueFar extends BoKAutoCommon
         gyroTurn(DT_TURN_SPEED_LOW, 0, 0, DT_TURN_THRESHOLD_LOW, false, false, DT_TIMEOUT_2S);
 
         double cmFromWall = robot.getDistanceCM(robot.mb1240Back);
-        Log.v("BOK", "cm from wall: " + cmFromWall);
+        if (cmFromWall > 50) {
+            cmFromWall = robot.getDistanceCM(robot.mb1240Back);
+            Log.v("BOK", "CM from wall 2 " + cmFromWall);
+            if (cmFromWall > 50) cmFromWall = 45;
+        }
         if(cryptoColumn == RelicRecoveryVuMark.LEFT)
             strafeWithRangeSensor(DT_POWER_FOR_STRAFE,
                                   DISTANCE_TO_LEFT_COL_CM, true, DT_TIMEOUT_5S);
@@ -72,7 +76,7 @@ public class BoKAutoBlueFar extends BoKAutoCommon
         else {
             int INIT_DISTANCE_FORWARD = 20;
             double DISTANCE_BACK_PART_1 = 20;
-            double DISTANCE_BACK_PART_2 = distBack-5;
+            double DISTANCE_BACK_PART_2 = distBack - 5;
             int FINAL_DISTANCE_FORWARD = 6;
             int MAX_DISTANCE_TO_COLOR = 24;
             int GYRO_TURN_DEGREES = 30;
@@ -90,7 +94,7 @@ public class BoKAutoBlueFar extends BoKAutoCommon
             }
             // Turn slightly to the left
             gyroTurn(DT_TURN_SPEED_HIGH, 0, GYRO_TURN_DEGREES,
-                     DT_TURN_THRESHOLD_LOW, false, false, DT_TIMEOUT_2S);
+                    DT_TURN_THRESHOLD_LOW, false, false, DT_TIMEOUT_2S);
 
             // move at a high speed past the safe zone triangle
             move(DT_POWER_HIGH, DT_POWER_HIGH, INIT_DISTANCE_FORWARD, true, DT_TIMEOUT_4S);
@@ -109,12 +113,12 @@ public class BoKAutoBlueFar extends BoKAutoCommon
 
             // we may have rotated a bit while in the glyph pit, so turn the robot back
             angles = robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
-                                                     AxesOrder.XYZ,
-                                                     AngleUnit.DEGREES);
+                    AxesOrder.XYZ,
+                    AngleUnit.DEGREES);
             gyroTurn(DT_TURN_SPEED_LOW,
-                     angles.thirdAngle, // current angle of the robot
-                     GYRO_TURN_DEGREES,
-                     DT_TURN_THRESHOLD_LOW, false, false, DT_TIMEOUT_4S);
+                    angles.thirdAngle, // current angle of the robot
+                    GYRO_TURN_DEGREES,
+                    DT_TURN_THRESHOLD_LOW, false, false, DT_TIMEOUT_4S);
 
             // now go back to the crypto box by retracing the steps
             robot.resetDTEncoders();
@@ -139,7 +143,7 @@ public class BoKAutoBlueFar extends BoKAutoCommon
             angles = robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
                     AxesOrder.XYZ,
                     AngleUnit.DEGREES);
-            gyroTurn(DT_TURN_SPEED_LOW+0.1,
+            gyroTurn(DT_TURN_SPEED_LOW + 0.1,
                     angles.thirdAngle, // current angle of the robot
                     0,
                     DT_TURN_THRESHOLD_LOW, false, false, DT_TIMEOUT_4S);
@@ -159,7 +163,7 @@ public class BoKAutoBlueFar extends BoKAutoCommon
             if (glyphFound)
                 numGlyphs = 1;
 
-            if(numGlyphs > 0) {
+            if (numGlyphs > 0) {
                 Log.v("BOK", "Ready to flip, raise the lift");
                 //moveRamp(MOVE_BACK_POWER, DISTANCE_BACK_PART_2, false, DT_TIMEOUT_2S);
 
@@ -182,8 +186,7 @@ public class BoKAutoBlueFar extends BoKAutoCommon
                 move(DT_POWER_HIGH, DT_POWER_HIGH, FINAL_DISTANCE_FORWARD, true, DT_TIMEOUT_2S);
                 // Lower the flipper lift and the flipper
                 flipFlipper(LOWER_LIFT_AND_RESET_FLIPPER);
-            }
-            else { // No glyphs! go back & park in the safe zone
+            } else { // No glyphs! go back & park in the safe zone
 
                 //moveRamp(DT_POWER_HIGH, (INIT_DISTANCE_FORWARD-5), false, DT_TIMEOUT_4S);
             }
