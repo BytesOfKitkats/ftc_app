@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.AnalogInput;
@@ -12,6 +13,7 @@ import com.qualcomm.robotcore.hardware.I2cDevice;
  * Created by krish on 11/2/2017.
  */
 @TeleOp(name="Telop Tank", group="Demo")
+@Disabled
 public class TeleopSmallBot extends LinearOpMode {
     private DcMotor left, right;
 

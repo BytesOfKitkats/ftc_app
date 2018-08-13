@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -19,6 +20,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
  * Created by krish on 7/20/2018.
  */
 @Autonomous(name = "Balancing RObot", group = "Balancing")
+@Disabled
 public class BalancingRobotAuto extends LinearOpMode {
     DcMotor left, right;
     BNO055IMU imu;

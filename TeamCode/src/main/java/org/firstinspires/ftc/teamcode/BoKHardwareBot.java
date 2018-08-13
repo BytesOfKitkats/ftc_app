@@ -43,9 +43,9 @@ public abstract class BoKHardwareBot
     protected static final double JF_LEFT = 0.1;
     // Glyph flipper
     protected static final double FLIPPER_DOWN_POS = 0.95;
-    protected static final double FLIPPER_UP_POS = 0.6;
+    protected static final double FLIPPER_UP_POS = 0.65;
     protected static final double FLIPPER_ANGLE_POS = 0.8;
-    protected static final double FLIPPER_INIT_POS = 0.95;
+    protected static final double FLIPPER_INIT_POS = 0.65;
     // Roller motor power
     protected static final double ROLLER_POWER_HIGH = 0.95;
     protected static final double ROLLER_POWER_MID = 0.65;

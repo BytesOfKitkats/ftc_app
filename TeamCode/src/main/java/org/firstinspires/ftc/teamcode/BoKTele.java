@@ -313,7 +313,7 @@ public class BoKTele
                     // Lower the flipper
                     double pos = robot.flipper.getPosition();
                     //Log.v("BOK", "Flipper Down " + pos);
-                    robot.flipper.setPosition(pos + 0.005); // flipper goes from 0.95 to 0.5
+                    robot.flipper.setPosition(pos + 0.01); // flipper goes from 0.95 to 0.5
                     if (pos > robot.FLIPPER_ANGLE_POS) {
                         roller_power = robot.ROLLER_POWER_HIGH;
                     }
@@ -341,7 +341,7 @@ public class BoKTele
                     flipperCount--;
                     double pos = robot.flipper.getPosition();
                     if(pos < robot.FLIPPER_ANGLE_POS) {
-                        robot.flipper.setPosition(pos + 0.01);
+                        robot.flipper.setPosition(pos + 0.005);
                     }
                     else{
                         flipperCount = 0;
@@ -376,7 +376,7 @@ public class BoKTele
 
                     robot.flipper.setPosition(robot.FLIPPER_UP_POS);
                     g2_right_bumper_pressed = true;
-                    //Log.v ("BOK", "flipper up pos");
+                    Log.v ("BOK", "flipper up pos");
                 }
 
                 // If the flipper lift is higher than 175, stop the intake automatically

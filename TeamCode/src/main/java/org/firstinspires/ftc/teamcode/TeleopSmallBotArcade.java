@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -12,6 +13,7 @@ import org.opencv.core.Mat;
  * Created by krish on 6/14/2018.
  */
 @TeleOp(name="Telop Arcade", group="Demo")
+@Disabled
 public class TeleopSmallBotArcade extends LinearOpMode {
     private DcMotor left, right;
     float lPwr, rPwr, xVal, yVal, turn;
