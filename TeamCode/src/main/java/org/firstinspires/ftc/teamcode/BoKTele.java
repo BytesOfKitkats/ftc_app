@@ -52,7 +52,7 @@ public class BoKTele
 
         // run until the end of the match (driver presses STOP)
         while (opMode.opModeIsActive()) {
-
+            moveRobot();
             robot.waitForTick(robot.WAIT_PERIOD);
         }
 

@@ -32,69 +32,16 @@ public abstract class BoKHardwareBot
 {
     // CONSTANTS
     protected static final int OPMODE_SLEEP_INTERVAL_MS_SHORT  = 10;
-    // Jewel flicker arm
-    protected static final double JA_INIT = 0.21;
-    protected static final double JA_MID = 0.52;
-    protected static final double JA_FINAL = 0.59;
-    // Jewel flicker
-    protected static final double JF_INIT = 1;
-    protected static final double JF_FINAL = 0.45;
-    protected static final double JF_RIGHT = 0.85;
-    protected static final double JF_LEFT = 0.1;
-    // Glyph flipper
-    protected static final double FLIPPER_DOWN_POS = 0.95;
-    protected static final double FLIPPER_UP_POS = 0.65;
-    protected static final double FLIPPER_ANGLE_POS = 0.8;
-    protected static final double FLIPPER_INIT_POS = 0.65;
-    // Roller motor power
-    protected static final double ROLLER_POWER_HIGH = 0.95;
-    protected static final double ROLLER_POWER_MID = 0.65;
-    protected static final double ROLLER_POWER_LOW = 0.4;
-    // Relic lift arm
-    protected static final double RA_INIT = 0.75;
-    protected static final double RA_RAISED_POS = 0.638;
-    protected static final double RA_NEAR_POS = 0.51;
-    protected static final double RA_FAR_POS = 0.53;
-    // Relic claw
-    protected static final double RC_INIT = 0.8;
-    protected static final double RC_UNLOCK = 0.5;
-    protected static final double RC_LOCK = 0.9;
-    // Roller gates right
-    protected static final double RGR_UNLOCK = 0.85;
-    protected static final double RGR_LOCK = 0.54;
-    // Roller gates left
-    protected static final double RGL_UNLOCK = 0.23;
-    protected static final double RGL_LOCK = 0.56;
-
-    // DC Motors
-    private static final String RELIC_SPOOL_MOTOR = "sp";
-    private static final String LEFT_ROLLER_MOTOR = "il";
-    private static final String RIGHT_ROLLER_MOTOR = "ir";
-    private static final String FLIPPER_LIFT_MOTOR = "fl";
-
-    // Servos
-    private static final String JEWEL_ARM_SERVO  = "ja";
-    private static final String JEWEL_FLICKER_SERVO  = "jf";
-    private static final String RELIC_ARM_SERVO = "rp";
-    private static final String RELIC_CLAW_SERVO = "rg";
-    private static final String FLIPPER_SERVO = "fls";
-    private static final String FLIPPER_RIDING_GATE_LEFT_SERVO = "rgl";
-    private static final String FLIPPER_RIDING_GATE_RIGHT_SERVO = "rgr";
 
     // Sensors
-    private static final String RANGE_SENSOR_JA = "rs";     // Modern Robotics
     private static final String MAX_BOTIX_BACK_CFG = "mbb"; // Analog
     private static final String MAX_BOTIX_SIDE_RIGHT_CFG = "mbsr";
     private static final String MAX_BOTIX_SIDE_LEFT_CFG = "mbsl";
     private static final String MAX_BOTIX_FRONT_CFG = "mbf";
-    private static final String COLOR_SENSOR_NEAR = "crn";  // REV color/proximity
-    private static final String COLOR_SENSOR_FAR = "crf";
     private static final String COLOR_SENSOR_BOTTOM = "crb";
     private static final String IMU_TOP = "imu_top";        // IMU
 
     protected static final int WAIT_PERIOD = 40; // 40 ms
-    private static final int RELIC_SPOOL_PLAY_POS = 420;
-    private static final double RELIC_SPOOL_PLAY_POWER = 0.2;
 
     // sometimes it helps to multiply the raw RGB values with a scale factor
     // to amplify/attentuate the measured values.
@@ -108,7 +55,6 @@ public abstract class BoKHardwareBot
     // Sensors
     protected BNO055IMU imu;
     protected AnalogInput mb1240Back, mb1240SideR, mb1240Front, mb1240SideL;
-    protected ModernRoboticsI2cRangeSensor rangeSensorJA;
     protected ColorSensor colorBottom;
 
     private Orientation angles;
@@ -177,12 +123,6 @@ public abstract class BoKHardwareBot
 
         colorBottom = opMode.hardwareMap.get(ColorSensor.class, COLOR_SENSOR_BOTTOM);
         if(colorBottom == null){
-            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
-        }
-
-        rangeSensorJA = opMode.hardwareMap.get(ModernRoboticsI2cRangeSensor.class,
-                RANGE_SENSOR_JA);
-        if (rangeSensorJA == null) {
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 

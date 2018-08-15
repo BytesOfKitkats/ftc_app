@@ -14,12 +14,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 
 public class BoKAutoBlueFar extends BoKAutoCommon
 {
-    private static int TURN_RIGHT_DEGREES = -90;
-    private static double DT_MOVE_TO_CRYPTO = 22; // Inches! Must come off the balancing stone
-    private static int DISTANCE_TO_LEFT_COL_CM = 51; // CM
-    private static int DISTANCE_TO_CENTER_COL_CM = 68;
-    private static int DISTANCE_TO_RIGHT_COL_CM = 88;
-
     // Constructor
     public BoKAutoBlueFar()
     {
@@ -29,6 +23,6 @@ public class BoKAutoBlueFar extends BoKAutoCommon
     @Override
     public void runSoftware()
     {
-
+        followHeadingPID(0, 0.25, 15);
     }
 }

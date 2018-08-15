@@ -12,13 +12,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
  * Created by Krishna Saxena on 10/3/2017.
  */
 
-public class BoKAutoRedFar extends BoKAutoCommon {
-    private static double TIMEOUT_DUMP = 1;
-    private static double DT_MOVE_TO_CRYPTO = 25.5;//inches
-    private static int DISTANCE_TO_RIGHT_COL_CM = 49;//cm
-    private static int DISTANCE_TO_CENTER_COL_CM = 66;//cm
-    private static int DISTANCE_TO_LEFT_COL_CM = 86;//cm
-
+public class BoKAutoRedFar extends BoKAutoCommon
+{
     // Constructor
     public BoKAutoRedFar()
     {

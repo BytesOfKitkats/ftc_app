@@ -78,13 +78,15 @@ public abstract class BoKAutoCommon implements BoKAuto
     //private static final double HEADING_THRESHOLD = 1;
     private static final int RS_DIFF_THRESHOLD_CM = 1;
     private static final double DT_POWER_FOR_RS_MIN = 0.12;
-    private static final double CRS_CRYPTO_TIMEOUT = 2.5;
-    protected static double distToMoveFlick = 0;
+    private static final double  SAMPLE_RATE_SEC = 0.1;
+    //Constants found using Ziegler-Nichols method for PID w/ Kc=0.31, Pc=0.3, dT=0.1
+    private static final double Kp = 0.248; // 0.3
+    private static final double Ki = 0.165; //0.01
+    private static final double Kd = 0.093 / SAMPLE_RATE_SEC; //0.1
     private static final int VUFORIA_LOCK_BALL_X_OFFSET = 240; // pixels offset from the center
     private static final int VUFORIA_LOCK_BALL_Y_OFFSET = 110; // of the Vuforia image
     private static final int VUFORIA_LOCK_BALL_RECT_WIDTH = 95;
     private static final int VUFORIA_LOCK_BALL_RECT_HEIGHT = 90;
-    protected static final double FLIPPER_ANGLE_INIT_POS = 0.85; // FLIPPER_INIT_POS = 0.95
     protected static final boolean DEBUG_OPEN_CV = false;
     private static final String VUFORIA_LOCK_IMG = "vuImage.png";
     private static final String ROI_IMG = "roiImage.png";
@@ -703,101 +705,6 @@ public abstract class BoKAutoCommon implements BoKAuto
         frame.close();
     }
 
-    public void moveTowardsCrypto(double power,
-                                  boolean forward,
-                                  int waitForServoMs,
-                                  double waitForSeconds)
-    {
-        double cmCurrent = 0;
-        robot.resetDTEncoders(); // reset encoders
-        runTime.reset();
-
-        //cmCurrent = robot.rangeSensorJA.rawOptical();
-        //Log.v("BOK", "Distance RS (start raw optical): " + cmCurrent);
-        //Log.v("BOK", "Distance RS (start optical): " + robot.rangeSensorJA.cmOptical());
-        cmCurrent = robot.rangeSensorJA.cmUltrasonic();
-        Log.v("BOK", String.format("Distance RS (start): %.2f", cmCurrent));
-
-        double targetEncCount = robot.getTargetEncCount(2); // fail safe
-        boolean targetEncCountReached = false;
-
-        if(forward){
-            robot.setPowerToDTMotors(power, power, -power, -power);
-        }
-        else{
-            robot.setPowerToDTMotors(-power, -power, power, power);
-        }
-
-        while (opMode.opModeIsActive() &&
-                (runTime.seconds() < waitForSeconds) &&
-                (cmCurrent > 20) &&
-                (!targetEncCountReached))
-        {
-            cmCurrent = robot.rangeSensorJA.cmUltrasonic();
-            double currentEncCount = (robot.getLFEncCount() + robot.getRFEncCount()) / 2;
-            if (currentEncCount >= targetEncCount) {
-                targetEncCountReached = true;
-            }
-        }
-        robot.stopMove();
-        if (!targetEncCountReached) {
-            double cmCurrentNow = robot.rangeSensorJA.cmUltrasonic();
-            if (cmCurrentNow <= 20) {
-                cmCurrent = cmCurrentNow;
-            }
-        }
-
-        // take a picture
-        //takePicture("c_crypto.png");
-
-        if (allianceColor == BoKAllianceColor.BOK_ALLIANCE_BLUE) {
-            // Need to move past the crypto column for blue
-            double distanceToMove = 5; // in inches
-            if (!targetEncCountReached) {
-                Log.v("BOK", "Blue: cmCurrent: " + cmCurrent);
-                // we got a valid ultrasonic value
-                distanceToMove = (cmCurrent/2.54)-4;// + 2.4;
-            }
-            Log.v("BOK", "Blue targetReached: " + targetEncCountReached +
-                  ", dist: " + String.format("%.2f", distanceToMove));
-            move(DT_POWER_FOR_CRYPTO,
-                 DT_POWER_FOR_CRYPTO,
-                 Math.abs(distanceToMove),
-                 (distanceToMove < 0) ? true : false,
-                 DT_TIMEOUT_5S);
-
-            // take a picture
-            //takePicture("cb_crypto.png");
-        }
-        else {
-            double distanceToMove = 5; // in inches
-            if (!targetEncCountReached) {
-                Log.v("BOK", "Red: cmCurrent: " + cmCurrent);
-                // we got a valid ultrasonic value
-                if (cryptoColumn == RelicRecoveryVuMark.RIGHT) {
-                    distanceToMove = (cmCurrent / 2.54) - 2;
-                }
-                else if (cryptoColumn == RelicRecoveryVuMark.CENTER) {
-                    distanceToMove = (cmCurrent / 2.54) + 5.75;
-                }
-                else {
-                     distanceToMove = (cmCurrent / 2.54) + 5.75;
-                }
-            }
-            Log.v("BOK", "Red targetReached: " + targetEncCountReached +
-                    ", dist: " + String.format("%.2f", distanceToMove));
-
-            move(DT_POWER_FOR_CRYPTO,
-                 DT_POWER_FOR_CRYPTO,
-                 Math.abs(distanceToMove),
-                    (distanceToMove > 0) ? true: false,
-                 DT_TIMEOUT_4S);
-
-            // take a picture
-            //takePicture("cr_crypto.png");
-        }
-    }
-    
     public boolean moveWithRangeSensor(double power,
                                     int targetDistanceCm,
                                     boolean sensorFront,
@@ -1091,6 +998,46 @@ public abstract class BoKAutoCommon implements BoKAuto
     protected double getSteer(double error, double PCoeff)
     {
         return Range.clip(error * PCoeff, -1, 1);
+    }
+
+    float getHeading()
+    {
+        return robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
+                AxesOrder.XYZ,
+                AngleUnit.DEGREES).thirdAngle;
+    }
+
+    protected void followHeadingPID(double heading, double power, double waitForSec)
+    {
+        double angle, error, sumError = 0, lastError = 0, diffError, turn, speedL, speedR,
+                lastTime = 0;
+        String logString = "dTime,ang,err,sum,last,diff,turn,speedL,speedR\n";
+        runTime.reset();
+        while (opMode.opModeIsActive() && (runTime.seconds() < waitForSec)) {
+            double currTime = runTime.seconds();
+            double deltaTime = currTime - lastTime;
+            if (deltaTime >= SAMPLE_RATE_SEC) {
+                angle = getHeading();
+                error = angle - heading;
+                sumError = sumError * 0.66 + error;
+                diffError = error - lastError;
+                turn = Kp * error + Ki * sumError + Kd * diffError;
+                speedL = power + turn;
+                speedR = power - turn;
+                speedL = Range.clip(speedL, -1, 1);
+                speedR = Range.clip(speedR, -1, 1);
+                robot.setPowerToDTMotors(-speedL, -speedL, speedR, speedR);
+                logString = logString + deltaTime + "," +angle + "," + error + "," + sumError + ","
+                        + lastError + "," + diffError + "," + turn + "," + speedL + ","
+                        + speedR + "\n";
+                lastError = error;
+                lastTime = currTime;
+            }
+        }
+        robot.setPowerToDTMotors(0,0,0,0);
+        File file = AppUtil.getInstance().getSettingsFile("BoKGyroData.csv");
+        ReadWriteFile.writeFile(file,
+                logString);
     }
 
     boolean targetColorReached(ColorSensor cs, boolean red)
