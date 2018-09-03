@@ -54,8 +54,6 @@ public abstract class BoKHardwareBot
 
     // Sensors
     protected BNO055IMU imu;
-    protected AnalogInput mb1240Back, mb1240SideR, mb1240Front, mb1240SideL;
-    protected ColorSensor colorBottom;
 
     private Orientation angles;
 
@@ -98,31 +96,6 @@ public abstract class BoKHardwareBot
         // type here
         imu = opMode.hardwareMap.get(BNO055IMU.class, IMU_TOP);
         if(imu == null){
-            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
-        }
-
-        mb1240Back = opMode.hardwareMap.analogInput.get(MAX_BOTIX_BACK_CFG);
-        if(mb1240Back == null){
-            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
-        }
-
-        mb1240Front = opMode.hardwareMap.analogInput.get(MAX_BOTIX_FRONT_CFG);
-        if(mb1240Front == null){
-            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
-        }
-
-        mb1240SideR = opMode.hardwareMap.analogInput.get(MAX_BOTIX_SIDE_RIGHT_CFG);
-        if(mb1240SideR == null){
-            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
-        }
-
-        mb1240SideL = opMode.hardwareMap.analogInput.get(MAX_BOTIX_SIDE_LEFT_CFG);
-        if (mb1240SideL == null) {
-            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
-        }
-
-        colorBottom = opMode.hardwareMap.get(ColorSensor.class, COLOR_SENSOR_BOTTOM);
-        if(colorBottom == null){
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 

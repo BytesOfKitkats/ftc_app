@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
  * It uses BoKMecanumDT and BoKAutoRedNear objects
  */
 @Autonomous(name="BoK Auto RED Near", group="BoKRed")
-//@Disabled
+@Disabled
 public class BoKAutoRedNearOpMode extends BoKAutoOpMode
 {
     @Override

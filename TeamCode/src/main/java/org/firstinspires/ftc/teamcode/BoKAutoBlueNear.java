@@ -31,6 +31,6 @@ public class BoKAutoBlueNear extends BoKAutoCommon
     @Override
     public void runSoftware()
     {
-
+        gyroTurn(0.25,0,-150,2,false,false,15);
     }
 }

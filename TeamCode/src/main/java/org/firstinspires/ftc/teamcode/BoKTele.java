@@ -95,10 +95,10 @@ public class BoKTele
             motorPowerLB = -gamePad1LeftStickY - gamePad1LeftStickX;
             motorPowerRF = gamePad1LeftStickY - (-gamePad1LeftStickX);
             motorPowerRB = gamePad1LeftStickY - gamePad1LeftStickX;
-            //Log.v("BOK","LF:" + String.format("%.2f", motorPowerLF*speedCoef) +
-            //       "LB: " + String.format("%.2f", motorPowerLB*speedCoef) +
-            //        "RF: " + String.format("%.2f", motorPowerRF*speedCoef) +
-            //        "RB: " + String.format("%.2f", motorPowerRB*speedCoef));
+            Log.v("BOK","LF:" + String.format("%.2f", motorPowerLF*speedCoef) +
+                   "LB: " + String.format("%.2f", motorPowerLB*speedCoef) +
+                    "RF: " + String.format("%.2f", motorPowerRF*speedCoef) +
+                    "RB: " + String.format("%.2f", motorPowerRB*speedCoef));
         }
         else if ((gamePad1RightStickX > GAME_STICK_DEAD_ZONE) ||
                 (gamePad1RightStickX < -GAME_STICK_DEAD_ZONE)) {
