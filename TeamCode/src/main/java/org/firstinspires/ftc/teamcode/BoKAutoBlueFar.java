@@ -23,7 +23,7 @@ public class BoKAutoBlueFar extends BoKAutoCommon
     @Override
     public void runSoftware()
     {
-        followHeadingPID(0, 0.05, 15);
-        //move(0.25,0.25,80,false,10);
+        //driveForwardEnc(80, 0.15, 0.75, 0.4);
+        move(0.25,0.25,80,false,10);
     }
 }

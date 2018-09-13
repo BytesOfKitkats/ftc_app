@@ -43,6 +43,7 @@ public class BoKTele
         this.opMode = opMode;
         this.robot = robot;
         //robot.initializeImu();
+        robot.resetDTEncoders();
         robot.setModeForDTMotors(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         return BoKTeleStatus.BOK_TELE_SUCCESS;
     }
@@ -99,6 +100,8 @@ public class BoKTele
                    "LB: " + String.format("%.2f", motorPowerLB*speedCoef) +
                     "RF: " + String.format("%.2f", motorPowerRF*speedCoef) +
                     "RB: " + String.format("%.2f", motorPowerRB*speedCoef));
+            robot.getRAvgEncCount();
+            robot.getLAvgEncCount();
         }
         else if ((gamePad1RightStickX > GAME_STICK_DEAD_ZONE) ||
                 (gamePad1RightStickX < -GAME_STICK_DEAD_ZONE)) {

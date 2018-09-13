@@ -749,6 +749,46 @@ public abstract class BoKAutoCommon implements BoKAuto
                 logString);
     }
 
+    protected void driveForwardEnc(double dist, double minPower, double maxPower, double Kp){
+        double adjustment = 0, leftPower = minPower, rightPower = minPower, power = minPower;
+        double totalEncCount = robot.getTargetEncCount(dist);
+        robot.resetDTEncoders();
+        double loopOneEndEncCount = totalEncCount/4;
+        double loopTwoEndEncCount = totalEncCount-loopOneEndEncCount;
+        double slope = (maxPower - minPower)/(0.25*totalEncCount);
+        String logString = "Lavg,Ravg,Cavg,adjst,speed,speedL,speedR\n";
+
+        int currEncCount = (robot.getLAvgEncCount() + robot.getRAvgEncCount())/2;
+        robot.setPowerToDTMotors(leftPower, leftPower, -rightPower, -rightPower);
+
+        while ((currEncCount < loopOneEndEncCount) && opMode.opModeIsActive()){
+            adjustment = Kp*(Math.abs(robot.getLAvgEncCount()) - Math.abs(robot.getRAvgEncCount()));
+            currEncCount = (Math.abs(robot.getLAvgEncCount())+ Math.abs(robot.getRAvgEncCount()))/2;
+            leftPower = power - adjustment;
+            rightPower = power + adjustment;
+            robot.setPowerToDTMotors(leftPower, leftPower, -rightPower, -rightPower);
+            power = slope*currEncCount + minPower;
+
+        }
+        /*
+        while ((currEncCount < loopTwoEndEncCount)&&opMode.opModeIsActive()){
+            robot.setPowerToDTMotors(maxPower, maxPower, -maxPower, -maxPower);
+            Log.v ("BOK", "curr count " + currEncCount + "loop 2 target " + loopTwoEndEncCount);
+        }
+
+        while ((currEncCount < totalEncCount)&&opMode.opModeIsActive()){
+            adjustment = Kp*(Math.abs(robot.getLAvgEncCount()) - Math.abs(robot.getRAvgEncCount()));
+            currEncCount = (Math.abs(robot.getLAvgEncCount())+ Math.abs(robot.getRAvgEncCount()))/2;
+            leftPower = power - adjustment;
+            rightPower = power + adjustment;
+            robot.setPowerToDTMotors(leftPower, leftPower, -rightPower, -rightPower);
+            power = -slope*(currEncCount-totalEncCount) + minPower;
+            Log.v ("BOK", "curr count " + currEncCount + " loop 3 target " + totalEncCount + " power " + power);
+        }
+        */
+        robot.setPowerToDTMotors(0,0,0,0);
+    }
+
     boolean targetColorReached(ColorSensor cs, boolean red)
     {
         float [] currentColor = robot.getHue(cs);

@@ -284,4 +284,16 @@ public class BoKMecanumDT extends BoKHardwareBot
     {
         return rightFront.getCurrentPosition();
     }
+
+    protected int getLAvgEncCount()
+    {
+        Log.v("BOK", "LeftFront " + leftFront.getCurrentPosition() + " LeftBack " + leftBack.getCurrentPosition());
+        return (leftFront.getCurrentPosition() + leftBack.getCurrentPosition())/2;
+    }
+
+    protected int getRAvgEncCount()
+    {
+        Log.v("BOK", "RightFront " + rightFront.getCurrentPosition() + " RightBack " + rightBack.getCurrentPosition());
+        return (rightFront.getCurrentPosition() + rightBack.getCurrentPosition())/2;
+    }
 }

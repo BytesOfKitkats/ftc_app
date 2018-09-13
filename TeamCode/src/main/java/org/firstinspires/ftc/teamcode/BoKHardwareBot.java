@@ -157,6 +157,9 @@ public abstract class BoKHardwareBot
     protected abstract int getLFEncCount();
     protected abstract int getRFEncCount();
 
+    protected abstract int getLAvgEncCount();
+    protected abstract int getRAvgEncCount();
+
     /*
      *
      * waitForTick implements a periodic delay. However, this acts like a metronome with a regular
