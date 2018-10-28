@@ -76,6 +76,25 @@ public abstract class BoKAutoCommon implements BoKAuto
     // CONSTANTS
     private static final double DT_RAMP_SPEED_INIT = 0.2;
     private static final double P_TURN_COEFF = 0.5;
+
+    private static final int SPHERE_RIGHT_LOC_X = 525;
+    private static final int SPHERE_RIGHT_LOC_Y = 125;
+    private static final int SPHERE_LEFT_LOC_X  = 540;
+    private static final int SPHERE_LEFT_LOC_Y  = 630;
+    private static final int ROI_WIDTH = 50;
+    private static final int ROI_HEIGHT = 50;
+    private static final int YELLOW_PERCENT = 50;
+    private static final String VUFORIA_CUBE_IMG = "vuImage.png";
+    private static final String VUFORIA_ROI_IMG_R = "vuImageR.png";
+    private static final String VUFORIA_ROI_IMG_C = "vuImageC.png";
+
+    public enum BoKAutoCubeLocation {
+        BOK_CUBE_UNKNOWN,
+        BOK_CUBE_LEFT,
+        BOK_CUBE_CENTER,
+        BOK_CUBE_RIGHT
+    }
+
     //private static final double HEADING_THRESHOLD = 1;
     protected static final boolean DEBUG_OPEN_CV = false;
     //private static final String HSV_IMG = "hsvImage.png";
@@ -132,6 +151,8 @@ public abstract class BoKAutoCommon implements BoKAuto
         vuforiaFTC = ClassFactory.getInstance().createVuforia(parameters);
         Vuforia.setFrameFormat(PIXEL_FORMAT.RGB565, true);
         vuforiaFTC.setFrameQueueCapacity(1); // change the frame queue capacity to 1
+
+        CameraDevice.getInstance().setFlashTorchMode(true);
 
         Log.v("BOK", "Done initializing software");
         this.opMode = opMode;
@@ -275,6 +296,102 @@ public abstract class BoKAutoCommon implements BoKAuto
 
             robot.stopMove();
         }
+    }
+
+    private boolean isCubePresent(Mat img, Rect roi, String roiImgName)
+    {
+        Mat hist = new Mat();
+        MatOfInt histSize = new MatOfInt(180);
+        MatOfFloat ranges = new MatOfFloat(0f, 180f);
+        Mat mask = new Mat(img.rows(), img.cols(),
+                CvType.CV_8UC1, new Scalar(0));
+        float[] resFloat = new float[180];
+        boolean foundYellow = false;
+
+        Imgproc.rectangle(img, new Point(roi.x, roi.y),
+                new Point(roi.x + ROI_WIDTH,
+                        roi.y + ROI_HEIGHT),
+                new Scalar(0, 255, 0), 10);
+        writeFile(roiImgName, img, true);
+        Mat subMask = mask.submat(roi);
+        subMask.setTo(new Scalar(255));
+
+        Imgproc.calcHist(Arrays.asList(img), new MatOfInt(0),
+                mask, hist, histSize, ranges);
+        //writeFile(HSV_IMG, img, DEBUG_OPEN_CV);
+        //Core.normalize(hist, hist, 256, 0, Core.NORM_MINMAX);
+        hist.get(0, 0, resFloat);
+
+        int p, nYellowPixels = 0;
+        int numPixels = roi.width * roi.height;
+        // Red is 0 (in HSV),
+        // but we need to check between 160-179 and 0-9
+        for (p = 10; p < 35; p++) {
+            nYellowPixels += (int) resFloat[p];
+        }
+
+        if (nYellowPixels >= ((numPixels * YELLOW_PERCENT)/100))
+            foundYellow = true;
+
+        Log.v("BOK", "num Yellow pixels: " + nYellowPixels + " out of " + numPixels);
+
+        hist.release();
+        histSize.release();
+        ranges.release();
+        mask.release();
+
+        return foundYellow;
+    }
+
+    protected BoKAutoCubeLocation findCube() {
+        BoKAutoCubeLocation ret = BoKAutoCubeLocation.BOK_CUBE_UNKNOWN;
+        VuforiaLocalizer.CloseableFrame frame;
+
+        // takes the frame at the head of the queue
+        try {
+            frame = vuforiaFTC.getFrameQueue().take();
+        } catch (InterruptedException e) {
+            Log.v("BOK", "Exception while finding cube!!");
+            return ret;
+        }
+
+        long numImages = frame.getNumImages();
+        for (int i = 0; i < numImages; i++) {
+            if (frame.getImage(i).getFormat() == PIXEL_FORMAT.RGB565) {
+                Image rgb = frame.getImage(i);
+                // rgb is now the Image object that we’ve used in the video
+                if (rgb != null) {
+                    Mat img = setupOpenCVImg(rgb, VUFORIA_CUBE_IMG, true);
+
+                    // Right location
+                    Rect roi = new Rect(SPHERE_RIGHT_LOC_X,
+                                        SPHERE_RIGHT_LOC_Y,
+                                        ROI_WIDTH, ROI_HEIGHT);
+
+                    // First check the right location
+                    if (isCubePresent(img, roi, VUFORIA_ROI_IMG_R )) {
+                        robot.samplerRightServo.setPosition(robot.SAMPLER_RIGHT_SERVO_FINAL);
+                        ret = BoKAutoCubeLocation.BOK_CUBE_RIGHT;
+                    }
+                    else {
+                        roi.x = SPHERE_LEFT_LOC_X;
+                        roi.y = SPHERE_LEFT_LOC_Y;
+                        if (isCubePresent(img, roi, VUFORIA_ROI_IMG_C )) {
+                            ret = BoKAutoCubeLocation.BOK_CUBE_CENTER;
+                        }
+                    }
+                    if (ret == BoKAutoCubeLocation.BOK_CUBE_UNKNOWN) {
+                        robot.samplerLeftServo.setPosition(robot.SAMPLER_LEFT_SERVO_FINAL);
+                        ret = BoKAutoCubeLocation.BOK_CUBE_LEFT;
+                    }
+                    img.release();
+                }
+                break;
+            } // PIXEL_FORMAT.RGB565
+        } // for (int i = 0; i < numImages; i++)
+        frame.close();
+
+        return ret;
     }
 
     protected void takePicture(String sFileName) {
@@ -443,5 +560,19 @@ public abstract class BoKAutoCommon implements BoKAuto
     protected double getSteer(double error, double PCoeff)
     {
         return Range.clip(error * PCoeff, -1, 1);
+    }
+
+    protected void moveIntake(double power, int encCount){
+        robot.intakeArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        robot.intakeArmMotor.setTargetPosition(encCount);
+        robot.intakeArmMotor.setPower(power);
+        while(robot.intakeArmMotor.isBusy()){
+
+        }
+        robot.intakeArmMotor.setPower(0);
+    }
+
+    protected void sweepRoller(double power){
+        robot.intakeSweeperServo.setPower(power);
     }
 }

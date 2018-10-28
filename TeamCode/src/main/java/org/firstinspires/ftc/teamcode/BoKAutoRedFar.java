@@ -23,13 +23,18 @@ public class BoKAutoRedFar extends BoKAutoCommon {
     @Override
     public void runSoftware()
     {
+        /*
         int captureCounter = 0;
         boolean buttonPressed = false;
         while (opMode.opModeIsActive()) {
             if (opMode.gamepad1.a && !buttonPressed) {
                 takePicture(String.format("VuImage_%d.png", captureCounter++));
+                Log.v("BOK", "Picture taken " + captureCounter);
             }
             buttonPressed = opMode.gamepad1.a;
-        }
+        }*/
+
+        findCube();
+        moveRamp(0.5, 50, true, 5);
     }
 }
