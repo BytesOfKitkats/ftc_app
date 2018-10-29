@@ -99,18 +99,19 @@ public class BoKTele
                 speedCoef = SPEED_COEFF_FAST;
             }
 
-            if (opMode.gamepad1.x && !end_game) {
+            if (opMode.gamepad2.x && !end_game) {
                 end_game = true;
                 Log.v("BOK", "End Game started");
                 // Make sure that the intake arm is folded up
 
                 // Make sure that the dumper lift is down
+                robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT+0.1);
                 robot.dumperSlideMotor.setTargetPosition(0);
                 robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 robot.dumperSlideMotor.setPower(DUMPER_LIFT_POWER);
             }
 
-            if (opMode.gamepad1.b && end_game) {
+            if (opMode.gamepad2.b && end_game) {
                 end_game = false;
 
                 Log.v("BOK", "End Game reverted");
@@ -125,8 +126,6 @@ public class BoKTele
             // Dpad Left/Right:        Switch from vertical to horizontal lift
             // Left Bumper:            Dump the minerals
             // Right Bumper:           Bring the dumper back up
-
-
 
             moveIntakeServo(); // Intake sweeper
 
@@ -302,11 +301,11 @@ public class BoKTele
                 // End game
                 // Raise or lower the hook
                 if (opMode.gamepad2.dpad_up && !hangHookRaised) {
-                    robot.hangHookServo.setPosition(robot.HANG_HOOK_SERVO_FINAL);
+                    robot.hangHookServo.setPosition(robot.HANG_HOOK_SERVO_INIT);
                     hangHookRaised = true;
                 }
                 if (opMode.gamepad2.dpad_down && hangHookRaised) {
-                    robot.hangHookServo.setPosition(robot.HANG_HOOK_SERVO_INIT);
+                    robot.hangHookServo.setPosition(robot.HANG_HOOK_SERVO_FINAL);
                     hangHookRaised = false;
                 }
                 // Hanging lift control
@@ -314,19 +313,22 @@ public class BoKTele
                     // Raise the dumper lift
                     robot.hangMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                     robot.hangMotor.setPower(HANG_LIFT_POWER);
-                    Log.v("BOK", "Hanging Lift Pos " +
+                    Log.v("BOK", "Hanging Lift Pos UP " +
                             robot.hangMotor.getCurrentPosition());
                 } else if (opMode.gamepad2.left_stick_y > GAME_TRIGGER_DEAD_ZONE) {
                     //if (robot.hangMotor.getCurrentPosition() > 0) {
                         // Lower the lift
                         robot.hangMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                         robot.hangMotor.setPower(-HANG_LIFT_POWER);
+                    Log.v("BOK", "Hanging Lift Pos DN " +
+                            robot.hangMotor.getCurrentPosition());
                     //}
 
                 } else {
                     // Hold the lift's last position, but there is a minimum so that the
                     // string remains tight.
                     robot.hangMotor.setPower(0);
+                    /*
                     int currentLiftPosition = robot.hangMotor.getCurrentPosition();
                     if (currentLiftPosition < HANG_LIFT_LOW_POS) {
                         Log.v("BOK", "Hang lift check: " +
@@ -336,7 +338,7 @@ public class BoKTele
                     robot.hangMotor.setTargetPosition(currentLiftPosition);
                     robot.hangMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     robot.hangMotor.setPower(DUMPER_LIFT_POWER);
-                }
+                */}
             }
             robot.waitForTick(robot.WAIT_PERIOD);
         }

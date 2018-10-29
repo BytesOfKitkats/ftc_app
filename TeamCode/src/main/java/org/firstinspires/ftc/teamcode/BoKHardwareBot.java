@@ -56,7 +56,7 @@ public abstract class BoKHardwareBot
     protected static final double DUMPER_ROTATE_SERVO_FINAL = 0.4;
     protected static final double DUMPER_TILT_SERVO_INIT    = 1.0;
     protected static final double DUMPER_TILT_SERVO_FINAL   = 0.0;
-    protected static final double HANG_HOOK_SERVO_INIT      = 0.0;
+    protected static final double HANG_HOOK_SERVO_INIT      = 0.15;
     protected static final double HANG_HOOK_SERVO_FINAL     = 1.0;
 
     // Sensors

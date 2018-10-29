@@ -77,10 +77,10 @@ public abstract class BoKAutoCommon implements BoKAuto
     private static final double DT_RAMP_SPEED_INIT = 0.2;
     private static final double P_TURN_COEFF = 0.5;
 
-    private static final int SPHERE_RIGHT_LOC_X = 525;
-    private static final int SPHERE_RIGHT_LOC_Y = 125;
-    private static final int SPHERE_LEFT_LOC_X  = 540;
-    private static final int SPHERE_LEFT_LOC_Y  = 630;
+    private static final int SPHERE_RIGHT_LOC_X = 535;
+    private static final int SPHERE_RIGHT_LOC_Y = 150;
+    private static final int SPHERE_LEFT_LOC_X  = 535;
+    private static final int SPHERE_LEFT_LOC_Y  = 560;
     private static final int ROI_WIDTH = 50;
     private static final int ROI_HEIGHT = 50;
     private static final int YELLOW_PERCENT = 50;
@@ -370,7 +370,6 @@ public abstract class BoKAutoCommon implements BoKAuto
 
                     // First check the right location
                     if (isCubePresent(img, roi, VUFORIA_ROI_IMG_R )) {
-                        robot.samplerRightServo.setPosition(robot.SAMPLER_RIGHT_SERVO_FINAL);
                         ret = BoKAutoCubeLocation.BOK_CUBE_RIGHT;
                     }
                     else {
@@ -381,7 +380,6 @@ public abstract class BoKAutoCommon implements BoKAuto
                         }
                     }
                     if (ret == BoKAutoCubeLocation.BOK_CUBE_UNKNOWN) {
-                        robot.samplerLeftServo.setPosition(robot.SAMPLER_LEFT_SERVO_FINAL);
                         ret = BoKAutoCubeLocation.BOK_CUBE_LEFT;
                     }
                     img.release();
@@ -574,5 +572,22 @@ public abstract class BoKAutoCommon implements BoKAuto
 
     protected void sweepRoller(double power){
         robot.intakeSweeperServo.setPower(power);
+    }
+
+    protected void moveHangLift(double power, int targetPos){
+        robot.hangMotor.setTargetPosition(targetPos);
+        robot.hangMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        robot.hangMotor.setPower(power);
+        while (robot.hangMotor.isBusy()){
+
+        }
+        robot.hangMotor.setPower(0);
+    }
+
+    class moveLiftDown extends Thread {
+        @Override
+        public void run() {
+            moveHangLift(-0.75, 0);
+        }
     }
 }
