@@ -105,7 +105,7 @@ public class BoKTele
                 // Make sure that the intake arm is folded up
 
                 // Make sure that the dumper lift is down
-                robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT+0.1);
+                robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT+0.2);
                 robot.dumperSlideMotor.setTargetPosition(0);
                 robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 robot.dumperSlideMotor.setPower(DUMPER_LIFT_POWER);

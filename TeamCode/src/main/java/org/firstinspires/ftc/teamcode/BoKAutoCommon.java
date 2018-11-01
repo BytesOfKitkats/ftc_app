@@ -53,6 +53,7 @@ import org.opencv.core.MatOfInt;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
@@ -77,16 +78,15 @@ public abstract class BoKAutoCommon implements BoKAuto
     private static final double DT_RAMP_SPEED_INIT = 0.2;
     private static final double P_TURN_COEFF = 0.5;
 
-    private static final int SPHERE_RIGHT_LOC_X = 535;
-    private static final int SPHERE_RIGHT_LOC_Y = 150;
-    private static final int SPHERE_LEFT_LOC_X  = 535;
-    private static final int SPHERE_LEFT_LOC_Y  = 560;
+    private static final int SPHERE_LOC_X_MIN = 500;
+    private static final int SPHERE_LOC_X_MAX = 650;
+    private static final int CUBE_LOC_Y_RIGHT = 225;
+    private static final int CUBE_LOC_Y_CENTER = 500;
     private static final int ROI_WIDTH = 50;
     private static final int ROI_HEIGHT = 50;
     private static final int YELLOW_PERCENT = 50;
     private static final String VUFORIA_CUBE_IMG = "vuImage.png";
-    private static final String VUFORIA_ROI_IMG_R = "vuImageR.png";
-    private static final String VUFORIA_ROI_IMG_C = "vuImageC.png";
+    private static final String VUFORIA_ROI_IMG = "vuImageROI.png";
 
     public enum BoKAutoCubeLocation {
         BOK_CUBE_UNKNOWN,
@@ -192,8 +192,7 @@ public abstract class BoKAutoCommon implements BoKAuto
                                         Bitmap.Config.RGB_565);
         bm.copyPixelsFromBuffer(rgb.getPixels());
 
-        Mat img = new Mat(rgb.getHeight(), rgb.getWidth(),
-                CvType.CV_8UC3);
+        Mat img = new Mat(rgb.getHeight(), rgb.getWidth(), CvType.CV_8UC3);
         Utils.bitmapToMat(bm, img);
 
         // OpenCV only deals with BGR
@@ -202,7 +201,7 @@ public abstract class BoKAutoCommon implements BoKAuto
 
         // First convert from BGR to HSV; separate the color components from intensity.
         // Increase robustness to lighting changes.
-        Imgproc.cvtColor(img, img, Imgproc.COLOR_BGR2HSV);
+        // Imgproc.cvtColor(img, img, Imgproc.COLOR_BGR2HSV);
         return img;
     }
 
@@ -298,25 +297,25 @@ public abstract class BoKAutoCommon implements BoKAuto
         }
     }
 
-    private boolean isCubePresent(Mat img, Rect roi, String roiImgName)
+    private boolean isCubePresent(Mat imgHSV, Rect roi)
     {
         Mat hist = new Mat();
         MatOfInt histSize = new MatOfInt(180);
         MatOfFloat ranges = new MatOfFloat(0f, 180f);
-        Mat mask = new Mat(img.rows(), img.cols(),
+        Mat mask = new Mat(imgHSV.rows(), imgHSV.cols(),
                 CvType.CV_8UC1, new Scalar(0));
         float[] resFloat = new float[180];
         boolean foundYellow = false;
 
-        Imgproc.rectangle(img, new Point(roi.x, roi.y),
-                new Point(roi.x + ROI_WIDTH,
-                        roi.y + ROI_HEIGHT),
+        Imgproc.rectangle(imgHSV, new Point(roi.x, roi.y),
+                new Point(roi.x + roi.width,
+                        roi.y + roi.height),
                 new Scalar(0, 255, 0), 10);
-        writeFile(roiImgName, img, true);
+
         Mat subMask = mask.submat(roi);
         subMask.setTo(new Scalar(255));
 
-        Imgproc.calcHist(Arrays.asList(img), new MatOfInt(0),
+        Imgproc.calcHist(Arrays.asList(imgHSV), new MatOfInt(0),
                 mask, hist, histSize, ranges);
         //writeFile(HSV_IMG, img, DEBUG_OPEN_CV);
         //Core.normalize(hist, hist, 256, 0, Core.NORM_MINMAX);
@@ -325,7 +324,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         int p, nYellowPixels = 0;
         int numPixels = roi.width * roi.height;
         // Red is 0 (in HSV),
-        // but we need to check between 160-179 and 0-9
+        // but we need to check between 10 and 35
         for (p = 10; p < 35; p++) {
             nYellowPixels += (int) resFloat[p];
         }
@@ -361,28 +360,82 @@ public abstract class BoKAutoCommon implements BoKAuto
                 Image rgb = frame.getImage(i);
                 // rgb is now the Image object that we’ve used in the video
                 if (rgb != null) {
-                    Mat img = setupOpenCVImg(rgb, VUFORIA_CUBE_IMG, true);
+                    Mat src = setupOpenCVImg(rgb, VUFORIA_CUBE_IMG, true);
+                    Mat srcHSV = new Mat();
 
-                    // Right location
-                    Rect roi = new Rect(SPHERE_RIGHT_LOC_X,
-                                        SPHERE_RIGHT_LOC_Y,
-                                        ROI_WIDTH, ROI_HEIGHT);
+                    Mat srcGray = new Mat(); // Convert image to gray scale
+                    Imgproc.cvtColor(src, srcGray, Imgproc.COLOR_BGR2GRAY);
+                    Imgproc.cvtColor(src, srcHSV, Imgproc.COLOR_BGR2HSV);
 
-                    // First check the right location
-                    if (isCubePresent(img, roi, VUFORIA_ROI_IMG_R )) {
-                        ret = BoKAutoCubeLocation.BOK_CUBE_RIGHT;
+                    // Apply a blur to reduce noise and avoid false circle detection
+                    Imgproc.blur(srcGray, srcGray, new Size(3, 3));
+
+                    Mat circles = new Mat();
+                    Point[] centerPoints = new Point[2];
+
+                    Imgproc.HoughCircles(
+                            srcGray, // input image gray scale
+                            circles, // a vector that stores 3 values: xc, yc, and r
+                                     // for each detected circle
+                            Imgproc.HOUGH_GRADIENT, // Detection method
+                            1.0, // inverse ratio of resolution
+                            (double) srcGray.rows() / 16, // min distance between centers
+                            100.0, // Upper threshold for internal Canny edge detector
+                            40.0, // Threshold for center detection
+                            25, // Minimum radius to be detected
+                            60); // Maximum radius to be detected
+
+                    int numCircles = 0;
+                    for (int x = 0; x < circles.cols(); x++) {
+                        double[] c = circles.get(0, x);
+                        Point pt = new Point(Math.round(c[0]), Math.round(c[1]));
+
+                        if ((pt.x > SPHERE_LOC_X_MIN) &&
+                            (pt.x < SPHERE_LOC_X_MAX)) {
+                            // Now add histogram calculation for double check
+                            Rect roi = new Rect((int)(pt.x - (ROI_WIDTH/2)),
+                                    (int)(pt.y - (ROI_HEIGHT/2)),
+                                    ROI_WIDTH,ROI_HEIGHT);
+
+                            if (isCubePresent(srcHSV, roi)) {
+                                if (pt.y < CUBE_LOC_Y_RIGHT )
+                                    ret = BoKAutoCubeLocation.BOK_CUBE_RIGHT;
+                                else if (pt.y > CUBE_LOC_Y_CENTER)
+                                    ret = BoKAutoCubeLocation.BOK_CUBE_CENTER;
+                                break;
+                            }
+
+                            centerPoints[numCircles] = pt;
+
+                            // circle center
+                            //Imgproc.circle(src, centerPoints[numCircles], 1, new Scalar(0,100,100), 3, 8, 0 );
+                            // circle outline
+                            int radius = (int) Math.round(c[2]);
+                            //Log.v("BOK", "Center: " + center + ", Radius: " + radius);
+                            Imgproc.circle(src, centerPoints[numCircles], radius, new Scalar(255,0,255), 3, 8, 0 );
+                            numCircles++;
+                        } // if detected circle is within the ROI band
+                    } // for each circle detected
+                    switch(numCircles) {
+                        case 1:
+                            if (centerPoints[0].y < CUBE_LOC_Y_RIGHT)
+                                ret = BoKAutoCubeLocation.BOK_CUBE_CENTER;
+                            else
+                                ret = BoKAutoCubeLocation.BOK_CUBE_RIGHT;
+                            break;
+                        case 2:
+                            ret = BoKAutoCubeLocation.BOK_CUBE_LEFT;
+                            break;
+                        default:
+                            Log.v("BOK", "Detected " + numCircles + "!!");
+                            break;
                     }
-                    else {
-                        roi.x = SPHERE_LEFT_LOC_X;
-                        roi.y = SPHERE_LEFT_LOC_Y;
-                        if (isCubePresent(img, roi, VUFORIA_ROI_IMG_C )) {
-                            ret = BoKAutoCubeLocation.BOK_CUBE_CENTER;
-                        }
-                    }
-                    if (ret == BoKAutoCubeLocation.BOK_CUBE_UNKNOWN) {
-                        ret = BoKAutoCubeLocation.BOK_CUBE_LEFT;
-                    }
-                    img.release();
+
+                    writeFile(VUFORIA_ROI_IMG, src, true);
+                    src.release();
+                    srcHSV.release();
+                    srcGray.release();
+                    circles.release();
                 }
                 break;
             } // PIXEL_FORMAT.RGB565
