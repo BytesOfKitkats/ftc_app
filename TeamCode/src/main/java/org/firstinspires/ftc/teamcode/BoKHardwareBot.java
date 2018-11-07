@@ -52,8 +52,9 @@ public abstract class BoKHardwareBot
     protected static final double SAMPLER_LEFT_SERVO_FINAL  = 0.2;
     protected static final double SAMPLER_RIGHT_SERVO_INIT  = 0.15;
     protected static final double SAMPLER_RIGHT_SERVO_FINAL = 0.8;
-    protected static final double DUMPER_ROTATE_SERVO_INIT  = .77;
-    protected static final double DUMPER_ROTATE_SERVO_FINAL = 0.4;
+    protected static final double DUMPER_ROTATE_SERVO_INIT  = 0;//.77;
+    protected static final double DUMPER_ROTATE_SERVO_HANG_TILT = 0;
+    protected static final double DUMPER_ROTATE_SERVO_FINAL = 0.6;
     protected static final double DUMPER_TILT_SERVO_INIT    = 1.0;
     protected static final double DUMPER_TILT_SERVO_FINAL   = 0.0;
     protected static final double HANG_HOOK_SERVO_INIT      = 0.15;

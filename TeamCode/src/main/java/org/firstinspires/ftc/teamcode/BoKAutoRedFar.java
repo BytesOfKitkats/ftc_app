@@ -29,21 +29,23 @@ public class BoKAutoRedFar extends BoKAutoCommon {
     @Override
     public void runSoftware()
     {
-        robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT+0.1);
+        robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_HANG_TILT);
         loc = findCube();
-        robot.hangMotor.setTargetPosition(8950);
-        robot.hangMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.hangMotor.setPower(0.75);
-        runTime.reset();
-        while (robot.hangMotor.isBusy()&&(runTime.seconds()<7)){
-            Log.v("BOK", "hang enc: " + robot.hangMotor.getCurrentPosition());
-        }
-        robot.hangMotor.setPower(0);
-        if (runTime.seconds() >= 10)
-            Log.v("BOK", "hang lift timed out");
+        //robot.hangMotor.setTargetPosition(9250);//8650
+        //robot.hangMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        //robot.hangMotor.setPower(0.75);
+        //runTime.reset();
+        //while (robot.hangMotor.isBusy()&&(runTime.seconds()<10)){
+            //Log.v("BOK", "hang enc: " + robot.hangMotor.getCurrentPosition());
+        //}
+        //robot.hangMotor.setPower(0);
+        //if (runTime.seconds() >= 10)
+        //    Log.v("BOK", "hang lift timed out");
 
-        robot.hangHookServo.setPosition(robot.HANG_HOOK_SERVO_FINAL);
-
+        //robot.hangHookServo.setPosition(0.6);
+        //opMode.sleep(2000);
+        //robot.hangHookServo.setPosition(robot.HANG_HOOK_SERVO_FINAL);
+        //opMode.sleep(2000);
         moveRamp(0.5, initDist, true, 5);
         moveLiftDown liftDown = new moveLiftDown();
         liftDown.start();
@@ -56,7 +58,7 @@ public class BoKAutoRedFar extends BoKAutoCommon {
         else if (loc == BoKAutoCubeLocation.BOK_CUBE_CENTER){
             moveIntake(0.3, 460);
             sweepRoller(1);
-            moveRamp(0.5, 10, true, 5);
+            moveRamp(0.5, 15, true, 5);
         }
 
         else {

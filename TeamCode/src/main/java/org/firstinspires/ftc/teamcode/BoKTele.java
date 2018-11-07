@@ -25,6 +25,8 @@ public class BoKTele
     private static final double SPEED_COEFF_FAST = 0.8;
     private static final double SPEED_COEFF_TURN = 0.7;
 
+    private static final int INTAKE_MOTOR_LOW_LIMIT = 10;
+    private static final int INTAKE_MOTOR_HIGH_LIMIT = 3250;
     private BoKHardwareBot robot;
     private LinearOpMode opMode;
     private double speedCoef = SPEED_COEFF_FAST;
@@ -60,7 +62,7 @@ public class BoKTele
         int INTAKE_ARM_HIGH_POS_LIMIT = 0;
         int INTAKE_ARM_LOW_POS_SLOW = 360;
         int INTAKE_ARM_LOW_POS_LIMIT = 460;
-        double INTAKE_LIFT_POWER = 0.5;
+        double INTAKE_LIFT_POWER = 0.75;
         int INTAKE_LIFT_LOW_POS = 0;
         double DUMPER_LIFT_POWER = 0.5;
         int DUMPER_LIFT_LOW_POS = 0;
@@ -105,7 +107,7 @@ public class BoKTele
                 // Make sure that the intake arm is folded up
 
                 // Make sure that the dumper lift is down
-                robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT+0.2);
+                robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_HANG_TILT);
                 robot.dumperSlideMotor.setTargetPosition(0);
                 robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 robot.dumperSlideMotor.setPower(DUMPER_LIFT_POWER);
@@ -132,7 +134,7 @@ public class BoKTele
             if (!end_game) {
                 if (opMode.gamepad2.dpad_up && !liftUp) {
                     robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    robot.dumperSlideMotor.setTargetPosition(3400);
+                    robot.dumperSlideMotor.setTargetPosition(3500);
                     robot.dumperSlideMotor.setPower(1.0);
                     robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT);
                     dumperDown = false;
@@ -141,7 +143,7 @@ public class BoKTele
                 if (opMode.gamepad2.dpad_down && liftUp) {
                     robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     robot.dumperSlideMotor.setTargetPosition(10);
-                    robot.dumperSlideMotor.setPower(0.9);
+                    robot.dumperSlideMotor.setPower(0.3);
                     robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT);
                     dumperDown = false;
                     liftUp = false;
@@ -180,17 +182,17 @@ public class BoKTele
                     intakeArmPower = INTAKE_ARM_POWER_LOW;
                 if (opMode.gamepad2.left_trigger > GAME_TRIGGER_DEAD_ZONE) {
                     // Lower the intake arm
-                    if (robot.intakeArmMotor.getCurrentPosition() < INTAKE_ARM_LOW_POS_LIMIT) {
+                    //if (robot.intakeArmMotor.getCurrentPosition() < INTAKE_ARM_LOW_POS_LIMIT) {
                         robot.intakeArmMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                         robot.intakeArmMotor.setPower(intakeArmPower);
                         Log.v("BOK", "Intake Arm Pos low " + currentIntakeArmPosition +
                                 " at power: " + intakeArmPower);
                         intakeArmHoldPosition = 0;
-                    }
-                    else {
+                    //}
+                    /*else {
                         intakeArmHoldPosition = 0;
                         Log.v("BOK", "Setting low limit");
-                    }
+                    }*/
                 } else if (opMode.gamepad2.right_trigger > GAME_TRIGGER_DEAD_ZONE) {
 
                     if (robot.intakeArmMotor.getCurrentPosition() > INTAKE_ARM_HIGH_POS_LIMIT) {
@@ -227,25 +229,26 @@ public class BoKTele
                         */
 
                     }
-                    Log.v("BOK", "Intake Motor PWR: " + intakeArmPower);
+                   // Log.v("BOK", "Intake Motor PWR: " + intakeArmPower);
                 }
                 if (runIntakeLift) {
+                    int currentIntakeLiftPos = robot.intakeSlidesMotor.getCurrentPosition();
                     // Intake lift control
-                    if (opMode.gamepad2.left_stick_x > GAME_TRIGGER_DEAD_ZONE) {
+                    if ((opMode.gamepad2.left_stick_x > GAME_TRIGGER_DEAD_ZONE) &&
+                            (currentIntakeLiftPos < INTAKE_MOTOR_HIGH_LIMIT)){
+
                         // Extend the intake arm
                         robot.intakeSlidesMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                         robot.intakeSlidesMotor.setPower(INTAKE_LIFT_POWER);
-                        //Log.v("BOK", "Intake Lift Pos + " +
-                        //        robot.intakeSlidesMotor.getCurrentPosition());
-                    } else if (opMode.gamepad2.left_stick_x < -GAME_TRIGGER_DEAD_ZONE) {
-
-                        //if (robot.intakeSlidesMotor.getCurrentPosition() > 0) {
-                            // Retract the intake arm
-                            //Log.v("BOK", "Intake Lift Pos - " +
-                             //       robot.intakeSlidesMotor.getCurrentPosition());
-                            robot.intakeSlidesMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                            robot.intakeSlidesMotor.setPower(-INTAKE_LIFT_POWER);
-                        //}
+                        Log.v("BOK", "Intake Lift Pos + " +
+                                robot.intakeSlidesMotor.getCurrentPosition());
+                    } else if ((opMode.gamepad2.left_stick_x < -GAME_TRIGGER_DEAD_ZONE) &&
+                            (currentIntakeLiftPos > INTAKE_MOTOR_LOW_LIMIT)){
+                       // Retract the intake arm
+                        Log.v("BOK", "Intake Lift Pos - " +
+                                robot.intakeSlidesMotor.getCurrentPosition());
+                        robot.intakeSlidesMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                        robot.intakeSlidesMotor.setPower(-INTAKE_LIFT_POWER*0.5);
                     } else {
                         // Hold the lift's last position, but there is a minimum so that the
                         // string remains tight.
