@@ -119,6 +119,12 @@ public class BoK4WheelDT extends BoKHardwareBot
         return (COUNTS_PER_MOTOR_REV * degreesOfMotorTurn) / 360.0;
     }
 
+    protected double getAvgEncCount()
+    {
+        return (rightBack.getCurrentPosition() + rightFront.getCurrentPosition() +
+                leftBack.getCurrentPosition() + leftFront.getCurrentPosition())/4.0;
+    }
+
     protected void resetDTEncoders()
     {
         // all four motors need encoder wires to use RUN_TO_POSITION

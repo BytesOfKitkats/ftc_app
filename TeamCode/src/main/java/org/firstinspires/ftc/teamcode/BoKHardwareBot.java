@@ -48,20 +48,23 @@ public abstract class BoKHardwareBot
     private static final String HANG_HOOK_SERVO_NAME     = "haH";
 
     // Servo positions
-    protected static final double SAMPLER_LEFT_SERVO_INIT   = 0.85;
-    protected static final double SAMPLER_LEFT_SERVO_FINAL  = 0.2;
-    protected static final double SAMPLER_RIGHT_SERVO_INIT  = 0.15;
-    protected static final double SAMPLER_RIGHT_SERVO_FINAL = 0.8;
-    protected static final double DUMPER_ROTATE_SERVO_INIT  = 0;//.77;
-    protected static final double DUMPER_ROTATE_SERVO_HANG_TILT = 0;
+    protected static final double SAMPLER_LEFT_SERVO_INIT   = 0.15;
+    protected static final double SAMPLER_LEFT_SERVO_FINAL  = 0.8;
+    protected static final double SAMPLER_RIGHT_SERVO_INIT  = 0.8;
+    protected static final double SAMPLER_RIGHT_SERVO_FINAL = 0.15;
+    protected static final double DUMPER_ROTATE_SERVO_INIT  = 0.15;
+    protected static final double DUMPER_ROTATE_SERVO_ANGLE  = 0.23;
+    protected static final double DUMPER_ROTATE_SERVO_HANG_TILT = 0.13;
     protected static final double DUMPER_ROTATE_SERVO_FINAL = 0.6;
-    protected static final double DUMPER_TILT_SERVO_INIT    = 1.0;
-    protected static final double DUMPER_TILT_SERVO_FINAL   = 0.0;
-    protected static final double HANG_HOOK_SERVO_INIT      = 0.15;
-    protected static final double HANG_HOOK_SERVO_FINAL     = 1.0;
+    protected static final double DUMPER_TILT_SERVO_INIT    = 0.49;
+    protected static final double DUMPER_TILT_SERVO_GOLD   = 0.35;
+    protected static final double HANG_HOOK_SERVO_INIT      = 0.14;
+    protected static final double HANG_HOOK_SERVO_FINAL     = 0.8;
 
     // Sensors
     private static final String IMU_TOP = "imu";        // IMU
+    private static final String DISTANCE_SENSOR_FRONT = "dsF";
+    private static final String DISTANCE_SENSOR_BACK = "dsB";
 
     protected static final int WAIT_PERIOD = 40; // 40 ms
 
@@ -83,11 +86,14 @@ public abstract class BoKHardwareBot
 
     // Sensors
     protected BNO055IMU imu;
+    protected AnalogInput distanceFront;
+    protected AnalogInput distanceBack;
 
     private Orientation angles;
 
     // waitForTicks
     private ElapsedTime period  = new ElapsedTime();
+    private ElapsedTime runTime  = new ElapsedTime();
 
     // return status
     protected enum BoKHardwareStatus
@@ -177,8 +183,17 @@ public abstract class BoKHardwareBot
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 
+        distanceBack = opMode.hardwareMap.analogInput.get(DISTANCE_SENSOR_BACK);
+        if(distanceBack == null){
+            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
+        }
+
+        distanceFront = opMode.hardwareMap.analogInput.get(DISTANCE_SENSOR_FRONT);
+        if(distanceFront == null){
+            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
+        }
+
         // DC Motor initialization
-        intakeArmMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         intakeArmMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeArmMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intakeArmMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -191,9 +206,11 @@ public abstract class BoKHardwareBot
         dumperSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         dumperSlideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+        hangMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         hangMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         hangMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         hangMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        hangMotor.setPower(0);
 
         // Servos initialization
         if (!opMode.getClass().getName().contains("Tele")) {
@@ -252,6 +269,7 @@ public abstract class BoKHardwareBot
     protected abstract void stopMove();
 
     protected abstract double getTargetEncCount(double targetDistanceInches);
+    protected abstract double getAvgEncCount();
     protected abstract int getLFEncCount();
     protected abstract int getRFEncCount();
 
@@ -288,4 +306,15 @@ public abstract class BoKHardwareBot
                 AngleUnit.DEGREES);
         return angles.thirdAngle;
     }
+
+    protected double getDistanceCM(AnalogInput mb1240, double target, double time)
+    {
+        runTime.reset();
+        double dist = mb1240.getVoltage() / 0.00189;
+        while ((dist > target)&&(runTime.seconds() <= time))
+            dist = mb1240.getVoltage() / 0.00189;
+        return (runTime.seconds() > time) ? target : dist;
+        //return mb1240.getVoltage() / 0.00189;
+    }
+
 }

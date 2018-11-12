@@ -60,8 +60,16 @@ import org.opencv.imgproc.Imgproc;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.Semaphore;
+
+import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
+import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
+import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
+import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
+import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
+import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.FRONT;
 
 /**
  * Created by Krishna Saxena on 11/15/2016.
@@ -79,7 +87,7 @@ public abstract class BoKAutoCommon implements BoKAuto
     private static final double P_TURN_COEFF = 0.5;
 
     private static final int SPHERE_LOC_X_MIN = 500;
-    private static final int SPHERE_LOC_X_MAX = 650;
+    private static final int SPHERE_LOC_X_MAX = 700;//650
     private static final int CUBE_LOC_Y_RIGHT = 225;
     private static final int CUBE_LOC_Y_CENTER = 500;
     private static final int ROI_WIDTH = 50;
@@ -87,6 +95,21 @@ public abstract class BoKAutoCommon implements BoKAuto
     private static final int YELLOW_PERCENT = 50;
     private static final String VUFORIA_CUBE_IMG = "vuImage.png";
     private static final String VUFORIA_ROI_IMG = "vuImageROI.png";
+
+    protected static final float mmPerInch        = 25.4f;
+    protected static final float mmFTCFieldWidth  = (12*6) * mmPerInch;       // the width of the FTC field (from the center point to the outer panels)
+    protected static final float mmTargetHeight   = (6) * mmPerInch;// the height of the center of the target image above the floor
+
+
+    private static final double Kp = 0.1;
+    private static final double Ki = 0;//0.165;
+    private static final double Kd = 0;//0.093
+    private static final double  SAMPLE_RATE_SEC = 0.05;
+    private static final int RS_DIFF_THRESHOLD_CM = 1;
+
+    private boolean targetVisible = false;
+    List<VuforiaTrackable> allTrackables;
+    VuforiaTrackable blueRover, redFootprint, frontCraters, backSpace;
 
     public enum BoKAutoCubeLocation {
         BOK_CUBE_UNKNOWN,
@@ -101,6 +124,7 @@ public abstract class BoKAutoCommon implements BoKAuto
 
     private AppUtil appUtil = AppUtil.getInstance();
     private VuforiaLocalizer vuforiaFTC;
+    VuforiaTrackables targetsRoverRuckus;
 
     protected ElapsedTime runTime  = new ElapsedTime();
 
@@ -151,20 +175,83 @@ public abstract class BoKAutoCommon implements BoKAuto
         vuforiaFTC = ClassFactory.getInstance().createVuforia(parameters);
         Vuforia.setFrameFormat(PIXEL_FORMAT.RGB565, true);
         vuforiaFTC.setFrameQueueCapacity(1); // change the frame queue capacity to 1
-
-        CameraDevice.getInstance().setFlashTorchMode(true);
+        setupVuforia();
+        //CameraDevice.getInstance().setFlashTorchMode(true);
 
         Log.v("BOK", "Done initializing software");
         this.opMode = opMode;
         this.robot = robot;
 
+        while (!opMode.gamepad1.x){
+            opMode.telemetry.addData("Status", "Press \"X\" to start gyro init");
+            opMode.telemetry.update();
+        }
+        opMode.telemetry.addData("Status", "Initializing gyro");
+        opMode.telemetry.update();
         setupRobot();
+        opMode.telemetry.addData("Status", "Done initializing gyro!");
+        opMode.telemetry.update();
         return BoKAutoStatus.BOK_AUTO_SUCCESS;
     }
 
     String format(OpenGLMatrix transformationMatrix)
     {
         return (transformationMatrix != null) ? transformationMatrix.formatAsTransform() : "null";
+    }
+
+    private void setupVuforia(){
+        // Load the data sets that for the trackable objects. These particular data
+        // sets are stored in the 'assets' part of our application.
+        targetsRoverRuckus = this.vuforiaFTC.loadTrackablesFromAsset("RoverRuckus");
+        VuforiaTrackable blueRover = targetsRoverRuckus.get(0);
+        blueRover.setName("Blue-Rover");
+        VuforiaTrackable redFootprint = targetsRoverRuckus.get(1);
+        redFootprint.setName("Red-Footprint");
+        VuforiaTrackable frontCraters = targetsRoverRuckus.get(2);
+        frontCraters.setName("Front-Craters");
+        VuforiaTrackable backSpace = targetsRoverRuckus.get(3);
+        backSpace.setName("Back-Space");
+
+        // For convenience, gather together all the trackable objects in one easily-iterable collection */
+        allTrackables= new ArrayList<VuforiaTrackable>();
+        allTrackables.addAll(targetsRoverRuckus);
+
+        OpenGLMatrix blueRoverLocationOnField = OpenGLMatrix
+                .translation(0, mmFTCFieldWidth, mmTargetHeight)
+                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 0));
+        blueRover.setLocation(blueRoverLocationOnField);
+
+        OpenGLMatrix redFootprintLocationOnField = OpenGLMatrix
+                .translation(0, -mmFTCFieldWidth, mmTargetHeight)
+                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 180));
+        redFootprint.setLocation(redFootprintLocationOnField);
+
+        OpenGLMatrix frontCratersLocationOnField = OpenGLMatrix
+                .translation(-mmFTCFieldWidth, 0, mmTargetHeight)
+                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0 , 90));
+        frontCraters.setLocation(frontCratersLocationOnField);
+
+        OpenGLMatrix backSpaceLocationOnField = OpenGLMatrix
+                .translation(mmFTCFieldWidth, 0, mmTargetHeight)
+                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, -90));
+        backSpace.setLocation(backSpaceLocationOnField);
+
+        final int CAMERA_FORWARD_DISPLACEMENT  = 102;   // eg: Camera is 110 mm in front of robot center
+        final int CAMERA_VERTICAL_DISPLACEMENT = 0;   // eg: Camera is 200 mm above ground
+        final int CAMERA_LEFT_DISPLACEMENT     = 0;     // eg: Camera is ON the robot's center line
+
+        OpenGLMatrix phoneLocationOnRobot = OpenGLMatrix
+                .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
+                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, YZX, DEGREES,
+                        -90, 0, 0));
+
+        /**  Let all the trackable listeners know where the phone is.  */
+        for (VuforiaTrackable trackable : allTrackables)
+        {
+            ((VuforiaTrackableDefaultListener)trackable.getListener()).
+                    setPhoneInformation(phoneLocationOnRobot, BACK);
+        }
+        targetsRoverRuckus.activate();
     }
 
     @Override
@@ -499,12 +586,12 @@ public abstract class BoKAutoCommon implements BoKAuto
                 Log.v("BOK", "gyroTurn timed out!" + String.format(" %.1f", waitForSeconds));
                 break;
             }
-
             // Update telemetry & Allow time for other processes to run.
             opMode.telemetry.update();
             //opMode.sleep(BoKHardwareBot.OPMODE_SLEEP_INTERVAL_MS_SHORT);
         }
 
+        robot.setPowerToDTMotors(0,0,0,0);
         Log.v("BOK", "turnF: " + angles.thirdAngle);
         return angles.thirdAngle;
     }
@@ -553,12 +640,12 @@ public abstract class BoKAutoCommon implements BoKAuto
 
             rightSpeed  = speed * steer;
             if (rightSpeed > 0)
-                rightSpeed = Range.clip(rightSpeed, DT_TURN_SPEED_LOW,
+                rightSpeed = Range.clip(rightSpeed, DT_TURN_SPEED_HIGH,
                                         DT_TURN_SPEED_HIGH);
             else
                 rightSpeed = Range.clip(rightSpeed,
                                         -DT_TURN_SPEED_HIGH,
-                                        -DT_TURN_SPEED_LOW);
+                                        -DT_TURN_SPEED_HIGH);
 
             if(!tank)
                 leftSpeed   = rightSpeed;
@@ -571,12 +658,12 @@ public abstract class BoKAutoCommon implements BoKAuto
         }
 
         // Send desired speeds to motors.
-        robot.setPowerToDTMotors(-leftSpeed, -leftSpeed, -rightSpeed, -rightSpeed);
+        robot.setPowerToDTMotors(-leftSpeed, -leftSpeed, rightSpeed, rightSpeed);
 
-        //Log.v("BOK", "Err: " + String.format("%.2f", error) + ", Steer: " +
-        //      String.format("%.2f", steer));
-        //Log.v("BOK", "Left Speed: " + String.format("%5.2f", leftSpeed) + ", Right Speed: " +
-        //      String.format("%5.2f", rightSpeed));
+        /*Log.v("BOK", "Err: " + String.format("%.2f", error) + ", Steer: " +
+              String.format("%.2f", steer));
+        Log.v("BOK", "Left Speed: " + String.format("%5.2f", leftSpeed) + ", Right Speed: " +
+              String.format("%5.2f", rightSpeed));*/
 
         return onTarget;
     }
@@ -618,7 +705,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         robot.intakeArmMotor.setTargetPosition(encCount);
         robot.intakeArmMotor.setPower(power);
         while(robot.intakeArmMotor.isBusy()){
-
+            //Log.v("BOK", "Enc count at " + robot.intakeArmMotor.getCurrentPosition());
         }
         robot.intakeArmMotor.setPower(0);
     }
@@ -637,10 +724,137 @@ public abstract class BoKAutoCommon implements BoKAuto
         robot.hangMotor.setPower(0);
     }
 
+    protected void followHeadingPID(double heading, double power, double dist, double waitForSec)
+    {
+        double angle, error, sumError = 0, lastError = 0, diffError, turn, speedL, speedR,
+                lastTime = 0;
+        double targetEnc = robot.getTargetEncCount(dist);
+      //  String logString = "dTime,ang,err,sum,last,diff,turn,speedL,speedR\n";
+        robot.resetDTEncoders();
+        runTime.reset();
+        while (opMode.opModeIsActive() && (runTime.seconds() < waitForSec)
+                && (robot.getAvgEncCount() < targetEnc)) {
+            double currTime = runTime.seconds();
+            double deltaTime = currTime - lastTime;
+            if (deltaTime >= SAMPLE_RATE_SEC) {
+                angle = robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
+                        AxesOrder.XYZ,
+                        AngleUnit.DEGREES).thirdAngle;
+                error = angle - heading;
+                sumError = sumError * 0.66 + error;
+                diffError = error - lastError;
+                turn = Kp * error + Ki * sumError + Kd * diffError;
+                speedL = power + turn;
+                speedR = power - turn;
+                speedL = Range.clip(speedL, -2*power, 2*power);
+                speedR = Range.clip(speedR, -2*power, 2*power);
+                robot.setPowerToDTMotors(speedL, speedL, speedR, speedR);
+                /*logString = logString + deltaTime + "," +angle + "," + error + "," + sumError + ","
+                        + lastError + "," + diffError + "," + turn + "," + speedL + ","
+                        + speedR + "\n";*/
+                lastError = error;
+                lastTime = currTime;
+            }
+        }
+        robot.setPowerToDTMotors(0,0,0,0);
+        /*File file = AppUtil.getInstance().getSettingsFile("BoKGyroData1.csv");
+        ReadWriteFile.writeFile(file,
+                logString);*/
+    }
+
+    public boolean moveWithRangeSensor(double power,
+                                       int targetDistanceCm,
+                                       int capDistCm,
+                                       boolean sensorFront,
+                                       double waitForSec)
+    {
+        boolean result = true;
+
+        double cmCurrent, diffFromTarget = targetDistanceCm, pCoeff, wheelPower;
+        robot.setModeForDTMotors(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.setModeForDTMotors(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        double encTarget;
+        if(allianceColor == BoKAllianceColor.BOK_ALLIANCE_RED)
+            encTarget = robot.getTargetEncCount(42);
+        else
+            encTarget = robot.getTargetEncCount(52);
+
+        AnalogInput rangeSensor; // First choose which range sensor to use
+        if(sensorFront) {
+            rangeSensor = robot.distanceFront;
+        }
+        else {
+            rangeSensor = robot.distanceBack;
+        }
+
+        cmCurrent = robot.getDistanceCM(rangeSensor, capDistCm, 0.5);
+        Log.v("BOK", "Distance from wall (outside loop)"+cmCurrent);
+        //if (!Double.isNaN(cmCurrent))
+        diffFromTarget = targetDistanceCm - cmCurrent;
+        runTime.reset();
+
+        while (opMode.opModeIsActive() &&
+                (Math.abs(diffFromTarget) >= RS_DIFF_THRESHOLD_CM)) {
+            Log.v("BOK", "Distance from wall "+cmCurrent);
+            if (runTime.seconds() >= waitForSec) {
+                Log.v("BOK", "moveWithRS timed out!" + String.format(" %.1f", waitForSec));
+                result = false;
+                break;
+            }
+
+            if (robot.getLFEncCount() >= encTarget) {
+                Log.v("BOK", "moveWithRS moved too far!" + robot.getLFEncCount());
+                result = false;
+                break;
+            }
+
+            cmCurrent = robot.getDistanceCM(rangeSensor, capDistCm, 0.5);
+            if (Double.isNaN(cmCurrent) || (cmCurrent >= 255)) // Invalid sensor reading
+                continue;
+
+            diffFromTarget = targetDistanceCm - cmCurrent;
+            pCoeff = diffFromTarget/15;
+            wheelPower = Range.clip(power*pCoeff, -power, power);
+            if (wheelPower > 0 && wheelPower < 0.4)
+                wheelPower = 0.4; // min power to move
+            if (wheelPower < 0 && wheelPower > -0.4)
+                wheelPower = -0.4;
+
+            if (sensorFront) {
+                // if diffFromTarget > 0 then wheelPower is +ve, but we need to move
+                // backward (BLUE FAR).
+                //Log.v("BOK", "Front current RS: " + cmCurrent +
+                //        " Difference: " + diffFromTarget +
+                //        " Power: " + wheelPower);
+                robot.setPowerToDTMotors(-wheelPower, -wheelPower, -wheelPower, -wheelPower);
+            }
+            else { // back range sensor
+                // if diffFromTarget > 0 then wheelPower is +ve
+                //Log.v("BOK", "Back current RS: " + cmCurrent +
+                //        " Difference: " + diffFromTarget +
+                //        " Power: (move fwd) " + wheelPower);
+                robot.setPowerToDTMotors(-wheelPower, -wheelPower, -wheelPower, -wheelPower);
+            }
+        }
+
+
+
+        if (sensorFront)
+            Log.v("BOK", "Front current RS: " + cmCurrent);
+        else
+            Log.v("BOK", "Back current RS: " + cmCurrent);
+        robot.setPowerToDTMotors(0, 0, 0, 0);
+
+        return result;
+    }
+
+
     class moveLiftDown extends Thread {
         @Override
         public void run() {
             moveHangLift(-0.75, 0);
         }
+
     }
 }

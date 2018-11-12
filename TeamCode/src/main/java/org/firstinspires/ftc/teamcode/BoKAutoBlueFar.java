@@ -26,29 +26,15 @@ public class BoKAutoBlueFar extends BoKAutoCommon
     @Override
     public void runSoftware()
     {
-        BoKAutoCubeLocation cubeLocation = findCube();
-        double distMove = 15; // TODO: How much to move when cube is in the middle
-        moveRamp(0.5, distMove, true, 5);
-
-        if (cubeLocation == BoKAutoCubeLocation.BOK_CUBE_RIGHT) {
-            robot.samplerRightServo.setPosition(robot.SAMPLER_RIGHT_SERVO_INIT);
-            moveRamp(0.5, 18, true, 5);
-        }
-        else if (cubeLocation == BoKAutoCubeLocation.BOK_CUBE_LEFT) {
-            robot.samplerRightServo.setPosition(robot.SAMPLER_RIGHT_SERVO_INIT);
-            moveRamp(0.5, 18, true, 5);
-        }
-        else {
-            // TODO: move the intake arm
-            moveIntake(0.3, 460);
-            sweepRoller(1);
-            moveRamp(0.5, 8, true, 5);
-        }
-
-        moveRamp(0.5, 5, true, 5);
+        //gyroTurn(0.5, 0, 75, DT_TURN_THRESHOLD_LOW,
+        //        false, false, 5);
+        //followHeadingPID(75, 0.5, 24, 6);
+        //moveIntake(0.3, 30);
+        //moveWithRangeSensor(0.5, 225, 160,true, 7);
+        moveIntake(0.5, 780);
+        sweepRoller(-1);
+        opMode.sleep(1000);
         sweepRoller(0);
-        moveIntake(-0.6, 0);
-        moveRamp(0.5, 7, true, 5);
-
+        moveIntake(0.5, 10);
     }
 }
