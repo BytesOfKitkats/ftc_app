@@ -24,17 +24,7 @@ public class BoKAutoBlueFar extends BoKAutoCommon
     }
 
     @Override
-    public void runSoftware()
-    {
-        //gyroTurn(0.5, 0, 75, DT_TURN_THRESHOLD_LOW,
-        //        false, false, 5);
-        //followHeadingPID(75, 0.5, 24, 6);
-        //moveIntake(0.3, 30);
-        //moveWithRangeSensor(0.5, 225, 160,true, 7);
-        moveIntake(0.5, 780);
-        sweepRoller(-1);
-        opMode.sleep(1000);
-        sweepRoller(0);
-        moveIntake(0.5, 10);
+    public void runSoftware() {
+        runAuto(6, 62, true);
     }
 }

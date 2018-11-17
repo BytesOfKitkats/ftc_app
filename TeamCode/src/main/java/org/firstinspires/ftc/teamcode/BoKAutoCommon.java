@@ -87,7 +87,7 @@ public abstract class BoKAutoCommon implements BoKAuto
     private static final double P_TURN_COEFF = 0.5;
 
     private static final int SPHERE_LOC_X_MIN = 500;
-    private static final int SPHERE_LOC_X_MAX = 700;//650
+    private static final int SPHERE_LOC_X_MAX = 800;
     private static final int CUBE_LOC_Y_RIGHT = 225;
     private static final int CUBE_LOC_Y_CENTER = 500;
     private static final int ROI_WIDTH = 50;
@@ -105,7 +105,7 @@ public abstract class BoKAutoCommon implements BoKAuto
     private static final double Ki = 0;//0.165;
     private static final double Kd = 0;//0.093
     private static final double  SAMPLE_RATE_SEC = 0.05;
-    private static final int RS_DIFF_THRESHOLD_CM = 1;
+    private static final int RS_DIFF_THRESHOLD_CM = 5;
 
     private boolean targetVisible = false;
     List<VuforiaTrackable> allTrackables;
@@ -493,7 +493,6 @@ public abstract class BoKAutoCommon implements BoKAuto
                             }
 
                             centerPoints[numCircles] = pt;
-
                             // circle center
                             //Imgproc.circle(src, centerPoints[numCircles], 1, new Scalar(0,100,100), 3, 8, 0 );
                             // circle outline
@@ -701,8 +700,8 @@ public abstract class BoKAutoCommon implements BoKAuto
     }
 
     protected void moveIntake(double power, int encCount){
-        robot.intakeArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         robot.intakeArmMotor.setTargetPosition(encCount);
+        robot.intakeArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         robot.intakeArmMotor.setPower(power);
         while(robot.intakeArmMotor.isBusy()){
             //Log.v("BOK", "Enc count at " + robot.intakeArmMotor.getCurrentPosition());
@@ -762,6 +761,51 @@ public abstract class BoKAutoCommon implements BoKAuto
                 logString);*/
     }
 
+    protected void followHeadingPIDBack(double heading, double power, double dist, double waitForSec)
+    {
+        double angle, error, sumError = 0, lastError = 0, diffError, turn, speedL, speedR,
+                lastTime = 0;
+        double targetEnc = robot.getTargetEncCount(dist);
+        //  String logString = "dTime,ang,err,sum,last,diff,turn,speedL,speedR\n";
+        robot.resetDTEncoders();
+        runTime.reset();
+        while (opMode.opModeIsActive() && (runTime.seconds() < waitForSec)
+                && (robot.getAvgEncCount() > targetEnc)) {
+            double currTime = runTime.seconds();
+            double deltaTime = currTime - lastTime;
+            if (deltaTime >= SAMPLE_RATE_SEC) {
+                angles = robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
+                        AxesOrder.XYZ,
+                        AngleUnit.DEGREES);
+                angle = angles.thirdAngle;
+                error = angle - heading;
+                sumError = sumError * 0.66 + error;
+                diffError = error - lastError;
+                turn = Kp * error + Ki * sumError + Kd * diffError;
+                speedL = power + turn;
+                speedR = power - turn;
+                // power is negative
+                speedL = Range.clip(speedL, 2*power, -2*power);
+                speedR = Range.clip(speedR, 2*power, -2*power);
+                robot.setPowerToDTMotors(speedL, speedL, speedR, speedR);
+                /*logString = logString + deltaTime + "," +angle + "," + error + "," + sumError + ","
+                        + lastError + "," + diffError + "," + turn + "," + speedL + ","
+                        + speedR + "\n";*/
+                lastError = error;
+                lastTime = currTime;
+                Log.v("BOK", "theta x " + angles.firstAngle);
+                if (angles.firstAngle < -5){
+
+                    break;
+                }
+            }
+        }
+        robot.setPowerToDTMotors(0,0,0,0);
+        /*File file = AppUtil.getInstance().getSettingsFile("BoKGyroData1.csv");
+        ReadWriteFile.writeFile(file,
+                logString);*/
+    }
+
     public boolean moveWithRangeSensor(double power,
                                        int targetDistanceCm,
                                        int capDistCm,
@@ -796,7 +840,7 @@ public abstract class BoKAutoCommon implements BoKAuto
 
         while (opMode.opModeIsActive() &&
                 (Math.abs(diffFromTarget) >= RS_DIFF_THRESHOLD_CM)) {
-            Log.v("BOK", "Distance from wall "+cmCurrent);
+            //Log.v("BOK", "Distance from wall "+cmCurrent);
             if (runTime.seconds() >= waitForSec) {
                 Log.v("BOK", "moveWithRS timed out!" + String.format(" %.1f", waitForSec));
                 result = false;
@@ -856,5 +900,127 @@ public abstract class BoKAutoCommon implements BoKAuto
             moveHangLift(-0.75, 0);
         }
 
+    }
+
+    public void runAuto(int xTarget, int yTarget, boolean doMarker)
+    {
+        BoKAutoCubeLocation loc = BoKAutoCubeLocation.BOK_CUBE_UNKNOWN;
+        double initDist = 10;
+        OpenGLMatrix location = null;
+
+        // prepare the dumper before landing
+        Log.v("BOK", "Angle at start " + robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
+                AxesOrder.XYZ,
+                AngleUnit.DEGREES).thirdAngle);
+        robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_HANG_TILT);
+        //find gold location
+        loc = findCube();
+        //start motor for hanging
+        robot.hangMotor.setTargetPosition(2325);//8650
+        robot.hangMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        robot.hangMotor.setPower(0.75);
+        runTime.reset();
+        while (robot.hangMotor.isBusy()&&(runTime.seconds()<10)){
+            //Log.v("BOK", "hang enc: " + robot.hangMotor.getCurrentPosition());
+        }
+        robot.hangMotor.setPower(0);
+        if (runTime.seconds() >= 10)
+            Log.v("BOK", "hang lift timed out");
+        //unhook
+        robot.hangHookServo.setPosition(robot.HANG_HOOK_SERVO_FINAL);
+        opMode.sleep(250);
+        Log.v("BOK", "Angle at end " + robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
+                AxesOrder.XYZ,
+                AngleUnit.DEGREES).thirdAngle);
+        //move forward slightly
+        move(0.5, 0.5, 2, true, 2);
+        //readjust robot position
+        gyroTurn(0.5, 0, 0, DT_TURN_THRESHOLD_LOW,
+                false, false, 5);
+
+        // move towards sampling
+        moveRamp(0.5, initDist, true, 5);
+        //start thread to lower hanging lift
+        moveLiftDown liftDown = new moveLiftDown();
+        liftDown.start();
+        if (loc == BoKAutoCubeLocation.BOK_CUBE_LEFT){
+            robot.samplerLeftServo.setPosition(robot.SAMPLER_LEFT_SERVO_FINAL);
+            moveRamp(0.5, 16, true, 5);
+            robot.samplerLeftServo.setPosition(robot.SAMPLER_LEFT_SERVO_INIT);
+            move(0.5, 0.5,16, false, 5);
+        }
+
+        else if (loc == BoKAutoCubeLocation.BOK_CUBE_CENTER){
+            //lowers intake arm
+            moveIntake(0.3, 780);
+            moveRamp(0.5, 5.5, true, 5);
+            //raises intake arm
+            moveIntake(0.3, 10);
+            moveRamp(0.5, 5.5, false, 5);
+        }
+
+        else {
+            robot.samplerRightServo.setPosition(robot.SAMPLER_RIGHT_SERVO_FINAL);
+            moveRamp(0.5, 16, true, 5);
+            robot.samplerRightServo.setPosition(robot.SAMPLER_RIGHT_SERVO_INIT);
+            moveRamp(0.5, 16, false, 5);
+        }
+        //turn towards vuforia picture
+        gyroTurn(0.5, 0, 75, DT_TURN_THRESHOLD_LOW,
+                false, false, 5);
+        opMode.sleep(1000);
+        boolean targetVisible = false;
+        //locates position of robot on field
+        for (VuforiaTrackable trackable : allTrackables) {
+            //Log.v("BOK", "Searching target " + trackable.getName());
+            if (((VuforiaTrackableDefaultListener)trackable.getListener()).isVisible()) {
+                Log.v("BOK", "Visible Target" + trackable.getName());
+                targetVisible = true;
+
+                // getUpdatedRobotLocation() will return null if no new information is available since
+                // the last time that call was made, or if the trackable is not currently visible.
+                OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener)trackable.getListener()).getUpdatedRobotLocation();
+                if (robotLocationTransform != null) {
+                    location = robotLocationTransform;
+                }
+                break;
+            }
+        }
+        double dist;
+        if(targetVisible){
+            VectorF translation = location.getTranslation();
+            double y = translation.get(1)/mmPerInch - yTarget; // we want to be at (0, -60)
+            double x = translation.get(0)/mmPerInch - xTarget;
+            dist = Math.hypot(x, y);
+            Log.v("BOK", String.format("{X, Y} = %.1f, %.1f",
+                    x, y) + " dist " + dist);
+        }
+        else {
+            dist = 35;
+            Log.v("BOK", "Did not lock into Vuforia dist is 31");
+        }
+        //follows heading with PID controller
+        followHeadingPID(75, 0.5, dist, 6);
+        //turns left
+        gyroTurn(0.5, 75, 130, DT_TURN_THRESHOLD_LOW,
+                false, false, 4);
+        Log.v("BOK" , "Dist to front wall " +
+                robot.getDistanceCM(robot.distanceFront, 190, 0.5));
+        double distToWall = robot.getDistanceCM(robot.distanceFront, 190, 0.5)/2.54;
+        //move to target distance of 80cm
+        moveWithRangeSensor(0.5, 65, 190, true, 7);
+        //once distance reached lower intake arm
+        moveIntake(0.5, 780);
+        sweepRoller(-1);
+        opMode.sleep(1000);
+        sweepRoller(0);
+        //raise intake arm
+        moveIntake(0.5, 10);
+        gyroTurn(0.5, 130,136, DT_TURN_THRESHOLD_LOW,
+                false, false, 4);
+        //move backwards to 200cm
+        followHeadingPIDBack(136, -0.5, -distToWall-3, 10);
+        //moveWithRangeSensor(0.5, 200, 250, true, 7);
+        //moveRamp(0.5, 5, false, 2);
     }
 }
