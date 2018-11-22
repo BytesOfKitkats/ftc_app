@@ -52,13 +52,13 @@ public abstract class BoKHardwareBot
     protected static final double SAMPLER_LEFT_SERVO_FINAL  = 0.8;
     protected static final double SAMPLER_RIGHT_SERVO_INIT  = 0.8;
     protected static final double SAMPLER_RIGHT_SERVO_FINAL = 0.15;
-    protected static final double DUMPER_ROTATE_SERVO_INIT  = 0.15;
-    protected static final double DUMPER_ROTATE_SERVO_ANGLE  = 0.23;
+    protected static final double DUMPER_ROTATE_SERVO_INIT  = 0.2;
+    protected static final double DUMPER_ROTATE_SERVO_ANGLE  = 0.25;
     protected static final double DUMPER_ROTATE_SERVO_HANG_TILT = 0.13;
     protected static final double DUMPER_ROTATE_SERVO_FINAL = 0.6;
     protected static final double DUMPER_TILT_SERVO_INIT    = 0.49;
     protected static final double DUMPER_TILT_SERVO_GOLD   = 0.35;
-    protected static final double HANG_HOOK_SERVO_INIT      = 0.14;
+    protected static final double HANG_HOOK_SERVO_INIT      = 0.08;
     protected static final double HANG_HOOK_SERVO_FINAL     = 0.8;
 
     // Sensors
@@ -222,7 +222,7 @@ public abstract class BoKHardwareBot
             // Do nothing for Teleop so that the robot hardware does not move during
             // initialization
         }
-        dumperRotateServo.setPosition(DUMPER_ROTATE_SERVO_INIT);
+        dumperRotateServo.setPosition(DUMPER_ROTATE_SERVO_INIT-0.05);
         dumperTiltServo.setPosition(DUMPER_TILT_SERVO_INIT);
 
         return BoKHardwareStatus.BOK_HARDWARE_SUCCESS;

@@ -8,8 +8,8 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
  * Registers the opMode with the driver station.
  * It uses BoKMecanumDT and BoKAutoRedNear objects
  */
-@Autonomous(name="BoK Auto RED Near", group="BoKRed")
-@Disabled
+@Autonomous(name="BoK Auto RED Depot", group="BoKRed")
+//@Disabled
 public class BoKAutoRedNearOpMode extends BoKAutoOpMode
 {
     @Override

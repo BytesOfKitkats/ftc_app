@@ -25,6 +25,6 @@ public class BoKAutoBlueFar extends BoKAutoCommon
 
     @Override
     public void runSoftware() {
-        runAuto(6, 62, true);
+        runAuto(6, 62, true, true);
     }
 }

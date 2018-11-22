@@ -22,14 +22,6 @@ public class BoKAutoRedNear extends BoKAutoCommon {
     public void runSoftware()
 
     {
-        boolean buttonXPressed = false;
-        int count =0;
-        while(opMode.opModeIsActive()) {
-            if(opMode.gamepad1.x && !buttonXPressed){
-                takePicture("VuImage_"+count+".png");
-                count++;
-            }
-            buttonXPressed = opMode.gamepad1.x;
-        }
+        runAuto(-6, -60, false, false);
     }
 }

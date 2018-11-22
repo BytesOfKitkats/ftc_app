@@ -84,7 +84,7 @@ public class BoKTele
         robot.samplerLeftServo.setPosition(robot.SAMPLER_LEFT_SERVO_INIT);
         robot.samplerRightServo.setPosition(robot.SAMPLER_RIGHT_SERVO_INIT);
         robot.hangHookServo.setPosition(robot.HANG_HOOK_SERVO_INIT);
-        robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_ANGLE);
+        robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT+0.05);
 
         // run until the end of the match (driver presses STOP)
         while (opMode.opModeIsActive()) {
@@ -140,7 +140,7 @@ public class BoKTele
                     robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     robot.dumperSlideMotor.setTargetPosition(7025);
                     robot.dumperSlideMotor.setPower(1.0);
-                    robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT+0.1);
+                    robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT+0.05);
                     dumperDown = false;
                     liftUp=true;
                 }
@@ -167,6 +167,9 @@ public class BoKTele
                         robot.dumperSlideMotor.setTargetPosition(currentLiftPosition);
                         robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                         robot.dumperSlideMotor.setPower(DUMPER_LIFT_POWER);
+                    }
+                    else if (robot.dumperSlideMotor.getCurrentPosition() > 2000) {
+                        robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_ANGLE);
                     }
                 }
                 if (opMode.gamepad2.left_bumper && !dumperDown &&
@@ -201,7 +204,7 @@ public class BoKTele
                     }*/
                 } else if (opMode.gamepad2.right_trigger > GAME_TRIGGER_DEAD_ZONE) {
                     if(!has_hanging_lift_moved)
-                        robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_ANGLE);
+                        robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT);
                     if (robot.intakeArmMotor.getCurrentPosition() > INTAKE_ARM_HIGH_POS_LIMIT) {
 
                         if (robot.intakeArmMotor.getCurrentPosition() < INTAKE_ARM_HIGH_POS_SLOW)

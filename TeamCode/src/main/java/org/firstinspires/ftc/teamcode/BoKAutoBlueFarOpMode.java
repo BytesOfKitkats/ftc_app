@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
  * Registers the opMode with the driver station.
  * It uses BoKMecanumDT and BoKAutoBlueFar objects
  */
-@Autonomous(name="BoK Auto BLUE Far", group="BoKBlue")
+@Autonomous(name="BoK Auto BLUE Crater", group="BoKBlue")
 //@Disabled
 public class BoKAutoBlueFarOpMode extends BoKAutoOpMode
 {

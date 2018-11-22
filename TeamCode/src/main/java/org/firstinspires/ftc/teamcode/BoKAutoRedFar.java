@@ -30,6 +30,6 @@ public class BoKAutoRedFar extends BoKAutoCommon {
 
     @Override
     public void runSoftware() {
-        runAuto(-6, -60, true);
+        runAuto(-6, -60, true, true);
     }
 }

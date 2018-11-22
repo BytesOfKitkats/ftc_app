@@ -902,7 +902,16 @@ public abstract class BoKAutoCommon implements BoKAuto
 
     }
 
-    public void runAuto(int xTarget, int yTarget, boolean doMarker)
+    protected void dumpMarker(){
+        moveIntake(0.5, 780);
+        sweepRoller(-1);
+        opMode.sleep(1000);
+        sweepRoller(0);
+        //raise intake arm
+        moveIntake(0.5, 10);
+    }
+
+    public void runAuto(int xTarget, int yTarget, boolean doMarker, boolean atCrater)
     {
         BoKAutoCubeLocation loc = BoKAutoCubeLocation.BOK_CUBE_UNKNOWN;
         double initDist = 10;
@@ -943,84 +952,104 @@ public abstract class BoKAutoCommon implements BoKAuto
         //start thread to lower hanging lift
         moveLiftDown liftDown = new moveLiftDown();
         liftDown.start();
+        double distForCube = 16;
         if (loc == BoKAutoCubeLocation.BOK_CUBE_LEFT){
             robot.samplerLeftServo.setPosition(robot.SAMPLER_LEFT_SERVO_FINAL);
-            moveRamp(0.5, 16, true, 5);
+            moveRamp(0.5, distForCube, true, 5);
             robot.samplerLeftServo.setPosition(robot.SAMPLER_LEFT_SERVO_INIT);
-            move(0.5, 0.5,16, false, 5);
+            if (atCrater) //move back to turn 75 degrees
+                move(0.5, 0.5,distForCube, false, 5);
         }
 
         else if (loc == BoKAutoCubeLocation.BOK_CUBE_CENTER){
             //lowers intake arm
             moveIntake(0.3, 780);
-            moveRamp(0.5, 5.5, true, 5);
+            distForCube = 5.5;
+            moveRamp(0.5, distForCube, true, 5);
             //raises intake arm
             moveIntake(0.3, 10);
-            moveRamp(0.5, 5.5, false, 5);
+            if(atCrater)
+                moveRamp(0.5, distForCube, false, 5);
         }
 
         else {
             robot.samplerRightServo.setPosition(robot.SAMPLER_RIGHT_SERVO_FINAL);
-            moveRamp(0.5, 16, true, 5);
+            moveRamp(0.5, distForCube, true, 5);
             robot.samplerRightServo.setPosition(robot.SAMPLER_RIGHT_SERVO_INIT);
-            moveRamp(0.5, 16, false, 5);
+            if(atCrater)
+                moveRamp(0.5, distForCube, false, 5);
         }
-        //turn towards vuforia picture
-        gyroTurn(0.5, 0, 75, DT_TURN_THRESHOLD_LOW,
-                false, false, 5);
-        opMode.sleep(1000);
-        boolean targetVisible = false;
-        //locates position of robot on field
-        for (VuforiaTrackable trackable : allTrackables) {
-            //Log.v("BOK", "Searching target " + trackable.getName());
-            if (((VuforiaTrackableDefaultListener)trackable.getListener()).isVisible()) {
-                Log.v("BOK", "Visible Target" + trackable.getName());
-                targetVisible = true;
+        // Finished Sampling
+        if(atCrater) {
+            if (doMarker) {
+                //turn towards vuforia picture
+                gyroTurn(0.5, 0, 75, DT_TURN_THRESHOLD_LOW,
+                        false, false, 5);
+                boolean targetVisible = false;
+                //locates position of robot on field
+                runTime.reset();
+                while (opMode.opModeIsActive() && !targetVisible && (runTime.seconds() < 2)) {
+                    for (VuforiaTrackable trackable : allTrackables) {
+                        //Log.v("BOK", "Searching target " + trackable.getName());
+                        if (((VuforiaTrackableDefaultListener) trackable.getListener()).isVisible()) {
+                            Log.v("BOK", "Visible Target" + trackable.getName());
+                            targetVisible = true;
 
-                // getUpdatedRobotLocation() will return null if no new information is available since
-                // the last time that call was made, or if the trackable is not currently visible.
-                OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener)trackable.getListener()).getUpdatedRobotLocation();
-                if (robotLocationTransform != null) {
-                    location = robotLocationTransform;
+                            // getUpdatedRobotLocation() will return null if no new information is available since
+                            // the last time that call was made, or if the trackable is not currently visible.
+                            OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener) trackable.getListener()).getUpdatedRobotLocation();
+                            if (robotLocationTransform != null) {
+                                location = robotLocationTransform;
+                            }
+                            break;
+                        }
+                    }
                 }
-                break;
+                double dist;
+                if (targetVisible) {
+                    VectorF translation = location.getTranslation();
+                    double y = translation.get(1) / mmPerInch - yTarget; // we want to be at (0, -60)
+                    double x = translation.get(0) / mmPerInch - xTarget;
+                    dist = Math.hypot(x, y);
+                    Log.v("BOK", String.format("{X, Y} = %.1f, %.1f",
+                            x, y) + " dist " + dist);
+                } else {
+                    dist = 35;
+                    Log.v("BOK", "Did not lock into Vuforia dist is 31");
+                }
+                //follows heading with PID controller
+                followHeadingPID(75, 0.5, dist, 6);
+                //turns left
+                gyroTurn(0.5, 75, 128, DT_TURN_THRESHOLD_LOW,
+                        false, false, 4);
+                Log.v("BOK", "Dist to front wall " +
+                        robot.getDistanceCM(robot.distanceFront, 190, 0.5));
+                double distToWall = robot.getDistanceCM(robot.distanceFront, 190, 0.5) / 2.54;
+                //move to target distance of 80cm
+                moveWithRangeSensor(0.5, 65, 190, true, 7);
+                //once distance reached lower intake arm
+                dumpMarker();
+                gyroTurn(0.5, 130, 136, DT_TURN_THRESHOLD_LOW,
+                        false, false, 4);
+                //move backwards to 200cm
+                followHeadingPIDBack(136, -0.5, -distToWall - 3, 10);
+                //moveWithRangeSensor(0.5, 200, 250, true, 7);
+                //moveRamp(0.5, 5, false, 2);
+            }// if(doMarker)
+            else {
+                move(0.7, 0.7, 17, true, 5);
             }
+        }// if(atCrater)
+        else{
+            moveRamp(0.6, 40-distForCube, true, 7);
+            dumpMarker();
+            gyroTurn(0.5, 0, -90, DT_TURN_THRESHOLD_LOW, false,
+                    false, 6);
+            move(0.5, 0.5, 12, false, 4);
+            gyroTurn(0.5, -90, -47, DT_TURN_THRESHOLD_LOW, false,
+                    false, 6);
+            followHeadingPIDBack(-47, -0.5, -57, 10);
         }
-        double dist;
-        if(targetVisible){
-            VectorF translation = location.getTranslation();
-            double y = translation.get(1)/mmPerInch - yTarget; // we want to be at (0, -60)
-            double x = translation.get(0)/mmPerInch - xTarget;
-            dist = Math.hypot(x, y);
-            Log.v("BOK", String.format("{X, Y} = %.1f, %.1f",
-                    x, y) + " dist " + dist);
-        }
-        else {
-            dist = 35;
-            Log.v("BOK", "Did not lock into Vuforia dist is 31");
-        }
-        //follows heading with PID controller
-        followHeadingPID(75, 0.5, dist, 6);
-        //turns left
-        gyroTurn(0.5, 75, 130, DT_TURN_THRESHOLD_LOW,
-                false, false, 4);
-        Log.v("BOK" , "Dist to front wall " +
-                robot.getDistanceCM(robot.distanceFront, 190, 0.5));
-        double distToWall = robot.getDistanceCM(robot.distanceFront, 190, 0.5)/2.54;
-        //move to target distance of 80cm
-        moveWithRangeSensor(0.5, 65, 190, true, 7);
-        //once distance reached lower intake arm
-        moveIntake(0.5, 780);
-        sweepRoller(-1);
-        opMode.sleep(1000);
-        sweepRoller(0);
-        //raise intake arm
-        moveIntake(0.5, 10);
-        gyroTurn(0.5, 130,136, DT_TURN_THRESHOLD_LOW,
-                false, false, 4);
-        //move backwards to 200cm
-        followHeadingPIDBack(136, -0.5, -distToWall-3, 10);
-        //moveWithRangeSensor(0.5, 200, 250, true, 7);
-        //moveRamp(0.5, 5, false, 2);
+
     }
 }

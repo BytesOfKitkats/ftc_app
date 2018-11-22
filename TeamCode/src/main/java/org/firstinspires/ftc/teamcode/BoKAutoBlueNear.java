@@ -23,30 +23,6 @@ public class BoKAutoBlueNear extends BoKAutoCommon
     @Override
     public void runSoftware()
     {
-        BoKAutoCubeLocation cubeLocation = findCube();
-        double distMove = 13; // TODO: How much to move when cube is in the middle
-        moveRamp(0.5, distMove, true, 5);
-
-        if (cubeLocation == BoKAutoCubeLocation.BOK_CUBE_RIGHT) {
-
-            moveRamp(0.5, 24, true, 5);
-            robot.samplerRightServo.setPosition(robot.SAMPLER_RIGHT_SERVO_INIT);
-        }
-        else if (cubeLocation == BoKAutoCubeLocation.BOK_CUBE_LEFT) {
-
-            moveRamp(0.5, 24, true, 5);
-            robot.samplerLeftServo.setPosition(robot.SAMPLER_LEFT_SERVO_INIT);
-        }
-        else {
-            // TODO: move the intake arm
-            moveIntake(0.3, 460);
-            sweepRoller(1);
-            moveRamp(0.5, 8, true, 5);
-        }
-
-        moveRamp(0.5, 5, true, 5);
-        sweepRoller(0);
-        moveIntake(-0.6, 0);
-        moveRamp(0.5, 7, true, 5);
+        runAuto(6, 60, false, false);
     }
 }
