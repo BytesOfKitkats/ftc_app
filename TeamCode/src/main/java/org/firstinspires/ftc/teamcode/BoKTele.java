@@ -20,6 +20,7 @@ public class BoKTele
 {
     // CONSTANTS
     private static final double GAME_STICK_DEAD_ZONE = 0.1;
+    private static final double GAME_STICK_DEAD_ZONE_LEFT_STICK = 0.3;
     private static final double GAME_TRIGGER_DEAD_ZONE = 0.2;
     private static final double SPEED_COEFF_SLOW = 0.35;
     private static final double SPEED_COEFF_FAST = 0.8;
@@ -71,6 +72,7 @@ public class BoKTele
         int HANG_LIFT_LOW_POS = 0;
         double COUNTS_PER_MOTOR_REV_AM60 = 1680;
         double DEGREES_ARM_MOTOR_MOVES = 172;
+        int count = 11;
 
         boolean runIntakeLift = true;
         boolean hangHookRaised = false;
@@ -78,6 +80,8 @@ public class BoKTele
         boolean liftUp = false;
         boolean dumperTiltGold = false;
         boolean dumperTiltSilver = false;
+        boolean plateTiltLow = false;
+        boolean plateTiltDump = false;
         int intakeArmHoldPosition = INTAKE_ARM_HIGH_POS_LIMIT;
 
         // Initialization after Play is pressed!
@@ -137,14 +141,12 @@ public class BoKTele
 
             if (!end_game) {
                 if (opMode.gamepad2.dpad_up && !liftUp) {
-                    robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    robot.dumperSlideMotor.setTargetPosition(7025);
-                    robot.dumperSlideMotor.setPower(1.0);
-                    robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT+0.05);
+                    count = 0;
                     dumperDown = false;
                     liftUp=true;
                 }
                 if (opMode.gamepad2.dpad_down && liftUp) {
+                    robot.plateTilt.setPosition(robot.PLATE_TILT_LOW);
                     robot.dumperTiltServo.setPosition(robot.DUMPER_TILT_SERVO_INIT);
                     robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     robot.dumperSlideMotor.setTargetPosition(10);
@@ -173,7 +175,7 @@ public class BoKTele
                     }
                 }
                 if (opMode.gamepad2.left_bumper && !dumperDown &&
-                        (robot.dumperSlideMotor.getCurrentPosition() > 3000)) {
+                        (robot.dumperSlideMotor.getCurrentPosition() > 1300)) {
                     robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_FINAL);
                     dumperDown = true;
                 }
@@ -204,7 +206,8 @@ public class BoKTele
                     }*/
                 } else if (opMode.gamepad2.right_trigger > GAME_TRIGGER_DEAD_ZONE) {
                     if(!has_hanging_lift_moved)
-                        robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT);
+                        robot.plateTilt.setPosition(robot.PLATE_TILT_LOW);
+                        robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_RECIEVE);
                     if (robot.intakeArmMotor.getCurrentPosition() > INTAKE_ARM_HIGH_POS_LIMIT) {
 
                         if (robot.intakeArmMotor.getCurrentPosition() < INTAKE_ARM_HIGH_POS_SLOW)
@@ -243,7 +246,7 @@ public class BoKTele
                 if (runIntakeLift) {
                     int currentIntakeLiftPos = robot.intakeSlidesMotor.getCurrentPosition();
                     // Intake lift control
-                    if ((opMode.gamepad2.left_stick_x > GAME_TRIGGER_DEAD_ZONE) &&
+                    if (opMode.gamepad2.left_stick_button &&
                             (currentIntakeLiftPos < INTAKE_MOTOR_HIGH_LIMIT)){
 
                         // Extend the intake arm
@@ -251,7 +254,7 @@ public class BoKTele
                         robot.intakeSlidesMotor.setPower(INTAKE_LIFT_POWER);
                         //Log.v("BOK", "Intake Lift Pos + " +
                         //        robot.intakeSlidesMotor.getCurrentPosition());
-                    } else if ((opMode.gamepad2.left_stick_x < -GAME_TRIGGER_DEAD_ZONE) &&
+                    } else if (opMode.gamepad2.right_stick_button &&
                             (currentIntakeLiftPos > INTAKE_MOTOR_LOW_LIMIT)){
                        // Retract the intake arm
                         //Log.v("BOK", "Intake Lift Pos - " +
@@ -274,16 +277,42 @@ public class BoKTele
                     }
 
                 }
+
                 if (opMode.gamepad2.y && !dumperTiltGold &&
-                        (robot.dumperSlideMotor.getCurrentPosition() > 6000)){
+                        (robot.dumperSlideMotor.getCurrentPosition() > 1300)){
                     robot.dumperTiltServo.setPosition(robot.DUMPER_TILT_SERVO_GOLD);
                 }
                 dumperTiltGold = opMode.gamepad2.y;
+
                 if (opMode.gamepad2.a && !dumperTiltSilver &&
-                        (robot.dumperSlideMotor.getCurrentPosition() > 6000)){
+                        (robot.dumperSlideMotor.getCurrentPosition() > 1300)){
                     robot.dumperTiltServo.setPosition(robot.DUMPER_TILT_SERVO_INIT);
                 }
                 dumperTiltSilver = opMode.gamepad2.a;
+
+                if (opMode.gamepad2.dpad_left && !plateTiltLow){
+                    robot.plateTilt.setPosition(robot.PLATE_TILT_LOW);
+                }
+                plateTiltLow = opMode.gamepad2.dpad_left;
+
+                if (opMode.gamepad2.dpad_right && !plateTiltDump){
+                    robot.plateTilt.setPosition(robot.PLATE_TILT_DUMP);
+                }
+                plateTiltDump = opMode.gamepad2.dpad_right;
+
+                if ((count < 10) && liftUp)
+                    count++;
+
+                if ((count == 10) && liftUp) {
+                    robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    robot.dumperSlideMotor.setTargetPosition(1400);
+                    robot.dumperSlideMotor.setPower(1.0);
+                    robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT+0.05);
+                    count = 11;
+                }
+
+                if(liftUp)
+                    Log.v("BOK", "Lift position " + robot.dumperSlideMotor.getCurrentPosition());
                 /*else { // !runIntakeLift
                     // Dumper lift control
                     if ((opMode.gamepad2.left_stick_y < -GAME_TRIGGER_DEAD_ZONE)
@@ -434,17 +463,27 @@ public class BoKTele
 
     private void moveIntakeServo()
     {
-        double servoPower = 0.0;
+        double servoPowerL = 0.0;
+        double servoPowerR = 0.0;
         /*
          * Gamepad2: Driver 2 controls the intake servo using the left joystick for speed
          */
         // NOTE: the left joystick goes negative when pushed upwards
         double gamePad2RightStickY = opMode.gamepad2.right_stick_y;
-        if ((Math.abs(gamePad2RightStickY) > GAME_STICK_DEAD_ZONE) ||
-            (Math.abs(gamePad2RightStickY) < -GAME_STICK_DEAD_ZONE)) {
-            servoPower = -gamePad2RightStickY;
+        double gamePad2LeftStickY = opMode.gamepad2.left_stick_y;
+        if ((Math.abs(gamePad2LeftStickY) > GAME_STICK_DEAD_ZONE_LEFT_STICK) ||
+                (Math.abs(gamePad2LeftStickY) < -GAME_STICK_DEAD_ZONE_LEFT_STICK)) {
+            servoPowerL = -gamePad2LeftStickY;
             //Log.v("BOK","Intake Servo:" + String.format("%.2f", servoPower));
         }
-        robot.intakeSweeperServo.setPower(servoPower);
+        if ((Math.abs(gamePad2RightStickY) > GAME_STICK_DEAD_ZONE) ||
+            (Math.abs(gamePad2RightStickY) < -GAME_STICK_DEAD_ZONE)) {
+            servoPowerR = -gamePad2RightStickY;
+            //Log.v("BOK","Intake Servo:" + String.format("%.2f", servoPower));
+        }
+
+        if(!opMode.gamepad2.left_stick_button || !opMode.gamepad2.right_stick_button)
+        robot.intakeSweeperServoLeft.setPower(servoPowerL);
+        robot.intakeSweeperServoRight.setPower(servoPowerR);
     }
 }

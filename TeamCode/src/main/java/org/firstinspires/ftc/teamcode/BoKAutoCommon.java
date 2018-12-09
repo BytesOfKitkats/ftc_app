@@ -709,8 +709,9 @@ public abstract class BoKAutoCommon implements BoKAuto
         robot.intakeArmMotor.setPower(0);
     }
 
-    protected void sweepRoller(double power){
-        robot.intakeSweeperServo.setPower(power);
+    protected void sweepRoller(double powerL, double powerR){
+        robot.intakeSweeperServoLeft.setPower(powerL);
+        robot.intakeSweeperServoRight.setPower(powerR);
     }
 
     protected void moveHangLift(double power, int targetPos){
@@ -904,9 +905,9 @@ public abstract class BoKAutoCommon implements BoKAuto
 
     protected void dumpMarker(){
         moveIntake(0.5, 780);
-        sweepRoller(-1);
+        sweepRoller(-1, -1);
         opMode.sleep(1000);
-        sweepRoller(0);
+        sweepRoller(0, 0);
         //raise intake arm
         moveIntake(0.5, 10);
     }
@@ -963,11 +964,13 @@ public abstract class BoKAutoCommon implements BoKAuto
 
         else if (loc == BoKAutoCubeLocation.BOK_CUBE_CENTER){
             //lowers intake arm
+            robot.plateTilt.setPosition(robot.PLATE_TILT_LOW);
             moveIntake(0.3, 780);
             distForCube = 5.5;
             moveRamp(0.5, distForCube, true, 5);
             //raises intake arm
             moveIntake(0.3, 10);
+            robot.plateTilt.setPosition(robot.PLATE_TILT_DUMP);
             if(atCrater)
                 moveRamp(0.5, distForCube, false, 5);
         }

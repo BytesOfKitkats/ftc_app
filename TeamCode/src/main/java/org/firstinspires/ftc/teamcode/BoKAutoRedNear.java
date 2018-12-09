@@ -22,6 +22,6 @@ public class BoKAutoRedNear extends BoKAutoCommon {
     public void runSoftware()
 
     {
-        runAuto(-6, -60, false, false);
+        runAuto(-6, -60, true, false);
     }
 }
