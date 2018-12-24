@@ -4,20 +4,19 @@ import android.util.Log;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 /**
  * Created by Krishna Saxena on 10/2/2017.
  * Extends BoKHardwareBot to implement the Mecanum wheels drive train with 4 DC Motors.
  */
-public class BoK4WheelDT extends BoKHardwareBot
+public class BoKMecanumDT extends BoKHardwareBot
 {
     // CONSTANTS
     // 134.4 cycles per revolution (CPR); It is a quadrature encoder producing 4 Pulses per Cycle.
     // With 134.4 CPR, it outputs 537.6 PPR. AndyMark Orbital 20 Motor Encoder
     // For 360 degrees wheel turn, motor shaft moves 480 degrees (approx)
     private static final double   COUNTS_PER_MOTOR_REV    = 537.6;
-    private static final double   DRIVE_GEAR_REDUCTION    = 1.5;
+    private static final double   DRIVE_GEAR_REDUCTION    = 1.33;
     private static final double   WHEEL_DIAMETER_INCHES   = 4.0;
 
     // CONSTANTS (strings from the robot config)
@@ -31,6 +30,12 @@ public class BoK4WheelDT extends BoKHardwareBot
     public DcMotor leftFront;
     public DcMotor rightBack;
     public DcMotor rightFront;
+
+    // Strafe target
+    private int leftFrontTarget;
+    private int leftBackTarget;
+    private int rightFrontTarget;
+    private int rightBackTarget;
 
     /*
      * Implement all the abstract methods
@@ -63,9 +68,6 @@ public class BoK4WheelDT extends BoKHardwareBot
         leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        rightFront.setDirection(DcMotor.Direction.REVERSE);
-        rightBack.setDirection(DcMotor.Direction.REVERSE);
         setModeForDTMotors(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Drive train is initialized, initialize sensors
@@ -78,8 +80,17 @@ public class BoK4WheelDT extends BoKHardwareBot
      * 2. set mode
      * 3. set motor encoder target
      */
+    protected void setPowerToDTMotors(double left, double right)
+    {
+        leftBack.setPower(left);
+        rightBack.setPower(right);
+        leftFront.setPower(left);
+        rightFront.setPower(right);
+        opMode.sleep(OPMODE_SLEEP_INTERVAL_MS_SHORT);
+    }
+
     private void setPowerToDTMotors(double leftFrontPower, double leftBackPower,
-                                    double rightFrontPower, double rightBackPower)
+                                      double rightFrontPower, double rightBackPower)
     {
         leftBack.setPower(leftBackPower);
         rightBack.setPower(rightBackPower);
@@ -88,19 +99,18 @@ public class BoK4WheelDT extends BoKHardwareBot
         opMode.sleep(OPMODE_SLEEP_INTERVAL_MS_SHORT);
     }
 
-    protected void setPowerToDTMotors(double power)
-    {
-        setPowerToDTMotors(power, power, power, power);
-    }
-
     protected void setPowerToDTMotors(double power, boolean forward)
     {
         if (forward) {
-            setPowerToDTMotors(power, power, power, power);
+            setPowerToDTMotors(power, power, -power, -power);
+        } else {
+            setPowerToDTMotors(-power, -power, power, power);
         }
-        else {
-            setPowerToDTMotors(-power, -power, -power, -power);
-        }
+    }
+
+    protected void setPowerToDTMotors(double power)
+    {
+        setPowerToDTMotors(power, power, power, power);
     }
 
     protected void setPowerToDTMotors(double leftPower,
@@ -108,21 +118,26 @@ public class BoK4WheelDT extends BoKHardwareBot
                                       boolean forward)
     {
         if (forward) {
-            setPowerToDTMotors(leftPower, leftPower, rightPower, rightPower);
+            setPowerToDTMotors(leftPower, leftPower, -rightPower, -rightPower);
         }
         else {
-            setPowerToDTMotors(leftPower, leftPower, rightPower, rightPower);
+            setPowerToDTMotors(-leftPower, -leftPower, rightPower, rightPower);
         }
     }
 
     protected void setPowerToDTMotorsStrafe(double power, boolean right)
     {
-        // do nothing, startStrafe would have already thrown an exception
+        if (right) {
+            setPowerToDTMotors(power, -power, power, -power);
+        }
+        else {
+            setPowerToDTMotors(-power, power, -power, power);
+        }
     }
 
     protected void setOnHeading(double leftPower, double rightPower)
     {
-        setPowerToDTMotors(-leftPower, -leftPower, rightPower, rightPower);
+        setPowerToDTMotors(-leftPower, -leftPower, -rightPower, -rightPower);
     }
 
     protected void setModeForDTMotors(DcMotor.RunMode runMode)
@@ -141,18 +156,10 @@ public class BoK4WheelDT extends BoKHardwareBot
     protected double getTargetEncCount(double targetDistanceInches)
     {
         double degreesOfWheelTurn, degreesOfMotorTurn;
-        degreesOfWheelTurn = (360.0 / (Math.PI * WHEEL_DIAMETER_INCHES)) *
+        degreesOfWheelTurn = (360.0 / (Math.PI * BoKMecanumDT.WHEEL_DIAMETER_INCHES)) *
                 targetDistanceInches;
-        degreesOfMotorTurn = DRIVE_GEAR_REDUCTION * degreesOfWheelTurn;
-        return (COUNTS_PER_MOTOR_REV * degreesOfMotorTurn) / 360.0;
-    }
-
-    protected double getAvgEncCount()
-    {
-        return (Math.abs(rightBack.getCurrentPosition()) +
-                Math.abs(rightFront.getCurrentPosition()) +
-                Math.abs(leftBack.getCurrentPosition()) +
-                Math.abs(leftFront.getCurrentPosition()))/4.0;
+        degreesOfMotorTurn = BoKMecanumDT.DRIVE_GEAR_REDUCTION * degreesOfWheelTurn;
+        return (BoKMecanumDT.COUNTS_PER_MOTOR_REV * degreesOfMotorTurn) / 360.0;
     }
 
     protected void resetDTEncoders()
@@ -179,6 +186,31 @@ public class BoK4WheelDT extends BoKHardwareBot
                 rightFront.getCurrentPosition() + ", " + currentRightTarget);
     }
     
+    private void setDTMotorEncoderTargetStrafe(int leftFrontTarget,
+                                               int leftBackTarget,
+                                              int rightFrontTarget,
+                                              int rightBackTarget)
+    {
+        int currentLeftFrontTarget = leftFront.getCurrentPosition() + leftFrontTarget;
+        int currentLeftBackTarget = leftBack.getCurrentPosition() + leftBackTarget;
+        int currentRightFrontTarget = rightFront.getCurrentPosition() + rightFrontTarget;
+        int currentRightBackTarget = rightBack.getCurrentPosition() + rightBackTarget;
+
+        leftFront.setTargetPosition(currentLeftFrontTarget);
+        leftBack.setTargetPosition(currentLeftBackTarget);
+        rightFront.setTargetPosition(currentRightFrontTarget);
+        rightBack.setTargetPosition(currentRightBackTarget);
+
+        // Turn On RUN_TO_POSITION
+        setModeForDTMotors(DcMotor.RunMode.RUN_TO_POSITION);
+
+        //Log.v("BOK", "START: LF: " + leftFront.getCurrentPosition() + ", " +
+        //        currentLeftFrontTarget + ", LB: " +
+        //        leftBack.getCurrentPosition() + ", " + currentLeftBackTarget + ", RF: " +
+        //        rightFront.getCurrentPosition() + ",  " + currentRightFrontTarget + " RB: " +
+        //        rightBack.getCurrentPosition() + ",  " + currentRightBackTarget);
+    }
+
     /*
      * move() method: setup the robot to move encoder counts
      */
@@ -189,36 +221,57 @@ public class BoK4WheelDT extends BoKHardwareBot
     {
         double targetEncCount = getTargetEncCount(inches);
         if (forward) {
-            setDTMotorEncoderTarget((int) targetEncCount, (int) targetEncCount);
-            setPowerToDTMotors(leftPower, leftPower, rightPower, rightPower);
+            setDTMotorEncoderTarget((int) targetEncCount, (int) -targetEncCount);
+            setPowerToDTMotors(leftPower, leftPower, -rightPower, -rightPower);
         }
         else {
-            setDTMotorEncoderTarget((int) -targetEncCount, (int) -targetEncCount);
-            setPowerToDTMotors(-leftPower, -leftPower, -rightPower, -rightPower);
+            setDTMotorEncoderTarget((int) -targetEncCount, (int) targetEncCount);
+            setPowerToDTMotors(-leftPower, -leftPower, rightPower, rightPower);
         }
         return (int)targetEncCount;
     }
 
     protected void startEncMove(double leftPower,
-                                double rightPower,
-                                int encCounts,
-                                boolean forward)
+                            double rightPower,
+                            int encCounts,
+                            boolean forward)
     {
         if (forward) {
-            setDTMotorEncoderTarget(encCounts, encCounts);
-            setPowerToDTMotors(leftPower, leftPower, rightPower, rightPower);
+            setDTMotorEncoderTarget(encCounts, -encCounts);
+            setPowerToDTMotors(leftPower, leftPower, -rightPower, -rightPower);
         }
         else {
-            setDTMotorEncoderTarget(-encCounts, -encCounts);
-            setPowerToDTMotors(-leftPower, -leftPower, -rightPower, -rightPower);
+            setDTMotorEncoderTarget(-encCounts, encCounts);
+            setPowerToDTMotors(-leftPower, -leftPower, rightPower, rightPower);
         }
     }
 
     protected int startStrafe(double power, double rotations, boolean right)
-            throws UnsupportedOperationException
     {
-        Log.v("BOK", "Strafing NOT supported!");
-        throw new UnsupportedOperationException("Strafing not supported");
+        double targetEncCount = (rotations*COUNTS_PER_MOTOR_REV) * DRIVE_GEAR_REDUCTION;
+        if (right) {
+            leftFrontTarget = (int) targetEncCount;
+            leftBackTarget = (int) -targetEncCount;
+            rightFrontTarget = (int) targetEncCount;
+            rightBackTarget = (int)-targetEncCount;
+            setDTMotorEncoderTargetStrafe(leftFrontTarget, leftBackTarget,
+                    rightFrontTarget, rightBackTarget);
+            setPowerToDTMotors(power, -power, power, -power);
+        }
+        else {
+            leftFrontTarget = (int) -targetEncCount;
+            leftBackTarget = (int) targetEncCount;
+            rightFrontTarget = (int) -targetEncCount;
+            rightBackTarget = (int)targetEncCount;
+            setDTMotorEncoderTargetStrafe(leftFrontTarget, leftBackTarget,
+                    rightFrontTarget, rightBackTarget);
+            setPowerToDTMotors(-power, power, -power, power);
+        }
+        Log.v("BOK", "Target LF " + leftFrontTarget +
+                ", LB " + leftBackTarget +
+                ", RF" + rightFrontTarget +
+                ", RB " + rightBackTarget);
+        return (int)targetEncCount;
     }
 
     protected void stopMove()
@@ -251,6 +304,14 @@ public class BoK4WheelDT extends BoKHardwareBot
         return rightFront.getCurrentPosition();
     }
 
+    protected double getAvgEncCount()
+    {
+        return (Math.abs(rightBack.getCurrentPosition()) +
+                Math.abs(rightFront.getCurrentPosition()) +
+                Math.abs(leftBack.getCurrentPosition()) +
+                Math.abs(leftFront.getCurrentPosition()))/4.0;
+    }
+
     protected void moveRobot(double speedCoef)
     {
         /*
@@ -259,11 +320,11 @@ public class BoK4WheelDT extends BoKHardwareBot
          */
         // NOTE: the left joystick goes negative when pushed upwards
         double gamePad1LeftStickY = opMode.gamepad1.left_stick_y;
-        //double gamePad1LeftStickX = opMode.gamepad1.left_stick_x;
+        double gamePad1LeftStickX = opMode.gamepad1.left_stick_x;
         double gamePad1RightStickX = opMode.gamepad1.right_stick_x;
 
         if (speedCoef == SPEED_COEFF_FAST) {
-            //gamePad1LeftStickX = Math.pow(gamePad1LeftStickX, 3);
+            gamePad1LeftStickX = Math.pow(gamePad1LeftStickX, 3);
             gamePad1LeftStickY = Math.pow(gamePad1LeftStickY, 3);
         }
 
@@ -277,13 +338,16 @@ public class BoK4WheelDT extends BoKHardwareBot
         //        String.format("%.2f", gamePad1LeftStickX) + ", " +
         //        String.format("%.2f", gamePad1RightStickX));
 
+        // Run mecanum wheels
+
         if ((Math.abs(gamePad1LeftStickY) > GAME_STICK_DEAD_ZONE) ||
-                (Math.abs(gamePad1LeftStickY) < -GAME_STICK_DEAD_ZONE))
-        {
-            motorPowerLF = -gamePad1LeftStickY;
-            motorPowerLB = -gamePad1LeftStickY;
-            motorPowerRF = -gamePad1LeftStickY;
-            motorPowerRB = -gamePad1LeftStickY;
+                (Math.abs(gamePad1LeftStickY) < -GAME_STICK_DEAD_ZONE) ||
+                (Math.abs(gamePad1LeftStickX) > GAME_STICK_DEAD_ZONE) ||
+                (Math.abs(gamePad1LeftStickX) < -GAME_STICK_DEAD_ZONE)) {
+            motorPowerLF = -gamePad1LeftStickY - (-gamePad1LeftStickX);
+            motorPowerLB = -gamePad1LeftStickY - gamePad1LeftStickX;
+            motorPowerRF = gamePad1LeftStickY - (-gamePad1LeftStickX);
+            motorPowerRB = gamePad1LeftStickY - gamePad1LeftStickX;
             //Log.v("BOK","LF:" + String.format("%.2f", motorPowerLF*speedCoef) +
             //       "LB: " + String.format("%.2f", motorPowerLB*speedCoef) +
             //        "RF: " + String.format("%.2f", motorPowerRF*speedCoef) +
@@ -296,8 +360,8 @@ public class BoK4WheelDT extends BoKHardwareBot
             //first and last
             motorPowerLF = gamePad1RightStickX;
             motorPowerLB = gamePad1RightStickX;
-            motorPowerRF = -gamePad1RightStickX;
-            motorPowerRB = -gamePad1RightStickX;
+            motorPowerRF = gamePad1RightStickX;
+            motorPowerRB = gamePad1RightStickX;
 
             speedCoefLocal = SPEED_COEFF_TURN;
             //Log.v("BOK","Turn: LF:" + String.format("%.2f", motorPowerLF) +

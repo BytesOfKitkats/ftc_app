@@ -14,7 +14,7 @@ public class BoKAutoOpMode extends LinearOpMode
     public void runOpMode() throws InterruptedException
     {
         boolean status = false;
-        BoKHardwareBot robot = new BoK4WheelDT();
+        BoKHardwareBot robot = new BoKMecanumDT();
 
         /*
          * Initialize the drive train and the robot subsystems variables.
