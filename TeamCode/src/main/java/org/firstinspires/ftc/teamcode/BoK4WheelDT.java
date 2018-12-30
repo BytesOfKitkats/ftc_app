@@ -251,6 +251,48 @@ public class BoK4WheelDT extends BoKHardwareBot
         return rightFront.getCurrentPosition();
     }
 
+    protected void testDTMotors(){
+        leftFront.setTargetPosition(1000);
+        leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftFront.setPower(0.5);
+        Log.v("BOK", "leftFront set power");
+        while(opMode.opModeIsActive() && leftFront.isBusy()){
+
+        }
+        leftFront.setPower(0);
+        Log.v("BOK", "leftFront finished");
+
+        rightFront.setTargetPosition(1000);
+        rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightFront.setPower(0.5);
+        Log.v("BOK", "rightFront set power");
+        while(opMode.opModeIsActive() && rightFront.isBusy()){
+
+        }
+        rightFront.setPower(0);
+        Log.v("BOK", "rightFront finished");
+
+        leftBack.setTargetPosition(1000);
+        leftBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftBack.setPower(0.5);
+        Log.v("BOK", "leftBack set power");
+        while(opMode.opModeIsActive() && leftBack.isBusy()){
+
+        }
+        leftBack.setPower(0);
+        Log.v("BOK", "leftBack finished");
+
+        rightBack.setTargetPosition(1000);
+        rightBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightBack.setPower(0.5);
+        Log.v("BOK", "rightBack set power");
+        while(opMode.opModeIsActive() && rightBack.isBusy()){
+
+        }
+        rightBack.setPower(0);
+        Log.v("BOK", "rightBack finished");
+    }
+
     protected void moveRobot(double speedCoef)
     {
         /*

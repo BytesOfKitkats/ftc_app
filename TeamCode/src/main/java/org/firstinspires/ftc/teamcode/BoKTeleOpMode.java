@@ -15,7 +15,7 @@ public class BoKTeleOpMode extends LinearOpMode
     public void runOpMode()  throws InterruptedException
     {
         boolean status = false;
-        BoKHardwareBot robot = new BoK4WheelDT();
+        BoKHardwareBot robot = new BoKMecanumDT();
         BoKTele opMode = null;
 
         /*

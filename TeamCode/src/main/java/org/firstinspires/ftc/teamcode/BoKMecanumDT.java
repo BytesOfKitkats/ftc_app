@@ -18,6 +18,8 @@ public class BoKMecanumDT extends BoKHardwareBot
     private static final double   COUNTS_PER_MOTOR_REV    = 537.6;
     private static final double   DRIVE_GEAR_REDUCTION    = 1.33;
     private static final double   WHEEL_DIAMETER_INCHES   = 4.0;
+    private static final double   LEFT_BACK_COEFF         = 1.0;
+    private static final double   LEFT_FRONT_COEFF         = 1.0;
 
     // CONSTANTS (strings from the robot config)
     private static final String LEFT_BACK_MOTOR_NAME   = "lb";
@@ -128,10 +130,11 @@ public class BoKMecanumDT extends BoKHardwareBot
     protected void setPowerToDTMotorsStrafe(double power, boolean right)
     {
         if (right) {
-            setPowerToDTMotors(power, -power, power, -power);
+            setPowerToDTMotors(power*1.6, -power*0.7, power*0.7, -power*1.6);
         }
         else {
-            setPowerToDTMotors(-power, power, -power, power);
+            setPowerToDTMotors(-power*1.6, 0.7*power,
+                    0.7*-power, power*1.6);
         }
     }
 
@@ -373,5 +376,56 @@ public class BoKMecanumDT extends BoKHardwareBot
                            (motorPowerLB * speedCoefLocal),
                            (motorPowerRF * speedCoefLocal),
                            (motorPowerRB * speedCoefLocal));
+        //Log.v("BOK", "Moving in MechanumDT");
+        //leftBack.setPower(motorPowerLB * speedCoefLocal);
+        //rightBack.setPower(motorPowerRB* speedCoefLocal);
+        //leftFront.setPower(motorPowerLF * speedCoefLocal);
+        ////rightFront.setPower(motorPowerRF * speedCoefLocal);
     }
+
+    protected void testDTMotors(){
+
+        leftFront.setTargetPosition(1000);
+        leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftFront.setPower(0.5);
+        Log.v("BOK", "leftFront set power");
+        while(opMode.opModeIsActive() && leftFront.isBusy()){
+            Log.v("BOK", "LF enc at: " + leftFront.getCurrentPosition());
+        }
+        leftFront.setPower(0);
+        Log.v("BOK", "leftFront finished");
+
+        /*
+        rightFront.setTargetPosition(1000);
+        rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightFront.setPower(0.5);
+        Log.v("BOK", "rightFront set power");
+        while(opMode.opModeIsActive() && rightFront.isBusy()){
+            Log.v("BOK", "RF enc at: " + rightFront.getCurrentPosition());
+        }
+        rightFront.setPower(0);
+        Log.v("BOK", "rightFront finished");
+
+        leftBack.setTargetPosition(1000);
+        leftBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftBack.setPower(0.5);
+        Log.v("BOK", "leftBack set power");
+        while(opMode.opModeIsActive() && leftBack.isBusy()){
+            Log.v("BOK", "LB enc at: " + leftBack.getCurrentPosition());
+        }
+        leftBack.setPower(0);
+        Log.v("BOK", "leftBack finished");
+
+        rightBack.setTargetPosition(1000);
+        rightBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightBack.setPower(0.5);
+        Log.v("BOK", "rightBack set power");
+        while(opMode.opModeIsActive() && rightBack.isBusy()){
+            Log.v("BOK", "RF enc at: " + rightBack.getCurrentPosition());
+        }
+        rightBack.setPower(0);
+        Log.v("BOK", "rightBack finished");
+        */
+    }
+
 }
