@@ -153,9 +153,10 @@ public class BoKTele
             // Left Bumper:            Dump the minerals
             // Right Bumper:           Bring the dumper back up
 
-            moveIntake(); // Intake sweeper
 
             if (!end_game) {
+                moveIntake(); // Intake sweeper
+
                 if (opMode.gamepad2.dpad_up && !liftUp) {
                     count = 0;
                     dumperDown = false;
@@ -224,12 +225,13 @@ public class BoKTele
                     }
                 }
                 else if (opMode.gamepad2.y) {
+                    robot.dumperRotateServo.setPosition(robot.DUMPER_RECEIVE_SERVO);
                     if(!robot.isRunningIntakeArmPID){
                         robot.isRunningIntakeArmPID = true;
                         intakeArmDown = false;
                         endPos = 0;
                         vTarget = -0.7;
-                        powerSetPoint = -0.5;
+                        powerSetPoint = -0.7;
                         resetIntakeArmVars();
                     }
                 }
