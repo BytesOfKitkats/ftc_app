@@ -182,15 +182,17 @@ public class BoKTele
                     // string remains tight.
                     if(!robot.dumperSlideMotor.isBusy()) {
                         robot.dumperSlideMotor.setPower(0);
-                        int currentLiftPosition = robot.dumperSlideMotor.getCurrentPosition();
-                        if (currentLiftPosition < DUMPER_LIFT_LOW_POS) {
-                            //Log.v("BOK", "Dumper lift check: " +
-                            //        robot.dumperSlideMotor.getCurrentPosition());
-                            currentLiftPosition = DUMPER_LIFT_LOW_POS;
+                        if(robot.dumperSlideMotor.getCurrentPosition() > 800) {
+                            int currentLiftPosition = robot.dumperSlideMotor.getCurrentPosition();
+                            if (currentLiftPosition < DUMPER_LIFT_LOW_POS) {
+                                //Log.v("BOK", "Dumper lift check: " +
+                                //        robot.dumperSlideMotor.getCurrentPosition());
+                                currentLiftPosition = DUMPER_LIFT_LOW_POS;
+                            }
+                            robot.dumperSlideMotor.setTargetPosition(currentLiftPosition);
+                            robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                            robot.dumperSlideMotor.setPower(DUMPER_LIFT_POWER);
                         }
-                        robot.dumperSlideMotor.setTargetPosition(currentLiftPosition);
-                        robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                        robot.dumperSlideMotor.setPower(DUMPER_LIFT_POWER);
                     }
                 }
                 //Log.v("BOK", "Dumper slide: " + robot.dumperSlideMotor.getCurrentPosition());
