@@ -27,7 +27,7 @@ public class BoKAutoTest extends BoKAutoCommon {
         opMode.telemetry.addData("Test: ", "Moving forward complete");
         opMode.telemetry.update();
         opMode.sleep(2000);*/
-
+        /*
         opMode.telemetry.addData("Test: ", "Moving dumper lift");
         opMode.telemetry.update();
         robot.dumperSlideMotor.setTargetPosition(robot.DUMPER_SLIDE_FINAL_POS);
@@ -62,8 +62,21 @@ public class BoKAutoTest extends BoKAutoCommon {
         opMode.telemetry.addData("Test: ", "Moving dumper lift complete");
         opMode.telemetry.update();
         opMode.sleep(2000);
-
-
+        */
+       /* robot.distanceRotateServo.setPosition(robot.DISTANCE_ROTATE_SERVO_INIT);
+        gyroTurn(DT_TURN_SPEED_LOW, 0, 45, DT_TURN_THRESHOLD_LOW,
+                false, false, 4);
+                */
+       //dumpMarker();
+        //strafe(0.5, 3, false, 6);
+        //dropIntakeArmAndExtend();
+        robot.distanceRotateServo.setPosition(robot.DISTANCE_ROTATE_SERVO_FINAL);
+        gyroTurn(0.1, 0, -5, DT_TURN_THRESHOLD_LOW, false, false, 5);
+        followHeadingPIDWithDistance(0, -0.15, 30,
+                false, false, 6);
+        gyroTurn(0.1, -5, 0, DT_TURN_THRESHOLD_LOW, false, false, 3);
+        followHeadingPIDWithDistance(0, 0.15, 120,
+                true, false, 8);
         /*
         opMode.telemetry.addData("Test: ", "Moving intake rotate");
         opMode.telemetry.update();

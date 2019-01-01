@@ -18,7 +18,7 @@ public interface BoKAuto
         BOK_AUTO_SUCCESS
     }
 
-    public static double DT_TURN_SPEED_LOW  = 0.3;
+    public static double DT_TURN_SPEED_LOW  = 0.2;
     public static double DT_TURN_SPEED_HIGH = 0.6;
     public static int DT_TURN_THRESHOLD_LOW = 1;
 

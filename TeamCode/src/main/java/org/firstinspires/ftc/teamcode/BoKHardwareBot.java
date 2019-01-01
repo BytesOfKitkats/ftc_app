@@ -260,9 +260,7 @@ public abstract class BoKHardwareBot
 
     protected abstract void setPowerToDTMotors(double power);
     protected abstract void setPowerToDTMotors(double power, boolean forward);
-    protected abstract void setPowerToDTMotors(double leftPower,
-                                               double rightPower,
-                                               boolean forward);
+    protected abstract void setPowerToDTMotors(double leftPower, double rightPower);
     protected abstract void setPowerToDTMotorsStrafe(double power, boolean right);
     protected abstract void setModeForDTMotors(DcMotor.RunMode runMode);
     protected abstract void setOnHeading(double leftPower, double rightPower);

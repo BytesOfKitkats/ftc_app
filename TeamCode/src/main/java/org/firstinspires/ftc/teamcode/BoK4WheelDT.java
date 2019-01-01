@@ -104,15 +104,9 @@ public class BoK4WheelDT extends BoKHardwareBot
     }
 
     protected void setPowerToDTMotors(double leftPower,
-                                      double rightPower,
-                                      boolean forward)
+                                      double rightPower)
     {
-        if (forward) {
-            setPowerToDTMotors(leftPower, leftPower, rightPower, rightPower);
-        }
-        else {
-            setPowerToDTMotors(leftPower, leftPower, rightPower, rightPower);
-        }
+        setPowerToDTMotors(leftPower, leftPower, rightPower, rightPower);
     }
 
     protected void setPowerToDTMotorsStrafe(double power, boolean right)

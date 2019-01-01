@@ -107,6 +107,19 @@ public abstract class BoKAutoCommon implements BoKAuto
     private static final int RS_DIFF_THRESHOLD_CM = 5;
     private static final int DETECT_BUMP_THRESHOLD = -5;
 
+    // Constants for runAuto
+    private static final double HANGLIFT_POWER = 0.75;
+    private static final double STRAFE_POWER = 0.5;
+    private static final double STRAFE_ROTATIONS = 3;
+    private static final double MOVE_POWER = 0.3;
+    private static final int DISTANCE_TO_WALL_LEFT_CUBE_INIT = 93;     // cm
+    private static final int DISTANCE_TO_WALL_LEFT_CUBE_FINAL = 71;    // cm
+    private static final int DISTANCE_TO_WALL_CENTER_CUBE_INIT = 120;  // cm
+    private static final int DISTANCE_TO_WALL_CENTER_CUBE_FINAL = 108; // cm
+    private static final int DISTANCE_TO_WALL_RIGHT_CUBE_INIT = 125;  // cm
+    private static final int DISTANCE_TO_WALL_RIGHT_CUBE_FINAL = 150; // cm
+    private static final int DISTANCE_TO_WALL_BEFORE_TURN = 30; // cm
+
     private boolean targetVisible = false;
     List<VuforiaTrackable> allTrackables;
     VuforiaTrackable blueRover, redFootprint, frontCraters, backSpace;
@@ -572,8 +585,8 @@ public abstract class BoKAutoCommon implements BoKAuto
                             (double) srcGray.rows() / 16, // min distance between centers
                             100.0, // Upper threshold for internal Canny edge detector
                             40.0, // Threshold for center detection
-                            25, // Minimum radius to be detected
-                            60); // Maximum radius to be detected
+                            20, // Minimum radius to be detected
+                            105); // Maximum radius to be detected
 
                     int numCircles = 0;
                     for (int x = 0; x < circles.cols(); x++) {
@@ -742,12 +755,12 @@ public abstract class BoKAutoCommon implements BoKAuto
             rightSpeed  = speed * steer;
             if (rightSpeed > 0)
                 rightSpeed = Range.clip(rightSpeed,
-                                        DT_TURN_SPEED_HIGH,
+                                        DT_TURN_SPEED_LOW,
                                         DT_TURN_SPEED_HIGH);
             else
                 rightSpeed = Range.clip(rightSpeed,
                                         -DT_TURN_SPEED_HIGH,
-                                        -DT_TURN_SPEED_HIGH);
+                                        -DT_TURN_SPEED_LOW);
 
             if(!tank)
                 leftSpeed   = rightSpeed;
@@ -838,11 +851,19 @@ public abstract class BoKAutoCommon implements BoKAuto
                 turn = Kp * error + Ki * sumError + Kd * diffError;
                 speedL = power + turn;
                 speedR = power - turn;
-                speedL = Range.clip(speedL, -2 * power, 2 * power);
-                speedR = Range.clip(speedR, -2 * power, 2 * power);
+
+                if(power < 0) {
+                    speedL = Range.clip(speedL, -Math.abs(2 * power), -0.15);
+                    speedR = Range.clip(speedR, 0.15, Math.abs(2 * power));
+                }
+                else{
+                    speedL = Range.clip(speedL, 0.15, Math.abs(2 * power));
+                    speedR = Range.clip(speedR, -Math.abs(2 * power), -0.15);
+                }
+
                 speedL = Range.clip(speedL, -1, 1);
                 speedR = Range.clip(speedR, -1, 1);
-                robot.setPowerToDTMotors(speedL, speedR, forward);
+                robot.setPowerToDTMotors(speedL, speedR);
 
                 /*logString = logString + deltaTime + "," +angle + "," + error + ","
                         + sumError + "," + lastError + "," + diffError + ","
@@ -864,17 +885,18 @@ public abstract class BoKAutoCommon implements BoKAuto
     }
 
     protected void followHeadingPIDWithDistance(double heading,
-                                    double power,
-                                    double distTarget,
-                                    boolean forward,
-                                    boolean detectBump,
-                                    double waitForSec) {
+                                                double power,
+                                                double distTarget,
+                                                boolean forward,
+                                                boolean detectBump,
+                                                double waitForSec)
+    {
         double angle, error, sumError = 0, lastError = 0, diffError, turn, speedL, speedR,
                 lastTime = 0;
         //String logString = "dTime,ang,err,sum,last,diff,turn,speedL,speedR\n";
         robot.resetDTEncoders();
         runTime.reset();
-        double dist = robot.getDistanceCM(robot.distanceBack, 501, 0.25);
+        double dist = robot.getDistanceCM(robot.distanceBack, distTarget+50, 0.25);
         Log.v("BOK", "Distance outside loop " + dist);
         while (opMode.opModeIsActive() && (runTime.seconds() < waitForSec)) {
 
@@ -883,7 +905,7 @@ public abstract class BoKAutoCommon implements BoKAuto
             else if (!forward && (dist < distTarget))
                 break;
 
-            Log.v("BOK", "Distance in loop " + dist);
+            //Log.v("BOK", "Distance in loop " + dist);
             double currTime = runTime.seconds();
             double deltaTime = currTime - lastTime;
             if (deltaTime >= SAMPLE_RATE_SEC) {
@@ -896,18 +918,24 @@ public abstract class BoKAutoCommon implements BoKAuto
                 turn = Kp * error + Ki * sumError + Kd * diffError;
                 speedL = power + turn;
                 speedR = power - turn;
-                speedL = Range.clip(speedL, -2 * power, 2 * power);
-                speedR = Range.clip(speedR, -2 * power, 2 * power);
+
+                if(power < 0) {
+                    speedL = Range.clip(speedL, -Math.abs(2 * power), -0.15);
+                    speedR = Range.clip(speedR, 0.15, Math.abs(2 * power));
+                }
+                else{
+                    speedL = Range.clip(speedL, 0.15, Math.abs(2 * power));
+                    speedR = Range.clip(speedR, -Math.abs(2 * power), -0.15);
+                }
+
                 speedL = Range.clip(speedL, -1, 1);
                 speedR = Range.clip(speedR, -1, 1);
-                robot.setPowerToDTMotors(speedL, speedR, forward);
+                robot.setPowerToDTMotors(speedL, speedR);
 
-                /*logString = logString + deltaTime + "," +angle + "," + error + ","
-                        + sumError + "," + lastError + "," + diffError + ","
-                        + turn + "," + speedL + "," + speedR + "\n";*/
+                Log.v("BOK", "angle " +angle + ",error " + error + ", " + turn + ",L: " + speedL + ",R: " + speedR + " dist " + dist);
                 lastError = error;
                 lastTime = currTime;
-                dist = robot.getDistanceCM(robot.distanceBack, 301, 0.25);
+                dist = robot.getDistanceCM(robot.distanceBack, distTarget+50, 0.25);
                 if (detectBump) {
                     if (angles.firstAngle < DETECT_BUMP_THRESHOLD) {
                         Log.v("BOK", "theta x " + angles.firstAngle);
@@ -962,13 +990,14 @@ public abstract class BoKAutoCommon implements BoKAuto
 
             diffFromTarget = targetDistanceCm - cmCurrent;
             pCoeff = diffFromTarget / 15;
-            wheelPower = Range.clip(power * pCoeff, -power, power);
+
+            wheelPower = Range.clip(power * pCoeff, -Math.abs(power), Math.abs(power));
             if (wheelPower > 0 && wheelPower < 0.4)
                 wheelPower = 0.4; // min power to move
             if (wheelPower < 0 && wheelPower > -0.4)
                 wheelPower = -0.4;
 
-            Log.v("BOK", "CM current " + cmCurrent + " diff "+diffFromTarget);
+            //Log.v("BOK", "CM current " + cmCurrent + " diff "+diffFromTarget);
             // back range sensor
             if (diffFromTarget < 0) // we are still far away!
                 robot.setPowerToDTMotors(wheelPower, false /* going back*/);
@@ -987,9 +1016,9 @@ public abstract class BoKAutoCommon implements BoKAuto
     }
 
     public boolean moveWithRangeSensorBack(double power,
-                                       int targetDistanceCm,
-                                       int capDistCm,
-                                       double waitForSec)
+                                           int targetDistanceCm,
+                                           int capDistCm,
+                                           double waitForSec)
     {
         boolean result = true;
 
@@ -1001,6 +1030,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         opMode.sleep(40);
         cmCurrent = robot.getDistanceCM(rangeSensor, capDistCm, 0.5);
         Log.v("BOK", "Distance from wall (outside loop)" + cmCurrent);
+
         //if (!Double.isNaN(cmCurrent))
         diffFromTarget = targetDistanceCm - cmCurrent;
         runTime.reset();
@@ -1032,7 +1062,7 @@ public abstract class BoKAutoCommon implements BoKAuto
             if (wheelPower < 0 && wheelPower > -0.4)
                 wheelPower = -0.4;
 
-            Log.v("BOK", "CM current " + cmCurrent + " diff "+diffFromTarget);
+            //Log.v("BOK", "CM current " + cmCurrent + " diff "+diffFromTarget);
             // back range sensor
             if (diffFromTarget < 0) // we are still far away!
                 robot.setPowerToDTMotors(wheelPower, false /* going back*/);
@@ -1069,116 +1099,148 @@ public abstract class BoKAutoCommon implements BoKAuto
     public void runAuto(int xTarget, int yTarget, boolean doMarker, boolean atCrater)
     {
         BoKAutoCubeLocation loc = BoKAutoCubeLocation.BOK_CUBE_UNKNOWN;
-        double initDist = 10;
-        OpenGLMatrix location = null;
-
-        // prepare the dumper before landing
         Log.v("BOK", "Angle at start " + robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
                 AxesOrder.XYZ,
                 AngleUnit.DEGREES).thirdAngle);
 
-        //find gold location
+        // Step 1: find gold location
         loc = findCube();
-        //start motor for hanging
+        // Step 2: Start motor for bringing the robot down (hanging lift)
         robot.hangMotor.setTargetPosition(robot.HANG_LIFT_HIGH_POS);
         robot.hangMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.hangMotor.setPower(0.75);
+        robot.hangMotor.setPower(HANGLIFT_POWER);
+
         runTime.reset();
-        while (robot.hangMotor.isBusy()&&(runTime.seconds()<10)){
-            //Log.v("BOK", "hang enc: " + robot.hangMotor.getCurrentPosition());
+        while (robot.hangMotor.isBusy() && (runTime.seconds() < 10)) {
+            // Do nothing while the robot is moving down
+            // Log.v("BOK", "hang enc: " + robot.hangMotor.getCurrentPosition());
         }
         robot.hangMotor.setPower(0);
         if (runTime.seconds() >= 10)
             Log.v("BOK", "hang lift timed out");
-        //unhook
+
+        // Step 3: Lower the hook
         robot.hangHookServo.setPosition(robot.HANG_HOOK_SERVO_FINAL);
         opMode.sleep(250);
+
+        // Step 4: Point the distance sensor so that it is perpendicular to the footprint picture:
+        // RED Crater; or the galaxy picture: Red Depot. For Blue Crater, we are pointing at the
+        // rover picture & for Blue Depot, we are pointing to the crater picture.
         robot.distanceRotateServo.setPosition(robot.DISTANCE_ROTATE_SERVO_FINAL);
+
         Log.v("BOK", "Angle at end " + robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
                 AxesOrder.XYZ,
                 AngleUnit.DEGREES).thirdAngle);
-        //readjust robot position
-        gyroTurn(DT_TURN_SPEED_LOW, 0, 0, DT_TURN_THRESHOLD_LOW,
-                false, false, 5);
 
-        // move towards sampling
-        strafe(0.5, 2.6, false, 6);
-        opMode.sleep(3000);
-        gyroTurn(DT_TURN_SPEED_LOW, 0, 0, DT_TURN_THRESHOLD_LOW, false, false, 3);
+        // Step 5: straighten the robot after coming down from the hanging position
+        gyroTurn(0.1, 0, 0, DT_TURN_THRESHOLD_LOW, false, false, 5);
+
+        Log.v("BOK", "Angle before strafe " + robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
+                AxesOrder.XYZ,
+                AngleUnit.DEGREES).thirdAngle);
+        // Step 6: Strafe towards sampling
+        strafe(STRAFE_POWER, STRAFE_ROTATIONS, false, 6);
+        opMode.sleep(250);
+        Log.v("BOK", "Angle after strafe " + robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
+                AxesOrder.XYZ,
+                AngleUnit.DEGREES).thirdAngle);
+        // Step 7: again straighten the robot after strafing
+        gyroTurn(0.1, 0, 0, DT_TURN_THRESHOLD_LOW, false, false, 3);
+        Log.v("BOK", "Angle after turn " + robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
+                AxesOrder.XYZ,
+                AngleUnit.DEGREES).thirdAngle);
+        //
+        // Step 8: find the distance to the wall
         double distSampling = robot.getDistanceCM(robot.distanceBack, 200, 0.5);
         Log.v("BOK", "Distance to wall " + distSampling);
-        double distForCube = 16;
+
+        // Step 9: complete the sampling
         if (loc == BoKAutoCubeLocation.BOK_CUBE_LEFT) {
             Log.v("BOK", "Cube on left");
-            //robot.distanceRotateServo.setPosition(robot.DISTANCE_ROTATE_SERVO_FINAL);
-            moveWithRangeSensorBack(-0.5, 93, 150, 2);
+            // 9a: Move back till the sampling arm is between center and left minerals
+            moveWithRangeSensorBack(-MOVE_POWER, DISTANCE_TO_WALL_LEFT_CUBE_INIT, 150, 2);
+            // 9b: Lower the sampler arm!
             robot.samplerServo.setPosition(robot.SAMPLER_SERVO_FINAL);
             opMode.sleep(250);
-            moveWithRangeSensorBack(-0.5, 71, 100, 2);
+            // 9c: Move past the cube
+            moveWithRangeSensorBack(-MOVE_POWER, DISTANCE_TO_WALL_LEFT_CUBE_FINAL, 100, 2);
+            // 9d: Raise the sampler arm
             robot.samplerServo.setPosition(robot.SAMPLER_SERVO_INIT);
-            //robot.samplerLeftServo.setPosition(robot.SAMPLER_LEFT_SERVO_INIT);
         }
         else if (loc == BoKAutoCubeLocation.BOK_CUBE_CENTER){
             Log.v("BOK", "Cube on center");
-            //robot.distanceRotateServo.setPosition(robot.DISTANCE_ROTATE_SERVO_FINAL);
-            moveWithRangeSensor(0.5, 125, 150, 2);
+            // 9a: Move forward till the sampling arm is between center and right minerals
+            moveWithRangeSensor(MOVE_POWER, DISTANCE_TO_WALL_CENTER_CUBE_INIT, 150, 2);
+            // 9b: Lower the sampler arm!
             robot.samplerServo.setPosition(robot.SAMPLER_SERVO_FINAL);
             opMode.sleep(250);
-            moveWithRangeSensorBack(-0.5, 100, 125, 2);
+            // 9c: Move past the cube
+            moveWithRangeSensorBack(-MOVE_POWER/2, DISTANCE_TO_WALL_CENTER_CUBE_FINAL, 125, 2);
+            // 9d: Raise the sampler arm
             robot.samplerServo.setPosition(robot.SAMPLER_SERVO_INIT);
-            return;
+            followHeadingPIDWithDistance(0, -MOVE_POWER, 110, false, false, 5);
+            gyroTurn(0.1, 0, -5, DT_TURN_THRESHOLD_LOW, false, false, 5);
         }
         else { // loc == BoKAutoCubeLocation.BOK_CUBE_RIGHT
             Log.v("BOK", "Cube on right");
-            //robot.samplerRightServo.setPosition(robot.SAMPLER_RIGHT_SERVO_FINAL);
-            robot.distanceRotateServo.setPosition(robot.DISTANCE_ROTATE_SERVO_FINAL);
-            opMode.sleep(250);
-            moveWithRangeSensor(0.5, 125, 150, 2);
+            // 9a: Move forward till the sampling arm is between center and right minerals
+            moveWithRangeSensor(MOVE_POWER, DISTANCE_TO_WALL_RIGHT_CUBE_INIT, 150, 2);
+            // 9b: Lower the sampler arm!
             robot.samplerServo.setPosition(robot.SAMPLER_SERVO_FINAL);
-            moveWithRangeSensor(0.5, 150, 175, 2);
+            // 9c: Move forward past the cube
+            moveWithRangeSensor(MOVE_POWER, DISTANCE_TO_WALL_RIGHT_CUBE_FINAL, 175, 2);
+            // 9d: Raise the sampler arm
             robot.samplerServo.setPosition(robot.SAMPLER_SERVO_INIT);
-            gyroTurn(DT_TURN_SPEED_LOW, 0, 0, DT_TURN_THRESHOLD_LOW, false, false, 3);
-            //robot.samplerRightServo.setPosition(robot.SAMPLER_RIGHT_SERVO_INIT);
+            followHeadingPIDWithDistance(0, -MOVE_POWER, 110, false, false, 5);
+            gyroTurn(0.1, 0, -5, DT_TURN_THRESHOLD_LOW, false, false, 5);
         }
+
         // Finished Sampling
-
         if(atCrater) {
-            followHeadingPIDWithDistance(0, -0.5, 60, false, false, 6);
+            // Step 10: Go backwards towards the wall
+            followHeadingPIDWithDistance(0, -0.15, DISTANCE_TO_WALL_BEFORE_TURN,
+                                         false, false, 6);
 
-            //gyroTurn(DT_TURN_SPEED_LOW, 75, 128, DT_TURN_THRESHOLD_LOW,
-                    //false, false, 4);
+            // Turn towards the farther wall
+            robot.distanceRotateServo.setPosition(robot.DISTANCE_ROTATE_SERVO_INIT);
+            gyroTurn(DT_TURN_SPEED_LOW, 0, 40, DT_TURN_THRESHOLD_LOW,
+                    false, false, 4);
 
-            /*
             if (doMarker) {
-
-                robot.distanceRotateServo.setPosition(robot.DISTANCE_ROTATE_SERVO_INIT);
                 Log.v("BOK", "Dist to front wall " +
                         robot.getDistanceCM(robot.distanceBack, 190, 0.5));
                 double distToWall = robot.getDistanceCM(robot.distanceBack, 190, 0.5) / 2.54;
-                //move to target distance of 80cm
-                moveWithRangeSensorBack(-0.5, 50, 190, 7);
-                //once distance reached lower intake arm
+                // Move to target distance of 80cm
+                followHeadingPIDWithDistance(45, -0.3, 60, false, false, 7);
+                // Once distance reached, dump the marker
                 dumpMarker();
-                gyroTurn(0.5, 130, 136, DT_TURN_THRESHOLD_LOW,
-                        false, false, 4);
+                gyroTurn(0.5, 45, 48, DT_TURN_THRESHOLD_LOW, false, false, 4);
                 //move backwards to 200cm
-                //followHeadingPIDBack(136, -0.5, -distToWall - 3, 10);
-                moveWithRangeSensor(0.5, 200, 250, 7);
-                //moveRamp(0.5, 5, false, 2);
+                followHeadingPID(48, 0.5, distToWall + 3, true, true, 10);
+                dropIntakeArmAndExtend();
             }// if(doMarker)
 
-        }// if(atCrater)
+        } // if(atCrater)
         else{
-            moveRamp(0.6, 40-distForCube, true, 7);
+            /*
+            moveRamp(0.6, 40 - distForCube, true, 7);
             dumpMarker();
             gyroTurn(0.5, 0, -90, DT_TURN_THRESHOLD_LOW, false,
                     false, 6);
             move(0.5, 0.5, 12, false, 4);
             gyroTurn(0.5, -90, -47, DT_TURN_THRESHOLD_LOW, false,
                     false, 6);
-            //followHeadingPIDBack(-47, -0.5, -57, 10);
+            //followHeadingPIDBack(-47, -0.5, -57, 10);*/
         }
-*/
+
         }
+
+    protected void dropIntakeArmAndExtend() {
+        robot.moveIntakeArmPID(1000, 0.5, 0.5, 3);
+        robot.intakeArmMotor.setTargetPosition(1100);
+        robot.intakeArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        robot.intakeArmMotor.setPower(0.5);
+        moveRamp(0.25, 13, false, 6);
     }
 }
+

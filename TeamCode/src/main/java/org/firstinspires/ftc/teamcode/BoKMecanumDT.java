@@ -115,18 +115,6 @@ public class BoKMecanumDT extends BoKHardwareBot
         setPowerToDTMotors(power, power, power, power);
     }
 
-    protected void setPowerToDTMotors(double leftPower,
-                                      double rightPower,
-                                      boolean forward)
-    {
-        if (forward) {
-            setPowerToDTMotors(leftPower, leftPower, -rightPower, -rightPower);
-        }
-        else {
-            setPowerToDTMotors(-leftPower, -leftPower, rightPower, rightPower);
-        }
-    }
-
     protected void setPowerToDTMotorsStrafe(double power, boolean right)
     {
         if (right) {
