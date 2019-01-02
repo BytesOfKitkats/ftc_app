@@ -828,7 +828,6 @@ public abstract class BoKAutoCommon implements BoKAuto
     protected void followHeadingPID(double heading,
                                     double power,
                                     double dist,
-                                    boolean forward,
                                     boolean detectBump,
                                     double waitForSec) {
         double angle, error, sumError = 0, lastError = 0, diffError, turn, speedL, speedR,
@@ -851,20 +850,18 @@ public abstract class BoKAutoCommon implements BoKAuto
                 turn = Kp * error + Ki * sumError + Kd * diffError;
                 speedL = power + turn;
                 speedR = power - turn;
+                speedR *= -1;
 
-                if(power < 0) {
-                    speedL = Range.clip(speedL, -Math.abs(2 * power), -0.15);
-                    speedR = Range.clip(speedR, 0.15, Math.abs(2 * power));
-                }
-                else{
-                    speedL = Range.clip(speedL, 0.15, Math.abs(2 * power));
-                    speedR = Range.clip(speedR, -Math.abs(2 * power), -0.15);
-                }
+                speedL = Range.clip(speedL, DT_MOVE_LOW, Math.abs(2 * power));
+                speedR = Range.clip(speedR, -Math.abs(2 * power), -DT_MOVE_LOW);
 
                 speedL = Range.clip(speedL, -1, 1);
                 speedR = Range.clip(speedR, -1, 1);
                 robot.setPowerToDTMotors(speedL, speedR);
 
+                Log.v("BOK", "angle " + String.format("%.2f", angle) + ",error " + String.format("%.2f",error)
+                        + ",turn " + String.format("%.2f", turn) + ",L: " + String.format("%.2f", speedL)
+                        + ",R: " + String.format("%.2f", speedR) + " enc " + String.format("%.2f", robot.getAvgEncCount()));
                 /*logString = logString + deltaTime + "," +angle + "," + error + ","
                         + sumError + "," + lastError + "," + diffError + ","
                         + turn + "," + speedL + "," + speedR + "\n";*/
@@ -879,7 +876,63 @@ public abstract class BoKAutoCommon implements BoKAuto
             }
         }
         robot.setPowerToDTMotors(0);
-        /*File file = AppUtil.getInstance().getSettingsFile("BoKGyroData1.csv");
+        /*File file = AppUtil.getInstance().getSettingsFile("BoKGyroDataFwd.csv");
+        ReadWriteFile.writeFile(file,
+                logString);*/
+    }
+
+    protected void followHeadingPIDBack(double heading,
+                                    double power,
+                                    double dist,
+                                    boolean detectBump,
+                                    double waitForSec) {
+        double angle, error, sumError = 0, lastError = 0, diffError, turn, speedL, speedR,
+                lastTime = 0;
+        double targetEnc = robot.getTargetEncCount(dist);
+        //String logString = "dTime,ang,err,sum,last,diff,turn,speedL,speedR\n";
+        robot.resetDTEncoders();
+        runTime.reset();
+        while (opMode.opModeIsActive() && (runTime.seconds() < waitForSec)
+                && (robot.getAvgEncCount() < targetEnc)) {
+            double currTime = runTime.seconds();
+            double deltaTime = currTime - lastTime;
+            if (deltaTime >= SAMPLE_RATE_SEC) {
+                angle = robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
+                        AxesOrder.XYZ,
+                        AngleUnit.DEGREES).thirdAngle;
+                error = angle - heading;
+                sumError = sumError * 0.66 + error;
+                diffError = error - lastError;
+                turn = Kp * error + Ki * sumError + Kd * diffError;
+                speedL = power + turn;
+                speedR = power - turn;
+                speedR *= -1;
+
+                speedL = Range.clip(speedL, -Math.abs(2 * power), -DT_MOVE_LOW);
+                speedR = Range.clip(speedR, DT_MOVE_LOW, Math.abs(2 * power));
+
+                speedL = Range.clip(speedL, -1, 1);
+                speedR = Range.clip(speedR, -1, 1);
+                robot.setPowerToDTMotors(speedL, speedR);
+
+                Log.v("BOK", "angle " + String.format("%.2f", angle) + ",error " + String.format("%.2f",error)
+                        + ",turn " + String.format("%.2f", turn) + ",L: " + String.format("%.2f", speedL)
+                        + ",R: " + String.format("%.2f", speedR) + " enc " + String.format("%.2f", robot.getAvgEncCount()));
+                /*logString = logString + deltaTime + "," +angle + "," + error + ","
+                        + sumError + "," + lastError + "," + diffError + ","
+                        + turn + "," + speedL + "," + speedR + "\n";*/
+                lastError = error;
+                lastTime = currTime;
+                if (detectBump) {
+                    if (angles.firstAngle < DETECT_BUMP_THRESHOLD) {
+                        Log.v("BOK", "theta x " + angles.firstAngle);
+                        break;
+                    }
+                }
+            }
+        }
+        robot.setPowerToDTMotors(0);
+        /*File file = AppUtil.getInstance().getSettingsFile("BoKGyroDataBack.csv");
         ReadWriteFile.writeFile(file,
                 logString);*/
     }
@@ -887,7 +940,6 @@ public abstract class BoKAutoCommon implements BoKAuto
     protected void followHeadingPIDWithDistance(double heading,
                                                 double power,
                                                 double distTarget,
-                                                boolean forward,
                                                 boolean detectBump,
                                                 double waitForSec)
     {
@@ -897,12 +949,10 @@ public abstract class BoKAutoCommon implements BoKAuto
         robot.resetDTEncoders();
         runTime.reset();
         double dist = robot.getDistanceCM(robot.distanceBack, distTarget+50, 0.25);
-        Log.v("BOK", "Distance outside loop " + dist);
+        Log.v("BOK", "Distance outside loop FWD" + dist);
         while (opMode.opModeIsActive() && (runTime.seconds() < waitForSec)) {
 
-            if (forward && (dist > distTarget))
-                break;
-            else if (!forward && (dist < distTarget))
+            if (dist > distTarget)
                 break;
 
             //Log.v("BOK", "Distance in loop " + dist);
@@ -918,21 +968,18 @@ public abstract class BoKAutoCommon implements BoKAuto
                 turn = Kp * error + Ki * sumError + Kd * diffError;
                 speedL = power + turn;
                 speedR = power - turn;
+                speedR *= -1;
 
-                if(power < 0) {
-                    speedL = Range.clip(speedL, -Math.abs(2 * power), -0.15);
-                    speedR = Range.clip(speedR, 0.15, Math.abs(2 * power));
-                }
-                else{
-                    speedL = Range.clip(speedL, 0.15, Math.abs(2 * power));
-                    speedR = Range.clip(speedR, -Math.abs(2 * power), -0.15);
-                }
+                speedL = Range.clip(speedL, DT_MOVE_LOW, Math.abs(2 * power));
+                speedR = Range.clip(speedR, -Math.abs(2 * power), -DT_MOVE_LOW);
 
                 speedL = Range.clip(speedL, -1, 1);
                 speedR = Range.clip(speedR, -1, 1);
                 robot.setPowerToDTMotors(speedL, speedR);
 
-                Log.v("BOK", "angle " +angle + ",error " + error + ", " + turn + ",L: " + speedL + ",R: " + speedR + " dist " + dist);
+                Log.v("BOK", "angle " + String.format("%.2f", angle) + ",error " + String.format("%.2f",error)
+                        + ",turn " + String.format("%.2f", turn) + ",L: " + String.format("%.2f", speedL)
+                        + ",R: " + String.format("%.2f", speedR) + " dist " + String.format("%.2f", dist));
                 lastError = error;
                 lastTime = currTime;
                 dist = robot.getDistanceCM(robot.distanceBack, distTarget+50, 0.25);
@@ -945,7 +992,67 @@ public abstract class BoKAutoCommon implements BoKAuto
             }
         }
         robot.setPowerToDTMotors(0);
-        /*File file = AppUtil.getInstance().getSettingsFile("BoKGyroData1.csv");
+        /*File file = AppUtil.getInstance().getSettingsFile("BoKGyroDataFwdDist.csv");
+        ReadWriteFile.writeFile(file,
+                logString);*/
+    }
+
+    protected void followHeadingPIDWithDistanceBack (double heading,
+                                                double power,
+                                                double distTarget,
+                                                boolean detectBump,
+                                                double waitForSec)
+    {
+        double angle, error, sumError = 0, lastError = 0, diffError, turn, speedL, speedR,
+                lastTime = 0;
+        //String logString = "dTime,ang,err,sum,last,diff,turn,speedL,speedR\n";
+        robot.resetDTEncoders();
+        runTime.reset();
+        double dist = robot.getDistanceCM(robot.distanceBack, distTarget+50, 0.25);
+        Log.v("BOK", "Distance outside loop BACK" + dist);
+        while (opMode.opModeIsActive() && (runTime.seconds() < waitForSec)) {
+
+            if (dist < distTarget)
+                break;
+
+            //Log.v("BOK", "Distance in loop " + dist);
+            double currTime = runTime.seconds();
+            double deltaTime = currTime - lastTime;
+            if (deltaTime >= SAMPLE_RATE_SEC) {
+                angle = robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
+                        AxesOrder.XYZ,
+                        AngleUnit.DEGREES).thirdAngle;
+                error = angle - heading;
+                sumError = sumError * 0.66 + error;
+                diffError = error - lastError;
+                turn = Kp * error + Ki * sumError + Kd * diffError;
+                speedL = power + turn;
+                speedR = power - turn;
+                speedR *= -1;
+
+                speedL = Range.clip(speedL, -Math.abs(2 * power), -DT_MOVE_LOW);
+                speedR = Range.clip(speedR, DT_MOVE_LOW, Math.abs(2 * power));
+
+                speedL = Range.clip(speedL, -1, 1);
+                speedR = Range.clip(speedR, -1, 1);
+                robot.setPowerToDTMotors(speedL, speedR);
+
+                Log.v("BOK", "angle " + String.format("%.2f", angle) + ",error " + String.format("%.2f",error)
+                        + ",turn " + String.format("%.2f", turn) + ",L: " + String.format("%.2f", speedL)
+                        + ",R: " + String.format("%.2f", speedR) + " dist " + String.format("%.2f", dist));
+                lastError = error;
+                lastTime = currTime;
+                dist = robot.getDistanceCM(robot.distanceBack, distTarget+50, 0.25);
+                if (detectBump) {
+                    if (angles.firstAngle < DETECT_BUMP_THRESHOLD) {
+                        Log.v("BOK", "theta x " + angles.firstAngle);
+                        break;
+                    }
+                }
+            }
+        }
+        robot.setPowerToDTMotors(0);
+        /*File file = AppUtil.getInstance().getSettingsFile("BoKGyroDataFwdDist.csv");
         ReadWriteFile.writeFile(file,
                 logString);*/
     }
@@ -1178,7 +1285,7 @@ public abstract class BoKAutoCommon implements BoKAuto
             moveWithRangeSensorBack(-MOVE_POWER/2, DISTANCE_TO_WALL_CENTER_CUBE_FINAL, 125, 2);
             // 9d: Raise the sampler arm
             robot.samplerServo.setPosition(robot.SAMPLER_SERVO_INIT);
-            followHeadingPIDWithDistance(0, -MOVE_POWER, 110, false, false, 5);
+            followHeadingPIDWithDistanceBack(0, -MOVE_POWER, 110, false, 5);
             gyroTurn(0.1, 0, -5, DT_TURN_THRESHOLD_LOW, false, false, 5);
         }
         else { // loc == BoKAutoCubeLocation.BOK_CUBE_RIGHT
@@ -1191,15 +1298,15 @@ public abstract class BoKAutoCommon implements BoKAuto
             moveWithRangeSensor(MOVE_POWER, DISTANCE_TO_WALL_RIGHT_CUBE_FINAL, 175, 2);
             // 9d: Raise the sampler arm
             robot.samplerServo.setPosition(robot.SAMPLER_SERVO_INIT);
-            followHeadingPIDWithDistance(0, -MOVE_POWER, 110, false, false, 5);
+            followHeadingPIDWithDistanceBack(0, -MOVE_POWER, 110, false, 5);
             gyroTurn(0.1, 0, -5, DT_TURN_THRESHOLD_LOW, false, false, 5);
         }
 
         // Finished Sampling
         if(atCrater) {
             // Step 10: Go backwards towards the wall
-            followHeadingPIDWithDistance(0, -0.15, DISTANCE_TO_WALL_BEFORE_TURN,
-                                         false, false, 6);
+            followHeadingPIDWithDistanceBack(0, -0.15, DISTANCE_TO_WALL_BEFORE_TURN,
+                                         false, 6);
 
             // Turn towards the farther wall
             robot.distanceRotateServo.setPosition(robot.DISTANCE_ROTATE_SERVO_INIT);
@@ -1211,12 +1318,12 @@ public abstract class BoKAutoCommon implements BoKAuto
                         robot.getDistanceCM(robot.distanceBack, 190, 0.5));
                 double distToWall = robot.getDistanceCM(robot.distanceBack, 190, 0.5) / 2.54;
                 // Move to target distance of 80cm
-                followHeadingPIDWithDistance(45, -0.3, 60, false, false, 7);
+                followHeadingPIDWithDistanceBack(45, -0.3, 60, false, 7);
                 // Once distance reached, dump the marker
                 dumpMarker();
                 gyroTurn(0.5, 45, 48, DT_TURN_THRESHOLD_LOW, false, false, 4);
                 //move backwards to 200cm
-                followHeadingPID(48, 0.5, distToWall + 3, true, true, 10);
+                followHeadingPID(48, 0.5, distToWall + 3, true, 10);
                 dropIntakeArmAndExtend();
             }// if(doMarker)
 
