@@ -70,13 +70,19 @@ public class BoKAutoTest extends BoKAutoCommon {
        //dumpMarker();
         //strafe(0.5, 3, false, 6);
         //dropIntakeArmAndExtend();
-        robot.distanceRotateServo.setPosition(robot.DISTANCE_ROTATE_SERVO_FINAL);
+        //robot.distanceRotateServo.setPosition(robot.DISTANCE_ROTATE_SERVO_FINAL);
         //gyroTurn(0.1, 0, -5, DT_TURN_THRESHOLD_LOW, false, false, 5);
-        followHeadingPIDBack(0, -0.3, 30,
+        /*followHeadingPIDBack(0, -0.3, 30,
                 false, 6);
         gyroTurn(0.1, -5, 0, DT_TURN_THRESHOLD_LOW, false, false, 3);
         followHeadingPID(0, 0.3, 30,
-                false, 8);
+                false, 8);*/
+        //strafe(0.5, 3, false, 15);
+        //robot.hangHookServo.setPosition(robot.HANG_HOOK_SERVO_FINAL);
+        //opMode.sleep(500);
+        //gyroTurn(0.6, 0, 45, DT_TURN_THRESHOLD_LOW+1, false, false, 6);
+        followHeadingPID(0, 0.5, 45, true, 20);
+        //followHeadingPIDWithDistanceBack(45, -0.5, 60, false, 20);
         /*
         opMode.telemetry.addData("Test: ", "Moving intake rotate");
         opMode.telemetry.update();

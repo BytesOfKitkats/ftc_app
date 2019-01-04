@@ -215,6 +215,20 @@ public class BoK4WheelDT extends BoKHardwareBot
         throw new UnsupportedOperationException("Strafing not supported");
     }
 
+    protected int startStrafeWEnc(double power, double rotations, boolean right)
+            throws UnsupportedOperationException
+    {
+        Log.v("BOK", "Strafing NOT supported!");
+        throw new UnsupportedOperationException("Strafing not supported");
+    }
+
+    protected int startStrafeDiag(double power, double rotations,
+                                           boolean forward, boolean left){
+        Log.v("BOK", "Strafing Diag NOT supported!");
+        throw new UnsupportedOperationException("Strafing not supported");
+    }
+
+
     protected void stopMove()
     {
         // Stop all motion;
