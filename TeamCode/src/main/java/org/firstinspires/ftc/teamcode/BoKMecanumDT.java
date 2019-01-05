@@ -18,8 +18,6 @@ public class BoKMecanumDT extends BoKHardwareBot
     private static final double   COUNTS_PER_MOTOR_REV    = 537.6;
     private static final double   DRIVE_GEAR_REDUCTION    = 1.33;
     private static final double   WHEEL_DIAMETER_INCHES   = 4.0;
-    private static final double   LEFT_BACK_COEFF         = 1.0;
-    private static final double   LEFT_FRONT_COEFF         = 1.0;
 
     // CONSTANTS (strings from the robot config)
     private static final String LEFT_BACK_MOTOR_NAME   = "lb";
@@ -34,10 +32,11 @@ public class BoKMecanumDT extends BoKHardwareBot
     public DcMotor rightFront;
 
     // Strafe target
+    /* Commenting out strafe functionality
     private int leftFrontTarget;
     private int leftBackTarget;
     private int rightFrontTarget;
-    private int rightBackTarget;
+    private int rightBackTarget; */
 
     /*
      * Implement all the abstract methods
@@ -66,10 +65,10 @@ public class BoKMecanumDT extends BoKHardwareBot
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 
-        //leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        //leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        //rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        //rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         setModeForDTMotors(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Drive train is initialized, initialize sensors
@@ -92,43 +91,44 @@ public class BoKMecanumDT extends BoKHardwareBot
     }
 
     private void setPowerToDTMotors(double leftFrontPower, double leftBackPower,
-                                      double rightFrontPower, double rightBackPower)
+                                    double rightFrontPower, double rightBackPower, boolean noSleep)
     {
         leftBack.setPower(leftBackPower);
         rightBack.setPower(rightBackPower);
         leftFront.setPower(leftFrontPower);
         rightFront.setPower(rightFrontPower);
-        opMode.sleep(OPMODE_SLEEP_INTERVAL_MS_SHORT);
+        if (!noSleep) {
+            opMode.sleep(OPMODE_SLEEP_INTERVAL_MS_SHORT);
+        }
     }
 
     protected void setPowerToDTMotors(double power, boolean forward)
     {
         if (forward) {
-            setPowerToDTMotors(power, power, -power, -power);
+            setPowerToDTMotors(power, power, -power, -power, false);
         } else {
-            setPowerToDTMotors(-power, -power, power, power);
+            setPowerToDTMotors(-power, -power, power, power, false);
         }
     }
 
     protected void setPowerToDTMotors(double power)
     {
-        setPowerToDTMotors(power, power, power, power);
+        setPowerToDTMotors(power, power, power, power, false);
     }
 
     /*protected void setPowerToDTMotorsStrafe(double power, boolean right)
     {
         if (right) {
-            setPowerToDTMotors(power*1.6, -power*0.7, power*0.7, -power*1.6);
+            setPowerToDTMotors(power*1.6, -power*0.7, power*0.7, -power*1.6, false);
         }
         else {
-            setPowerToDTMotors(-power*1.6, 0.7*power,
-                    0.7*-power, power*1.6);
+            setPowerToDTMotors(-power*1.6, 0.7*power, 0.7*-power, power*1.6, false);
         }
     }*/
 
     protected void setOnHeading(double leftPower, double rightPower)
     {
-        setPowerToDTMotors(-leftPower, -leftPower, -rightPower, -rightPower);
+        setPowerToDTMotors(-leftPower, -leftPower, -rightPower, -rightPower, false);
     }
 
     protected void setModeForDTMotors(DcMotor.RunMode runMode)
@@ -176,7 +176,8 @@ public class BoKMecanumDT extends BoKHardwareBot
         Log.v("BOK", "START: " + leftFront.getCurrentPosition() +", " + currentLeftTarget + ", " +
                 rightFront.getCurrentPosition() + ", " + currentRightTarget);
     }
-    
+
+    /*
     private void setDTMotorEncoderTargetStrafe(int leftFrontTarget,
                                                int leftBackTarget,
                                               int rightFrontTarget,
@@ -200,7 +201,7 @@ public class BoKMecanumDT extends BoKHardwareBot
         //        leftBack.getCurrentPosition() + ", " + currentLeftBackTarget + ", RF: " +
         //        rightFront.getCurrentPosition() + ",  " + currentRightFrontTarget + " RB: " +
         //        rightBack.getCurrentPosition() + ",  " + currentRightBackTarget);
-    }
+    } */
 
     /*
      * move() method: setup the robot to move encoder counts
@@ -213,11 +214,11 @@ public class BoKMecanumDT extends BoKHardwareBot
         double targetEncCount = getTargetEncCount(inches);
         if (forward) {
             setDTMotorEncoderTarget((int) targetEncCount, (int) -targetEncCount);
-            setPowerToDTMotors(leftPower, leftPower, -rightPower, -rightPower);
+            setPowerToDTMotors(leftPower, leftPower, -rightPower, -rightPower, false);
         }
         else {
             setDTMotorEncoderTarget((int) -targetEncCount, (int) targetEncCount);
-            setPowerToDTMotors(-leftPower, -leftPower, rightPower, rightPower);
+            setPowerToDTMotors(-leftPower, -leftPower, rightPower, rightPower, false);
         }
         return (int)targetEncCount;
     }
@@ -229,11 +230,11 @@ public class BoKMecanumDT extends BoKHardwareBot
     {
         if (forward) {
             setDTMotorEncoderTarget(encCounts, -encCounts);
-            setPowerToDTMotors(leftPower, leftPower, -rightPower, -rightPower);
+            setPowerToDTMotors(leftPower, leftPower, -rightPower, -rightPower, false);
         }
         else {
             setDTMotorEncoderTarget(-encCounts, encCounts);
-            setPowerToDTMotors(-leftPower, -leftPower, rightPower, rightPower);
+            setPowerToDTMotors(-leftPower, -leftPower, rightPower, rightPower, false);
         }
     }
 
@@ -248,7 +249,7 @@ public class BoKMecanumDT extends BoKHardwareBot
             rightBackTarget = (int)-targetEncCount;
             setDTMotorEncoderTargetStrafe(leftFrontTarget, leftBackTarget,
                     rightFrontTarget, rightBackTarget);
-            setPowerToDTMotors(power, -power, power, -power);
+            setPowerToDTMotors(power, -power, power, -power, false);
         }
         else {
             leftFrontTarget = (int) -targetEncCount;
@@ -257,7 +258,7 @@ public class BoKMecanumDT extends BoKHardwareBot
             rightBackTarget = (int)targetEncCount;
             setDTMotorEncoderTargetStrafe(leftFrontTarget, leftBackTarget,
                     rightFrontTarget, rightBackTarget);
-            setPowerToDTMotors(-power, power, -power, power);
+            setPowerToDTMotors(-power, power, -power, power, false);
         }
         Log.v("BOK", "Target LF " + leftFrontTarget +
                 ", LB " + leftBackTarget +
@@ -272,15 +273,15 @@ public class BoKMecanumDT extends BoKHardwareBot
         double targetEncCount = (rotations*COUNTS_PER_MOTOR_REV) * DRIVE_GEAR_REDUCTION;
         if (right) {
             setModeForDTMotors(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            setPowerToDTMotors(power*1.15, -power*1.25, power*1.3, -power*1.2);
-            //setPowerToDTMotors(1, -1, 1, -1);
-            //setPowerToDTMotors(11.5/13.0, -(12.5/13.0), 1, -(12/13.0));
+            setPowerToDTMotors(power*1.15, -power*1.25, power*1.3, -power*1.2, false);
+            //setPowerToDTMotors(1, -1, 1, -1, false);
+            //setPowerToDTMotors(11.5/13.0, -(12.5/13.0), 1, -(12/13.0), false);
         }
         else {
             setModeForDTMotors(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            //setPowerToDTMotors(-power*1.1, power*1.25, -power*1.31, power*1.28);
-            setPowerToDTMotors(-(power*2), power, -power, (power*2));
-            //setPowerToDTMotors(-power, power*1.25, -power*1.3, power*1.2);
+            //setPowerToDTMotors(-power*1.1, power*1.25, -power*1.31, power*1.28, false);
+            setPowerToDTMotors(-(power*2), power, -power, (power*2), false);
+            //setPowerToDTMotors(-power, power*1.25, -power*1.3, power*1.2, false);
         }
         return (int)targetEncCount;
     }
@@ -289,7 +290,7 @@ public class BoKMecanumDT extends BoKHardwareBot
     protected void stopMove()
     {
         // Stop all motion;
-        setPowerToDTMotors(0, 0, 0, 0);
+        setPowerToDTMotors(0, 0, 0, 0, false);
         // Turn off RUN_TO_POSITION
         setModeForDTMotors(DcMotor.RunMode.RUN_USING_ENCODER);
     }
@@ -324,7 +325,7 @@ public class BoKMecanumDT extends BoKHardwareBot
                 Math.abs(leftFront.getCurrentPosition()))/4.0;
     }
 
-    protected void moveRobot(double speedCoef)
+    protected void moveRobotTele(double speedCoef)
     {
         /*
          * Gamepad1: Driver 1 controls the robot using the left joystick for throttle and
@@ -384,43 +385,38 @@ public class BoKMecanumDT extends BoKHardwareBot
         setPowerToDTMotors((motorPowerLF * speedCoefLocal),
                            (motorPowerLB * speedCoefLocal),
                            (motorPowerRF * speedCoefLocal),
-                           (motorPowerRB * speedCoefLocal));
+                           (motorPowerRB * speedCoefLocal), true);
         //Log.v("BOK", "Moving in MechanumDT");
-        //leftBack.setPower(motorPowerLB * speedCoefLocal);
-        //rightBack.setPower(motorPowerRB* speedCoefLocal);
-        //leftFront.setPower(motorPowerLF * speedCoefLocal);
-        ////rightFront.setPower(motorPowerRF * speedCoefLocal);
     }
 
-    protected void testDTMotors(){
-
+    protected void testDTMotors()
+    {
         leftFront.setTargetPosition(1000);
         leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         leftFront.setPower(0.5);
         Log.v("BOK", "leftFront set power");
         while(opMode.opModeIsActive() && leftFront.isBusy()){
-            Log.v("BOK", "LF enc at: " + leftFront.getCurrentPosition());
+            //Log.v("BOK", "LF enc at: " + leftFront.getCurrentPosition());
         }
         leftFront.setPower(0);
-        Log.v("BOK", "leftFront finished");
+        //Log.v("BOK", "leftFront finished");
 
-        /*
         rightFront.setTargetPosition(1000);
         rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightFront.setPower(0.5);
         Log.v("BOK", "rightFront set power");
         while(opMode.opModeIsActive() && rightFront.isBusy()){
-            Log.v("BOK", "RF enc at: " + rightFront.getCurrentPosition());
+            //Log.v("BOK", "RF enc at: " + rightFront.getCurrentPosition());
         }
         rightFront.setPower(0);
-        Log.v("BOK", "rightFront finished");
+        //Log.v("BOK", "rightFront finished");
 
         leftBack.setTargetPosition(1000);
         leftBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         leftBack.setPower(0.5);
         Log.v("BOK", "leftBack set power");
         while(opMode.opModeIsActive() && leftBack.isBusy()){
-            Log.v("BOK", "LB enc at: " + leftBack.getCurrentPosition());
+            //Log.v("BOK", "LB enc at: " + leftBack.getCurrentPosition());
         }
         leftBack.setPower(0);
         Log.v("BOK", "leftBack finished");
@@ -430,11 +426,9 @@ public class BoKMecanumDT extends BoKHardwareBot
         rightBack.setPower(0.5);
         Log.v("BOK", "rightBack set power");
         while(opMode.opModeIsActive() && rightBack.isBusy()){
-            Log.v("BOK", "RF enc at: " + rightBack.getCurrentPosition());
+            //Log.v("BOK", "RF enc at: " + rightBack.getCurrentPosition());
         }
         rightBack.setPower(0);
-        Log.v("BOK", "rightBack finished");
-        */
+        //Log.v("BOK", "rightBack finished");
     }
-
 }

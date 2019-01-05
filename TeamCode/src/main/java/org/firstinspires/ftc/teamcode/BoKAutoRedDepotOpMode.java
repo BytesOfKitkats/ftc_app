@@ -1,21 +1,20 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 /**
  * Created by Krishna Saxena on 10/3/2017.
  * Registers the opMode with the driver station.
- * It uses BoKMecanumDT and BoKAutoBlueFar objects
+ * It uses BoKMecanumDT and BoKAutoRedDepot objects
  */
-@Autonomous(name="BoK Auto BLUE Crater", group="BoKBlue")
+@Autonomous(name="BoK Auto Depot", group="BoKRed")
 //@Disabled
-public class BoKAutoBlueFarOpMode extends BoKAutoOpMode
+public class BoKAutoRedDepotOpMode extends BoKAutoOpMode
 {
     @Override
     public void runOpMode() throws InterruptedException
     {
-        autoImpl = new BoKAutoBlueFar(); // use interface (polymorphism)
+        autoImpl = new BoKAutoRedDepot(); // use interface (polymorphism)
         super.runOpMode();
     }
 }

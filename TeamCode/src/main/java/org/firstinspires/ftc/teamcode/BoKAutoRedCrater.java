@@ -20,16 +20,17 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefau
  * Created by Krishna Saxena on 10/3/2017.
  */
 
-public class BoKAutoRedFar extends BoKAutoCommon {
+public class BoKAutoRedCrater extends BoKAutoCommon {
 
     // Constructor
-    public BoKAutoRedFar() {
+    public BoKAutoRedCrater()
+    {
         allianceColor = BoKAllianceColor.BOK_ALLIANCE_RED;
-        far = true;
     }
 
     @Override
-    public void runSoftware() {
-        runAuto(-6, -60, true, true);
+    public void runSoftware()
+    {
+        runAuto(true, true);
     }
 }

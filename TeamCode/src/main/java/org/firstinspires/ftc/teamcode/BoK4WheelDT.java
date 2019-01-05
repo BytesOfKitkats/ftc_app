@@ -259,7 +259,8 @@ public class BoK4WheelDT extends BoKHardwareBot
         return rightFront.getCurrentPosition();
     }
 
-    protected void testDTMotors(){
+    protected void testDTMotors()
+    {
         leftFront.setTargetPosition(1000);
         leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         leftFront.setPower(0.5);
@@ -301,7 +302,7 @@ public class BoK4WheelDT extends BoKHardwareBot
         Log.v("BOK", "rightBack finished");
     }
 
-    protected void moveRobot(double speedCoef)
+    protected void moveRobotTele(double speedCoef)
     {
         /*
          * Gamepad1: Driver 1 controls the robot using the left joystick for throttle and
