@@ -215,7 +215,7 @@ public class BoKTele
                         lastErr = err;
                         lastTime = time;
                         lastPos = inPos;
-                        Log.v("BOK", "Intake arm posD " + inPos + " moving at " + powerApp);
+                        //Log.v("BOK", "Intake arm posD " + inPos + " moving at " + powerApp);
                     }
                     else {
                         isRunningIntakeArmPID = false;
@@ -238,7 +238,7 @@ public class BoKTele
                         lastErr = err;
                         lastTime = time;
                         lastPos = inPos;
-                        Log.v("BOK", "Intake arm posU " + inPos + " moving at " + powerApp);
+                        //Log.v("BOK", "Intake arm posU " + inPos + " moving at " + powerApp);
                     } else {
                         isRunningIntakeArmPID = false;
                         currentIntakeArmPosition = -100;
@@ -253,7 +253,7 @@ public class BoKTele
                 }
 
                 if (isLiftingIntakeArm){
-                    Log.v("BOK", "Setting -ve power to inA");
+                    //Log.v("BOK", "Setting -ve power to inA");
                     robot.intakeArmMotor.setPower(-0.6);
                 }
 

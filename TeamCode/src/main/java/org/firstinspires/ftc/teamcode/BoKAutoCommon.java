@@ -89,8 +89,8 @@ public abstract class BoKAutoCommon implements BoKAuto
     // Sampling locations in the image; phone's image is 1280x720s
     private static final int HOUGH_CIRCLE_MIN_RAD = 20;
     private static final int HOUGH_CIRCLE_MAX_RAD = 105;
-    private static final int SPHERE_LOC_Y_MIN = 300;
-    private static final int SPHERE_LOC_Y_MAX = 500;
+    private static final int SPHERE_LOC_Y_MIN = 275;
+    private static final int SPHERE_LOC_Y_MAX = 600;
     private static final int CUBE_LOC_LEFT_X_MIN = 350;
     private static final int CUBE_LOC_RIGHT_X_MAX = 850;
     private static final int ROI_WIDTH = 50;
@@ -1333,7 +1333,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         // Finished Sampling
 
         // Step 9: Go backwards towards the wall
-        followHeadingPIDWithDistanceBack(0 /*heading*/,
+        followHeadingPIDWithDistanceBack(-5 /*heading*/,
                                          -MOVE_POWER_HIGH,
                                          DISTANCE_TO_WALL_BEFORE_TURN,
                                          false/*detectBump*/, 3/*seconds*/);
