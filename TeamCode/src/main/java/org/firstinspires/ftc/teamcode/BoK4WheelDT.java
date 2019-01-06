@@ -27,10 +27,10 @@ public class BoK4WheelDT extends BoKHardwareBot
     private static final String RIGHT_FRONT_MOTOR_NAME = "rf";
 
     // Drive train motors
-    public DcMotor leftBack;
-    public DcMotor leftFront;
-    public DcMotor rightBack;
-    public DcMotor rightFront;
+    private DcMotor leftBack;
+    private DcMotor leftFront;
+    private DcMotor rightBack;
+    private DcMotor rightFront;
 
     /*
      * Implement all the abstract methods

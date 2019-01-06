@@ -22,6 +22,6 @@ public class BoKAutoRedDepot extends BoKAutoCommon
     @Override
     public void runSoftware()
     {
-        runAuto(true, false);
+        runAuto(false/*atCrater*/);
     }
 }

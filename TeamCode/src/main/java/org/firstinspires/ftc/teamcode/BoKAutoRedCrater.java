@@ -31,6 +31,6 @@ public class BoKAutoRedCrater extends BoKAutoCommon {
     @Override
     public void runSoftware()
     {
-        runAuto(true, true);
+        runAuto(true/*atCrater*/);
     }
 }

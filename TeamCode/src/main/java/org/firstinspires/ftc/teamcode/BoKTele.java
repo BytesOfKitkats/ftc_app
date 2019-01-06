@@ -53,6 +53,7 @@ public class BoKTele
         this.robot = robot;
         robot.setModeForDTMotors(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         robot.dumperSlideMotor.setPower(0);
+        robot.hangMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         robot.hangMotor.setPower(0);
         intakeArmRunTime = new ElapsedTime();
         return BoKTeleStatus.BOK_TELE_SUCCESS;
@@ -63,7 +64,7 @@ public class BoKTele
         // Constants
         double DUMPER_LIFT_POWER = 0.5;
         double DUMPER_ROTATE_DECR = 0.02;
-        double HANG_LIFT_POWER = 0.5;
+        double HANG_LIFT_POWER = 0.9;
 
         double nextPos = robot.DUMPER_ROTATE_SERVO_INIT;
         int currentIntakeArmPosition = 0;

@@ -20,7 +20,7 @@ public class BoKAutoTest extends BoKAutoCommon {
     public void runSoftware()
     {
         boolean[] arrayTests = {
-                true, // 4 DT motors
+                false, // 4 DT motors
                 true, // Dumper lift motor & servo
                 true, // Intake arm motor & intake motor
                 true, // Hanging lift motor & servo
@@ -41,6 +41,9 @@ public class BoKAutoTest extends BoKAutoCommon {
             opMode.sleep(2000);
         } // if (arrayTests[0])
 
+        while (opMode.opModeIsActive() && arrayTests[1] && !opMode.gamepad1.a) {
+        }
+
         if (arrayTests[1] && opMode.opModeIsActive()) {
             // test Dumper lift motor
             opMode.telemetry.addData("Test: ", "Moving dumper lift");
@@ -54,8 +57,8 @@ public class BoKAutoTest extends BoKAutoCommon {
             double nextPos = robot.DUMPER_ROTATE_SERVO_INIT - 0.05;
             while (opMode.opModeIsActive() && !opMode.gamepad1.x) {
                 //Log.v("BOK", "Dumper slide: " + robot.dumperSlideMotor.getCurrentPosition());
-                if (opMode.gamepad1.a && !dump) {
-                    dump = opMode.gamepad1.a;
+                if (opMode.gamepad1.y && !dump) {
+                    dump = opMode.gamepad1.y;
                     //robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_FINAL);
                 }
                 if (dump && (nextPos > robot.DUMPER_ROTATE_SERVO_FINAL)) {
@@ -79,17 +82,24 @@ public class BoKAutoTest extends BoKAutoCommon {
             opMode.sleep(2000);
         } // if (arrayTests[1])
 
+
+        while (opMode.opModeIsActive() && arrayTests[2] && !opMode.gamepad1.a) {
+        }
+
         if (arrayTests[2] && opMode.opModeIsActive()) {
             // Test intake arm motor and intake motor
             opMode.telemetry.addData("Test: ", "Intake arm motor");
             opMode.telemetry.update();
             dropIntakeArmAndExtend();
-            robot.intakeMotor.setPower(0.2);
-            opMode.sleep(500);
+            robot.intakeMotor.setPower(0.7);
+            opMode.sleep(2000);
             robot.intakeMotor.setPower(0);
             opMode.telemetry.addData("Test: ", "Intake arm complete");
             opMode.telemetry.update();
             opMode.sleep(2000);
+        }
+
+        while (opMode.opModeIsActive() && arrayTests[3] && !opMode.gamepad1.a) {
         }
 
         if (arrayTests[3] && opMode.opModeIsActive()) {
@@ -110,6 +120,9 @@ public class BoKAutoTest extends BoKAutoCommon {
             opMode.sleep(1000);
         }
 
+        while (opMode.opModeIsActive() && arrayTests[4] && !opMode.gamepad1.a) {
+        }
+
         if (arrayTests[4] && opMode.opModeIsActive()) {
             // Test flicker servo
             opMode.telemetry.addData("Test: ", "Flicker servo");
@@ -120,12 +133,18 @@ public class BoKAutoTest extends BoKAutoCommon {
             opMode.sleep(1000);
         }
 
+        while (opMode.opModeIsActive() && arrayTests[5] && !opMode.gamepad1.a) {
+        }
+
         if (arrayTests[5] && opMode.opModeIsActive()) {
             // Test marker servo
             opMode.telemetry.addData("Test: ", "Marker servo");
             opMode.telemetry.update();
             dumpMarker();
             opMode.sleep(1000);
+        }
+
+        while (opMode.opModeIsActive() && arrayTests[6] && !opMode.gamepad1.a) {
         }
 
         if (arrayTests[6] && opMode.opModeIsActive()) {
@@ -135,8 +154,11 @@ public class BoKAutoTest extends BoKAutoCommon {
             robot.distanceRotateServo.setPosition(robot.DISTANCE_ROTATE_SERVO_FINAL);
             opMode.sleep(500);
 
-            double dist = robot.getDistanceCM(robot.distanceBack, 150, 2);
-            opMode.telemetry.addData("Distance: ", dist);
+            while (opMode.opModeIsActive() && !opMode.gamepad1.x) {
+                double dist = robot.getDistanceCM(robot.distanceBack, 150, 2);
+                opMode.telemetry.addData("Distance: ", dist);
+                opMode.telemetry.update();
+            }
             opMode.sleep(500);
 
             robot.distanceRotateServo.setPosition(robot.DISTANCE_ROTATE_SERVO_INIT);
@@ -145,6 +167,9 @@ public class BoKAutoTest extends BoKAutoCommon {
         }
         opMode.telemetry.addData("Test: ", "All tests complete");
         opMode.telemetry.update();
+
+        while (opMode.opModeIsActive() && arrayTests[7] && !opMode.gamepad1.a) {
+        }
 
         if (arrayTests[7] && opMode.opModeIsActive()) {
             // Autonomous tests
@@ -155,6 +180,9 @@ public class BoKAutoTest extends BoKAutoCommon {
             //dropIntakeArmAndExtend();
             //followHeadingPIDBack(0, -0.3, 30, false, 6);
             followHeadingPID(0, 0.5, 45, true, 5);
+        }
+
+        while (opMode.opModeIsActive() && arrayTests[8] && !opMode.gamepad1.a) {
         }
 
         if (arrayTests[8] && opMode.opModeIsActive()) {

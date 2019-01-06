@@ -4,7 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 @Autonomous(name="BoK Auto Test", group="BOKTest")
-@Disabled
+//@Disabled
 public class BoKAutoTestOpMode extends BoKAutoOpMode {
     @Override
     public void runOpMode() throws InterruptedException
