@@ -906,7 +906,7 @@ public abstract class BoKAutoCommon implements BoKAuto
     }
 
     /*
-     * followHeadingPID
+     * followHeadingPIDWithDistanceBack
      * Parameters:
      * heading: gyro heading (z axis)
      * power: input power (steady state)

@@ -36,7 +36,8 @@ public class BoKTele
     private LinearOpMode opMode;
     private double speedCoef = robot.SPEED_COEFF_FAST;
     private boolean end_game = false;
-    private boolean isLiftingIntakeArm = true;
+    private boolean isLiftingIntakeArm = false;
+    private boolean hasMovedIntakeArm = false;
 
     ElapsedTime intakeArmRunTime;
 
@@ -245,7 +246,7 @@ public class BoKTele
                     }
                 }
                 else {
-                    if (!isLiftingIntakeArm) {
+                    if (!isLiftingIntakeArm && hasMovedIntakeArm) {
                         robot.intakeArmMotor.setTargetPosition(currentIntakeArmPosition);
                         robot.intakeArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                         robot.intakeArmMotor.setPower(0.5);
@@ -257,7 +258,15 @@ public class BoKTele
                     robot.intakeArmMotor.setPower(-0.6);
                 }
 
-                if ((opMode.gamepad2.left_trigger > GAME_TRIGGER_DEAD_ZONE) && isLiftingIntakeArm) {
+                if ((opMode.gamepad2.left_trigger > GAME_TRIGGER_DEAD_ZONE)
+                        && !isLiftingIntakeArm) {
+                    isLiftingIntakeArm = true;
+                    Log.v("BOK", "Tele: Started lifting Intake ARM");
+                }
+
+                if ((opMode.gamepad2.right_trigger > GAME_TRIGGER_DEAD_ZONE)
+                        && isLiftingIntakeArm) {
+                    hasMovedIntakeArm = true;
                     isLiftingIntakeArm = false;
                     robot.intakeArmMotor.setPower(0);
                     robot.intakeArmMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
