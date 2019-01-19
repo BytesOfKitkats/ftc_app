@@ -253,6 +253,12 @@ public class BoKTele
                     }
                 }
 
+                if ((Math.abs(opMode.gamepad2.right_stick_y) > GAME_TRIGGER_DEAD_ZONE)
+                        && !hasMovedIntakeArm) {
+                    robot.intakeArmMotor.setPower(opMode.gamepad2.right_stick_y);
+
+                }
+
                 if (isLiftingIntakeArm){
                     //Log.v("BOK", "Setting -ve power to inA");
                     robot.intakeArmMotor.setPower(-0.6);

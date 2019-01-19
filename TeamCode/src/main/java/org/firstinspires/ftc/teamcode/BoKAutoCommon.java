@@ -112,7 +112,7 @@ public abstract class BoKAutoCommon implements BoKAuto
     private static final double DIST_FORWARD_AFTER_TURN = 10; // inchess
     private static final int DISTANCE_TO_WALL_LEFT_CUBE_INIT = 98;     // cm
     private static final int DISTANCE_TO_WALL_LEFT_CUBE_FINAL = 71;    // cm
-    private static final int DISTANCE_TO_WALL_CENTER_CUBE_INIT = 120;  // cm
+    private static final int DISTANCE_TO_WALL_CENTER_CUBE_INIT = 125;  // cm
     private static final int DISTANCE_TO_WALL_CENTER_CUBE_FINAL = 112; // cm
     private static final int DISTANCE_TO_WALL_RIGHT_CUBE_INIT = 120;  // cm
     private static final int DISTANCE_TO_WALL_RIGHT_CUBE_FINAL = 150; // cm
@@ -1187,7 +1187,7 @@ public abstract class BoKAutoCommon implements BoKAuto
     protected void dropIntakeArmAndExtend() {
         moveIntakeArmPID(1000/*enc count*/, 0.5/*power*/, 0.5/*vTarget*/, 3/*seconds*/);
         // Complete the final position of the intake arm
-        robot.intakeArmMotor.setTargetPosition(1100);
+        robot.intakeArmMotor.setTargetPosition(1200);
         robot.intakeArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         robot.intakeArmMotor.setPower(0.5);
         moveRamp(0.35/*power*/, 13 /*inches*/, false/*back*/, 4/*seconds*/);
