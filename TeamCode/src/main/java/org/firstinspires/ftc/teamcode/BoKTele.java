@@ -65,6 +65,8 @@ public class BoKTele
         // Constants
         double DUMPER_LIFT_POWER = 0.5;
         double DUMPER_ROTATE_DECR = 0.02;
+        double DUMPER_ROTATE_DECR_LOW = 0.01;
+        double sorterSpeed = DUMPER_ROTATE_DECR;
         double HANG_LIFT_POWER = 0.9;
 
         double nextPos = robot.DUMPER_ROTATE_SERVO_INIT;
@@ -91,8 +93,13 @@ public class BoKTele
             if (opMode.gamepad1.y) {
                 speedCoef = robot.SPEED_COEFF_SLOW;
             }
+
             if (opMode.gamepad1.a) {
                 speedCoef = robot.SPEED_COEFF_FAST;
+            }
+
+            if (opMode.gamepad1.b) {
+                sorterSpeed = DUMPER_ROTATE_DECR_LOW;
             }
 
             // GAMEPAD 2 CONTROLS
@@ -149,6 +156,7 @@ public class BoKTele
                     nextPos = robot.DUMPER_ROTATE_SERVO_INIT;
                     dump = false;
                     liftUp = false;
+                    sorterSpeed = DUMPER_ROTATE_DECR;
                 }
                 else { // Neither Dpad Up or Dpad Down is pressed
                     // Hold the lift's last position, but there is a minimum so that the
@@ -168,12 +176,13 @@ public class BoKTele
                     //Log.v("BOK", "LEFT bumper" + nextPos);
                 }
                 if (dump && (nextPos > robot.DUMPER_ROTATE_SERVO_FINAL)) {
-                    nextPos -= DUMPER_ROTATE_DECR;
+                    nextPos -= sorterSpeed;
                     robot.dumperRotateServo.setPosition(nextPos);
                     //Log.v("BOK", "decrement" + nextPos);
                 }
                 if (opMode.gamepad2.right_bumper && dump) {
                     dump = false;
+                    sorterSpeed = DUMPER_ROTATE_DECR;
                     nextPos = robot.DUMPER_ROTATE_SERVO_INIT;
                     robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT);
                 }

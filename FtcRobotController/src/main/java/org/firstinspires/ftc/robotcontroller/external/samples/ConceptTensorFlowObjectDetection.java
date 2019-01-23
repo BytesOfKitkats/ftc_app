@@ -32,6 +32,9 @@ package org.firstinspires.ftc.robotcontroller.external.samples;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
+
 import java.util.List;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
@@ -55,6 +58,8 @@ public class ConceptTensorFlowObjectDetection extends LinearOpMode {
     private static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
     private static final String LABEL_GOLD_MINERAL = "Gold Mineral";
     private static final String LABEL_SILVER_MINERAL = "Silver Mineral";
+    private DcMotor hang;
+    private Servo hook;
 
     /*
      * IMPORTANT: You need to obtain your own license key to use Vuforia. The string below with which
@@ -68,7 +73,7 @@ public class ConceptTensorFlowObjectDetection extends LinearOpMode {
      * Once you've obtained a license key, copy the string from the Vuforia web site
      * and paste it in to your code on the next line, between the double quotes.
      */
-    private static final String VUFORIA_KEY = " -- YOUR NEW VUFORIA KEY GOES HERE  --- ";
+    private static final String VUFORIA_KEY = "AcBslPH/////AAABmdIsKH48AUtFgqZowN2tKAE9QKaxlJhsIfCyTmm/zjeMHNMyQXD7kidLriCV3tr2hOE2WJGAFKv9TLFaCpd23sDG9ms9fqZbLDxdDjt3Vfa9jdPid72/Z1E6xOgTija5FPAqK0/DQe/Ngg7VXSM0zwUOIbjuhonntnbZjywQ7hRCZ4is7ybZwiRiA1vyNuT7WCK9pOwbeNEJc/n1+HfZeEGfM+6ZnjRrl96qudE4B6W2FhrBKy85WyybPaxNjX5XUFfyuouJYIKA/Lve1qgkkVYHExk7up/EuOdhfl97IpoYMo7Ru+4x8SNolAeIlzitsPsTrxb5eZgWJxF3T61/uUkMLSMu8XpYJc1myd66bAjo";
 
     /**
      * {@link #vuforia} is the variable we will use to store our instance of the Vuforia
@@ -97,6 +102,13 @@ public class ConceptTensorFlowObjectDetection extends LinearOpMode {
         /** Wait for the game to begin */
         telemetry.addData(">", "Press Play to start tracking");
         telemetry.update();
+
+        hang = hardwareMap.dcMotor.get("ha");
+        hook = hardwareMap.servo.get("haH");
+
+        hang.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        hook.setPosition(0.7);
+
         waitForStart();
 
         if (opModeIsActive()) {
