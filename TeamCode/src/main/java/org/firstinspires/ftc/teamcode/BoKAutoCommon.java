@@ -87,7 +87,7 @@ public abstract class BoKAutoCommon implements BoKAuto
     private static final double P_TURN_COEFF = 0.5;
 
     // Sampling locations in the image; phone's image is 1280x720s
-    private static final int HOUGH_CIRCLE_MIN_RAD = 20;
+    private static final int HOUGH_CIRCLE_MIN_RAD = 30;
     private static final int HOUGH_CIRCLE_MAX_RAD = 105;
     private static final int SPHERE_LOC_Y_MIN = 275;
     private static final int SPHERE_LOC_Y_MAX = 600;
@@ -534,9 +534,10 @@ public abstract class BoKAutoCommon implements BoKAuto
      * the HoughCircles algorithm to detect the spheres in the band of the picture where the
      * spheres are most likely to be found.
      */
-    protected BoKAutoCubeLocation findCube()
+    protected BoKAutoCubeLocation findCube(boolean blurImg)
     {
-        BoKAutoCubeLocation ret = BoKAutoCubeLocation.BOK_CUBE_LEFT;
+        BoKAutoCubeLocation ret = (blurImg) ? BoKAutoCubeLocation.BOK_CUBE_UNKNOWN :
+                BoKAutoCubeLocation.BOK_CUBE_LEFT;
         VuforiaLocalizer.CloseableFrame frame;
 
         // takes the frame at the head of the queue
@@ -561,7 +562,8 @@ public abstract class BoKAutoCommon implements BoKAuto
                     Imgproc.cvtColor(src, srcHSV, Imgproc.COLOR_BGR2HSV);
 
                     // Apply a blur to reduce noise and avoid false circle detection
-                    //Imgproc.blur(srcGray, srcGray, new Size(3, 3));
+                    if (blurImg)
+                        Imgproc.blur(srcGray, srcGray, new Size(3, 3));
 
                     Mat circles = new Mat();
                     Point[] centerPoints = new Point[4];
@@ -1190,7 +1192,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         robot.intakeArmMotor.setTargetPosition(1200);
         robot.intakeArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         robot.intakeArmMotor.setPower(0.5);
-        moveRamp(0.35/*power*/, 13 /*inches*/, false/*back*/, 4/*seconds*/);
+        moveRamp(0.35/*power*/, 15 /*inches*/, false/*back*/, 4/*seconds*/);
         robot.intakeArmMotor.setPower(0);
     }
 
@@ -1207,7 +1209,11 @@ public abstract class BoKAutoCommon implements BoKAuto
                                                 AngleUnit.DEGREES).thirdAngle);
 
         // Step 1: find gold location
-        loc = findCube();
+        loc = findCube(true);
+        if (loc == BoKAutoCubeLocation.BOK_CUBE_UNKNOWN) {
+            Log.v("BOK", "Failed to find 2 spheres! Trying without blur!");
+            loc = findCube(false);
+        }
 
         // Step 2: Start motor for bringing the robot down (hanging lift)
         robot.hangMotor.setTargetPosition(robot.HANG_LIFT_HIGH_POS);
