@@ -806,21 +806,24 @@ public abstract class BoKAutoCommon implements BoKAuto
      */
     protected void followHeadingPID(double heading,
                                     double power,
-                                    double dist,
+                                    double distFast,
+                                    double distMax,
                                     boolean detectBump,
                                     double waitForSec)
     {
         double angle, error, diffError, turn, speedL, speedR,
                 sumError = 0, lastError = 0, lastTime = 0;
         double Kp = 0.1, Ki = 0, Kd = 0; // Ki = 0.165; Kd = 0.093;
-        double targetEnc = robot.getTargetEncCount(dist); // convert inches to target enc count
+        double targetEncMax = robot.getTargetEncCount(distMax); // convert inches to target enc count
+        double targetEncFast = robot.getTargetEncCount(distFast);
+        double avgEncCount = 0;
         //String logString = "dTime,ang,err,sum,last,diff,turn,speedL,speedR\n";
-        Log.v("BOK", "followHeadingPID: " + heading + ", dist: " + dist);
+        Log.v("BOK", "followHeadingPID: " + heading + ", distM: " + distMax + ", (" + distFast + ")");
         robot.resetDTEncoders();
         runTime.reset();
 
         while (opMode.opModeIsActive() && (runTime.seconds() < waitForSec) &&
-               (robot.getAvgEncCount() < targetEnc)) {
+               (avgEncCount < targetEncMax)) {
             double currTime = runTime.seconds();
             double deltaTime = currTime - lastTime;
             if (deltaTime >= SAMPLE_RATE_SEC) {
@@ -863,6 +866,9 @@ public abstract class BoKAutoCommon implements BoKAuto
                     }
                 }
             }
+            avgEncCount = robot.getAvgEncCount();
+            if (avgEncCount >= targetEncFast)
+                power = power/2;
         }
         robot.setPowerToDTMotors(0);
         if (runTime.seconds() >= waitForSec) {
@@ -1337,13 +1343,13 @@ public abstract class BoKAutoCommon implements BoKAuto
             // Turn away from our sampling sphere
             gyroTurn(DT_TURN_SPEED_LOW, 40, 48, DT_TURN_THRESHOLD_LOW, false, false, 3/*seconds*/);
             // Move forwards distToWall + 10 inches, detect bump with the crater wall
-            followHeadingPID(48, MOVE_POWER_HIGH + 0.1, distToMoveBack, true, 7 /*seconds*/);
+            followHeadingPID(48, MOVE_POWER_HIGH + 0.1, distToWall + 10, distToMoveBack, true, 7 /*seconds*/);
         }
         else {
             // Turn away from our sampling sphere
             gyroTurn(DT_TURN_SPEED_LOW, -130, -135, DT_TURN_THRESHOLD_LOW, false, false, 3/*sec*/);
             // Move forwards distToWall + 10 inches, detect bump with the crater wall
-            followHeadingPID(-135, 0.5, distToMoveBack, true, 15);
+            followHeadingPID(-135, MOVE_POWER_HIGH, distToWall + 10, distToMoveBack, true, 7 /*seconds*/);
         }
         Log.v("BOK", "Moving before arm in " +
                 String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));

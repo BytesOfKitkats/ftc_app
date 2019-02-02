@@ -184,7 +184,7 @@ public class BoKAutoTest extends BoKAutoCommon {
             //strafe(0.5, 3, false, 6);
             //dropIntakeArmAndExtend();
             //followHeadingPIDBack(0, -0.3, 30, false, 6);
-            followHeadingPID(0, 0.5, 45, true, 5);
+            followHeadingPID(0, 0.5, 35, 45, true, 5);
         }
 
         while (opMode.opModeIsActive() && arrayTests[8] && !opMode.gamepad1.a) {
