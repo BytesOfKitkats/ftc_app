@@ -396,27 +396,27 @@ public class BoKMecanumDT extends BoKHardwareBot
         leftFront.setPower(0.5);
         Log.v("BOK", "leftFront set power");
         while(opMode.opModeIsActive() && leftFront.isBusy()){
-            //Log.v("BOK", "LF enc at: " + leftFront.getCurrentPosition());
+            Log.v("BOK", "LF enc at: " + leftFront.getCurrentPosition());
         }
         leftFront.setPower(0);
-        //Log.v("BOK", "leftFront finished");
+        Log.v("BOK", "leftFront finished");
 
         rightFront.setTargetPosition(1000);
         rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightFront.setPower(0.5);
         Log.v("BOK", "rightFront set power");
         while(opMode.opModeIsActive() && rightFront.isBusy()){
-            //Log.v("BOK", "RF enc at: " + rightFront.getCurrentPosition());
+            Log.v("BOK", "RF enc at: " + rightFront.getCurrentPosition());
         }
         rightFront.setPower(0);
-        //Log.v("BOK", "rightFront finished");
+        Log.v("BOK", "rightFront finished");
 
         leftBack.setTargetPosition(1000);
         leftBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         leftBack.setPower(0.5);
         Log.v("BOK", "leftBack set power");
         while(opMode.opModeIsActive() && leftBack.isBusy()){
-            //Log.v("BOK", "LB enc at: " + leftBack.getCurrentPosition());
+            Log.v("BOK", "LB enc at: " + leftBack.getCurrentPosition());
         }
         leftBack.setPower(0);
         Log.v("BOK", "leftBack finished");
@@ -426,9 +426,9 @@ public class BoKMecanumDT extends BoKHardwareBot
         rightBack.setPower(0.5);
         Log.v("BOK", "rightBack set power");
         while(opMode.opModeIsActive() && rightBack.isBusy()){
-            //Log.v("BOK", "RF enc at: " + rightBack.getCurrentPosition());
+            Log.v("BOK", "RF enc at: " + rightBack.getCurrentPosition());
         }
         rightBack.setPower(0);
-        //Log.v("BOK", "rightBack finished");
+        Log.v("BOK", "rightBack finished");
     }
 }

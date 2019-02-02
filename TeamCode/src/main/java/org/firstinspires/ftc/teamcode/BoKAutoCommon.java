@@ -1,32 +1,16 @@
 package org.firstinspires.ftc.teamcode;
 
-import android.app.Activity;
 import android.graphics.Bitmap;
 
-import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.AnalogInput;
-import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
-
-import android.graphics.Typeface;
 import android.util.Log;
-import android.view.View;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.ReadWriteFile;
-import com.vuforia.CameraDevice;
 import com.vuforia.Image;
-import com.vuforia.Matrix34F;
 import com.vuforia.PIXEL_FORMAT;
-import com.vuforia.Tool;
-import com.vuforia.Vec2F;
-import com.vuforia.Vec3F;
 import com.vuforia.Vuforia;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -34,13 +18,8 @@ import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
@@ -57,19 +36,7 @@ import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
-import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
-import java.util.concurrent.Semaphore;
-
-import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
-import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
-import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.FRONT;
 
 /**
  * Created by Krishna Saxena on 11/15/2016.
@@ -100,7 +67,7 @@ public abstract class BoKAutoCommon implements BoKAuto
     private static final String VUFORIA_ROI_IMG = "vuImageROI.png";
 
     private static final double  SAMPLE_RATE_SEC = 0.05;
-    private static final int RS_DIFF_THRESHOLD_CM = 5;
+    private static final int RS_DIFF_THRESHOLD_CM = 2;
     private static final double DETECT_BUMP_THRESHOLD = 1.5;
 
     // Constants for runAuto
@@ -1192,7 +1159,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         robot.intakeArmMotor.setTargetPosition(1200);
         robot.intakeArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         robot.intakeArmMotor.setPower(0.5);
-        moveRamp(0.35/*power*/, 15 /*inches*/, false/*back*/, 4/*seconds*/);
+        moveRamp(0.45/*power*/, 15 /*inches*/, false/*back*/, 4/*seconds*/);
         robot.intakeArmMotor.setPower(0);
     }
 
@@ -1349,7 +1316,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         double headingForBackWall = (atCrater) ? 40 : -130;
         // Step 10: Turn towards the back wall
         if (atCrater)
-            gyroTurn(DT_TURN_SPEED_LOW, 0, headingForBackWall ,
+            gyroTurn(DT_TURN_SPEED_HIGH, 0, headingForBackWall ,
                      DT_TURN_THRESHOLD_LOW, false, false, 3/*seconds*/);
         else
             gyroTurn(DT_TURN_SPEED_HIGH, 0, headingForBackWall,
@@ -1365,17 +1332,18 @@ public abstract class BoKAutoCommon implements BoKAuto
         dumpMarker();
         Log.v("BOK", "Dumping marker completed in " +
                 String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));
+        double distToMoveBack = Math.max(distToWall + 10, 60);
         if (atCrater) {
             // Turn away from our sampling sphere
             gyroTurn(DT_TURN_SPEED_LOW, 40, 48, DT_TURN_THRESHOLD_LOW, false, false, 3/*seconds*/);
             // Move forwards distToWall + 10 inches, detect bump with the crater wall
-            followHeadingPID(48, MOVE_POWER_HIGH + 0.1, distToWall + 10, true, 7 /*seconds*/);
+            followHeadingPID(48, MOVE_POWER_HIGH + 0.1, distToMoveBack, true, 7 /*seconds*/);
         }
         else {
             // Turn away from our sampling sphere
             gyroTurn(DT_TURN_SPEED_LOW, -130, -135, DT_TURN_THRESHOLD_LOW, false, false, 3/*sec*/);
             // Move forwards distToWall + 10 inches, detect bump with the crater wall
-            followHeadingPID(-135, 0.5, distToWall + 10, true, 15);
+            followHeadingPID(-135, 0.5, distToMoveBack, true, 15);
         }
         Log.v("BOK", "Moving before arm in " +
                 String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));

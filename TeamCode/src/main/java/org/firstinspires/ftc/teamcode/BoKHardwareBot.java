@@ -34,8 +34,9 @@ public abstract class BoKHardwareBot
     // CONSTANTS
     protected static final int OPMODE_SLEEP_INTERVAL_MS_SHORT  = 10;
     protected static final double SPEED_COEFF_SLOW = 0.35;
+    protected static final double SPEED_COEFF_MED = 0.5;
     protected static final double SPEED_COEFF_FAST = 0.8;
-    protected static final double SPEED_COEFF_TURN = 0.5;
+    protected static final double SPEED_COEFF_TURN = 0.6;
     protected static final double GAME_STICK_DEAD_ZONE = 0.1;
 
     // DC Motors

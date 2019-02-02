@@ -20,7 +20,7 @@ public class BoKAutoTest extends BoKAutoCommon {
     public void runSoftware()
     {
         boolean[] arrayTests = {
-                false, // 4 DT motors
+                true, // 4 DT motors
                 true, // Dumper lift motor & servo
                 true, // Intake arm motor & intake motor
                 true, // Hanging lift motor & servo
@@ -90,7 +90,12 @@ public class BoKAutoTest extends BoKAutoCommon {
             // Test intake arm motor and intake motor
             opMode.telemetry.addData("Test: ", "Intake arm motor");
             opMode.telemetry.update();
-            dropIntakeArmAndExtend();
+            moveIntakeArmPID(1000/*enc count*/, 0.5/*power*/, 0.5/*vTarget*/, 3/*seconds*/);
+            // Complete the final position of the intake arm
+            robot.intakeArmMotor.setTargetPosition(1200);
+            robot.intakeArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.intakeArmMotor.setPower(0.5);
+            robot.intakeArmMotor.setPower(0);
             robot.intakeMotor.setPower(0.7);
             opMode.sleep(2000);
             robot.intakeMotor.setPower(0);
@@ -104,7 +109,7 @@ public class BoKAutoTest extends BoKAutoCommon {
 
         if (arrayTests[3] && opMode.opModeIsActive()) {
             // Test hanging lift and hang hook servo
-            opMode.telemetry.addData("Test: ", "Intake arm motor");
+            opMode.telemetry.addData("Test: ", "Hanging arm motor");
             opMode.telemetry.update();
 
             robot.hangMotor.setTargetPosition(robot.HANG_LIFT_HIGH_POS);

@@ -128,6 +128,7 @@ public class BoKTele
                 robot.dumperSlideMotor.setTargetPosition(0);
                 robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 robot.dumperSlideMotor.setPower(DUMPER_LIFT_POWER);
+                robot.intakeMotor.setPower(0); // sweeper is off
             }
 
             if (opMode.gamepad2.b && end_game) {
@@ -141,16 +142,18 @@ public class BoKTele
 
                 if (opMode.gamepad2.dpad_up && !liftUp) {
                     liftUp = true;
+                    speedCoef = robot.SPEED_COEFF_MED;
                     robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT);
-                    robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     robot.dumperSlideMotor.setTargetPosition(robot.DUMPER_SLIDE_FINAL_POS);
+                    robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     robot.dumperSlideMotor.setPower(0.7);
                 }
                 if (opMode.gamepad2.dpad_down && liftUp) {
                     //robot.plateTilt.setPosition(robot.PLATE_TILT_LOW);
                     //robot.dumperTiltServo.setPosition(robot.DUMPER_TILT_SERVO_INIT);
-                    robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    speedCoef = robot.SPEED_COEFF_FAST;
                     robot.dumperSlideMotor.setTargetPosition(10);
+                    robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     robot.dumperSlideMotor.setPower(-0.7);
                     robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT);
                     nextPos = robot.DUMPER_ROTATE_SERVO_INIT;
@@ -262,9 +265,15 @@ public class BoKTele
                     }
                 }
 
-                if ((Math.abs(opMode.gamepad2.right_stick_y) > GAME_TRIGGER_DEAD_ZONE)
+                if ((opMode.gamepad2.right_stick_y > GAME_TRIGGER_DEAD_ZONE)
                         && !hasMovedIntakeArm) {
-                    robot.intakeArmMotor.setPower(opMode.gamepad2.right_stick_y);
+                    robot.intakeArmMotor.setPower(0.5*opMode.gamepad2.right_stick_y);
+
+                }
+
+                else if ((opMode.gamepad2.right_stick_y < -GAME_TRIGGER_DEAD_ZONE)
+                        && !hasMovedIntakeArm) {
+                    robot.intakeArmMotor.setPower(0.2*opMode.gamepad2.right_stick_y);
 
                 }
 
@@ -335,6 +344,8 @@ public class BoKTele
          */
         // NOTE: the left joystick goes negative when pushed upwards
         double gamePad2LeftStickY = -opMode.gamepad2.left_stick_y*INTAKE_MOTOR_CAP_SPEED;
+        if (gamePad2LeftStickY < 0)
+            gamePad2LeftStickY *= 0.67;
         robot.intakeMotor.setPower(gamePad2LeftStickY);
     }
 
