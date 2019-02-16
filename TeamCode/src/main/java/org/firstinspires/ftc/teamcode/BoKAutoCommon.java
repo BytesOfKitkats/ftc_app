@@ -25,6 +25,7 @@ import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfFloat;
@@ -36,7 +37,9 @@ import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by Krishna Saxena on 11/15/2016.
@@ -62,7 +65,7 @@ public abstract class BoKAutoCommon implements BoKAuto
     private static final int CUBE_LOC_RIGHT_X_MAX = 850;
     private static final int ROI_WIDTH = 50;
     private static final int ROI_HEIGHT = 50;
-    private static final int YELLOW_PERCENT = 50;
+    private static final int WHITE_PERCENT = 50;
     private static final String VUFORIA_CUBE_IMG = "vuImage.png";
     private static final String VUFORIA_ROI_IMG = "vuImageROI.png";
 
@@ -444,54 +447,48 @@ public abstract class BoKAutoCommon implements BoKAuto
     */
 
     /*
-     * isCubePresent
-     * Helper method that checks for yellow pixels to confirm the presence of the cube mineral. The
+     * isItWhite
+     * Helper method that checks for white values in the Value plane of the ROI. The
      * input image is in HSV format to prevent the effect of ambient light conditions.
-     * This method should always return false because this is called by findCube only for spheres.
      */
-    private boolean isCubePresent(Mat imgHSV, Rect roi)
+    private boolean isItWhite(Mat imgHSV, Rect roi)
     {
-        Mat hist = new Mat();
-        MatOfInt histSize = new MatOfInt(180);
-        MatOfFloat ranges = new MatOfFloat(0f, 180f);
+        Mat hist2 = new Mat();
+        MatOfInt histSize2 = new MatOfInt(256);
+        MatOfFloat ranges2 = new MatOfFloat(0f, 256f);
         Mat mask = new Mat(imgHSV.rows(), imgHSV.cols(),
                 CvType.CV_8UC1, new Scalar(0));
-        float[] resFloat = new float[180];
-        boolean foundYellow = false;
-
-        Imgproc.rectangle(imgHSV, new Point(roi.x, roi.y),
-                new Point(roi.x + roi.width,
-                        roi.y + roi.height),
-                new Scalar(0, 255, 0), 10);
+        float[] resFloat2 = new float[256];
+        boolean isItWhite = true;
+        List<Mat> hsvPlanes = new ArrayList<>();
+        Core.split(imgHSV, hsvPlanes);
 
         Mat subMask = mask.submat(roi);
         subMask.setTo(new Scalar(255));
 
-        Imgproc.calcHist(Arrays.asList(imgHSV), new MatOfInt(0),
-                mask, hist, histSize, ranges);
-        //writeFile(HSV_IMG, img, DEBUG_OPEN_CV);
+        Imgproc.calcHist(Arrays.asList(hsvPlanes.get(2)), new MatOfInt(0),
+                mask, hist2, histSize2, ranges2);
         //Core.normalize(hist, hist, 256, 0, Core.NORM_MINMAX);
-        hist.get(0, 0, resFloat);
+        hist2.get(0, 0, resFloat2);
 
-        int p, nYellowPixels = 0;
+        int p, nWhitePixels = 0;
         int numPixels = roi.width * roi.height;
-        // Red is 0 (in HSV),
-        // but we need to check between 10 and 35
-        for (p = 10; p < 35; p++) {
-            nYellowPixels += (int) resFloat[p];
+        // White area has a very good distribution of high value pixels
+        for (p = 175; p < 256; p++) {
+            nWhitePixels += (int) resFloat2[p];
         }
 
-        if (nYellowPixels >= ((numPixels * YELLOW_PERCENT)/100))
-            foundYellow = true;
+        if (nWhitePixels < ((numPixels * WHITE_PERCENT)/100))
+            isItWhite = false;
 
-        Log.v("BOK", "num Yellow pixels: " + nYellowPixels + " out of " + numPixels);
+        Log.v("BOK", "num White pixels: " + nWhitePixels + " out of " + numPixels);
 
-        hist.release();
-        histSize.release();
-        ranges.release();
+        hist2.release();
+        histSize2.release();
+        ranges2.release();
         mask.release();
 
-        return foundYellow;
+        return isItWhite;
     }
 
     /*
@@ -501,10 +498,9 @@ public abstract class BoKAutoCommon implements BoKAuto
      * the HoughCircles algorithm to detect the spheres in the band of the picture where the
      * spheres are most likely to be found.
      */
-    protected BoKAutoCubeLocation findCube(boolean blurImg)
+    protected BoKAutoCubeLocation findCube()
     {
-        BoKAutoCubeLocation ret = (blurImg) ? BoKAutoCubeLocation.BOK_CUBE_UNKNOWN :
-                BoKAutoCubeLocation.BOK_CUBE_LEFT;
+        BoKAutoCubeLocation ret = BoKAutoCubeLocation.BOK_CUBE_LEFT;
         VuforiaLocalizer.CloseableFrame frame;
 
         // takes the frame at the head of the queue
@@ -522,94 +518,137 @@ public abstract class BoKAutoCommon implements BoKAuto
                 // rgb is now the Image object that we’ve used in the video
                 if (rgb != null) {
                     Mat src = setupOpenCVImg(rgb, VUFORIA_CUBE_IMG, true);
-                    Mat srcHSV = new Mat();
-
+                    Mat srcHSV = new Mat();  // Convert image to HSV
                     Mat srcGray = new Mat(); // Convert image to gray scale
+                    Mat srcBlur = new Mat(); // Blurred image
+
                     Imgproc.cvtColor(src, srcGray, Imgproc.COLOR_BGR2GRAY);
                     Imgproc.cvtColor(src, srcHSV, Imgproc.COLOR_BGR2HSV);
 
                     // Apply a blur to reduce noise and avoid false circle detection
-                    if (blurImg)
-                        Imgproc.blur(srcGray, srcGray, new Size(3, 3));
+                    Imgproc.blur(srcGray, srcBlur, new Size(3, 3));
 
                     Mat circles = new Mat();
-                    Point[] centerPoints = new Point[4];
+                    Point[] centerPointsBlur = new Point[4];
+                    Point[] centerPointsSrc = new Point[4];
+                    Scalar green = new Scalar(0, 255, 0);
+                    Scalar blue = new Scalar(255, 0, 0);
 
-                    Imgproc.HoughCircles(
-                            srcGray, // input image gray scale
-                            circles, // a vector that stores 3 values: xc, yc, and r
-                                     // for each detected circle
-                            Imgproc.HOUGH_GRADIENT, // Detection method
-                            1.0, // inverse ratio of resolution
-                            (double) srcGray.rows() / 16, // min distance between centers
-                            100.0, // Upper threshold for internal Canny edge detector
-                            40.0, // Threshold for center detection
-                            HOUGH_CIRCLE_MIN_RAD,   // Minimum radius to be detected
-                            HOUGH_CIRCLE_MAX_RAD); // Maximum radius to be detected
+                    Mat srcForHough = srcBlur;
+                    Scalar rectColor = green;
+                    Scalar circColor = blue;
 
-                    int numCircles = 0;
-                    for (int x = 0; x < circles.cols(); x++) {
-                        double[] c = circles.get(0, x);
-                        Point pt = new Point(Math.round(c[0]), Math.round(c[1]));
+                    Point[] cPoints = centerPointsBlur;
+                    int[] numCircles = {0, 0};
 
-                        if ((pt.y > SPHERE_LOC_Y_MIN) &&
-                            (pt.y < SPHERE_LOC_Y_MAX)) {
-                            // Now add histogram calculation for double check
-                            Rect roi = new Rect((int)(pt.x - (ROI_WIDTH/2)),
-                                    (int)(pt.y - (ROI_HEIGHT/2)),
-                                    ROI_WIDTH,ROI_HEIGHT);
+                    // k = 0 for blur; k = 1 for srcGray (if needed)
+                    for (int k = 0; k < 2; k++) { //
+                        Imgproc.HoughCircles(
+                                srcForHough, // input image gray scale
+                                circles, // a vector that stores 3 values: xc, yc, and r
+                                // for each detected circle
+                                Imgproc.HOUGH_GRADIENT, // Detection method
+                                1.0, // inverse ratio of resolution
+                                (double) srcGray.rows() / 16, // min distance between centers
+                                100.0, // Upper threshold for internal Canny edge detector
+                                40.0, // Threshold for center detection
+                                HOUGH_CIRCLE_MIN_RAD,   // Minimum radius to be detected
+                                HOUGH_CIRCLE_MAX_RAD); // Maximum radius to be detected
 
-                            if (isCubePresent(srcHSV, roi)) {
-                                // This is just a safety net, we have never seen this!
-                                Log.v("BOK", "Detected Yellow in a sphere!!");
+                        for (int x = 0; x < circles.cols(); x++) {
+                            double[] c = circles.get(0, x);
+                            Point pt = new Point(Math.round(c[0]), Math.round(c[1]));
+
+                            if ((pt.y > SPHERE_LOC_Y_MIN) &&
+                                    (pt.y < SPHERE_LOC_Y_MAX)) {
+                                // Now add histogram calculation for double check
+                                Rect roi = new Rect((int) (pt.x - (ROI_WIDTH / 2)),
+                                        (int) (pt.y - (ROI_HEIGHT / 2)),
+                                        ROI_WIDTH, ROI_HEIGHT);
+
+                                if (!isItWhite(srcHSV, roi)) {
+                                    // This is just a safety net, we have never seen this!
+                                    Log.v("BOK", "Not white!!");
+                                    continue;
+                                }
+
+                                cPoints[numCircles[k]] = pt;
+                                Imgproc.rectangle(src, new Point(roi.x, roi.y),
+                                        new Point(roi.x + roi.width,
+                                                roi.y + roi.height),
+                                        rectColor, 3);
+
+                                int radius = (int) Math.round(c[2]);
+                                //Log.v("BOK", "Center: " + pt + ", Radius: " + radius);
+                                Imgproc.circle(src,
+                                        cPoints[numCircles[k]],
+                                        radius,
+                                        circColor, 3, 8, 0);
+                                numCircles[k]++;
+                                if (numCircles[k] > 3) {
+                                    break; // something went terribly wrong; bail out!
+                                }
+                            } // if detected circle is within the ROI band
+                        } // for each circle detected
+
+                        // The image is 1280x720
+                        if (numCircles[k] != 2) {
+                            Log.v("BOK", "Could not find 2 spheres! " + numCircles[k]);
+                        } else {
+                            if ((cPoints[0].x < CUBE_LOC_RIGHT_X_MAX) &&
+                                    (cPoints[1].x < CUBE_LOC_RIGHT_X_MAX)) {
+                                // both the circles on the left of the image
+                                ret = BoKAutoCubeLocation.BOK_CUBE_RIGHT;
+                            } else if ((cPoints[0].x > CUBE_LOC_LEFT_X_MIN) &&
+                                    (cPoints[1].x) > CUBE_LOC_LEFT_X_MIN) {
+                                // both the circles on the right of the image
+                                ret = BoKAutoCubeLocation.BOK_CUBE_LEFT;
+                            } else {
+                                ret = BoKAutoCubeLocation.BOK_CUBE_CENTER;
                             }
+                            writeFile(VUFORIA_ROI_IMG, src, true);
+                            break;
+                        } // if (numCircles[k] == 2)
 
-                            centerPoints[numCircles] = pt;
-                            // circle center
-                            // Imgproc.circle(src,
-                            //                centerPoints[numCircles],
-                            //                1, new Scalar(0,100,100), 3, 8, 0 );
-                            // circle outline in the image saved to file
-                            int radius = (int) Math.round(c[2]);
-                            //Log.v("BOK", "Center: " + center + ", Radius: " + radius);
-                            Imgproc.circle(src,
-                                           centerPoints[numCircles],
-                                           radius,
-                                           new Scalar(255,0,255), 3, 8, 0 );
-                            numCircles++;
-                            if(numCircles > 3) {
-                                break; // something went terribly wrong; bail out!
-                            }
-                        } // if detected circle is within the ROI band
-                    } // for each circle detected
+                        srcForHough = srcGray;
+                        rectColor = blue;
+                        circColor = green;
+                        cPoints = centerPointsSrc;
+                    } // for (int k = 0; k < 2; k++)
 
-                    // The image is 1280x720
-                    if (numCircles == 2) {
-                        if ((centerPoints[0].x < CUBE_LOC_RIGHT_X_MAX) &&
-                            (centerPoints[1].x < CUBE_LOC_RIGHT_X_MAX)) {
-                            // both the circles on the left of the image
-                            ret = BoKAutoCubeLocation.BOK_CUBE_RIGHT;
-                        }
-                        else if ((centerPoints[0].x > CUBE_LOC_LEFT_X_MIN) &&
-                                 (centerPoints[1].x) > CUBE_LOC_LEFT_X_MIN) {
-                            // both the circles on the right of the image
-                            ret = BoKAutoCubeLocation.BOK_CUBE_LEFT;
-                        }
-                        else {
-                            ret = BoKAutoCubeLocation.BOK_CUBE_CENTER;
-                        }
-                    }
-                    else {
-                        Log.v("BOK", "Detected " + numCircles + "!!");
-                    }
-
-                    writeFile(VUFORIA_ROI_IMG, src, true);
                     src.release();
                     srcHSV.release();
                     srcGray.release();
                     circles.release();
-                }
-                break;
+
+                    if ((numCircles[0] != 2) && (numCircles[1] != 2)) {
+                        Log.v("BOK", "Failed both blur & srcGray!");
+                        if ((numCircles[0] == 1) || (numCircles[1] == 1)) {
+                            // check which side is it on?
+                            if (numCircles[0] == 1) {
+                                if (centerPointsBlur[0].x < 250) {
+                                    // Do something here!
+                                    ret = BoKAutoCubeLocation.BOK_CUBE_CENTER;
+                                }
+                                else if (centerPointsBlur[0].x > 1000) {
+                                    // Do something here!
+                                    ret = BoKAutoCubeLocation.BOK_CUBE_CENTER;
+                                }
+                            }
+                            else {
+                                if (centerPointsSrc[0].x < 250) {
+                                    // Do something here!
+                                    ret = BoKAutoCubeLocation.BOK_CUBE_CENTER;
+                                }
+                                else if (centerPointsSrc[0].x > 1000) {
+                                    // Do something here!
+                                    ret = BoKAutoCubeLocation.BOK_CUBE_CENTER;
+                                }
+                            }
+                        }
+                    }
+                    break;
+                } // (if rgb != null)
             } // PIXEL_FORMAT.RGB565
         } // for (int i = 0; i < numImages; i++)
         frame.close();
@@ -817,6 +856,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         double targetEncMax = robot.getTargetEncCount(distMax); // convert inches to target enc count
         double targetEncFast = robot.getTargetEncCount(distFast);
         double avgEncCount = 0;
+        double powerSlow = power/2;
         //String logString = "dTime,ang,err,sum,last,diff,turn,speedL,speedR\n";
         Log.v("BOK", "followHeadingPID: " + heading + ", distM: " + distMax + ", (" + distFast + ")");
         robot.resetDTEncoders();
@@ -867,8 +907,10 @@ public abstract class BoKAutoCommon implements BoKAuto
                 }
             }
             avgEncCount = robot.getAvgEncCount();
-            if (avgEncCount >= targetEncFast)
-                power = power/2;
+            if (avgEncCount >= targetEncFast) {
+                Log.v("BOK", "Power Slow set " + avgEncCount);
+                power = powerSlow;
+            }
         }
         robot.setPowerToDTMotors(0);
         if (runTime.seconds() >= waitForSec) {
@@ -1165,7 +1207,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         robot.intakeArmMotor.setTargetPosition(1200);
         robot.intakeArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         robot.intakeArmMotor.setPower(0.5);
-        moveRamp(0.45/*power*/, 15 /*inches*/, false/*back*/, 4/*seconds*/);
+        moveRamp(0.5/*power*/, 17 /*inches*/, false/*back*/, 4/*seconds*/);
         robot.intakeArmMotor.setPower(0);
     }
 
@@ -1182,11 +1224,7 @@ public abstract class BoKAutoCommon implements BoKAuto
                                                 AngleUnit.DEGREES).thirdAngle);
 
         // Step 1: find gold location
-        loc = findCube(true);
-        if (loc == BoKAutoCubeLocation.BOK_CUBE_UNKNOWN) {
-            Log.v("BOK", "Failed to find 2 spheres! Trying without blur!");
-            loc = findCube(false);
-        }
+        loc = findCube();
 
         // Step 2: Start motor for bringing the robot down (hanging lift)
         robot.hangMotor.setTargetPosition(robot.HANG_LIFT_HIGH_POS);
@@ -1343,13 +1381,13 @@ public abstract class BoKAutoCommon implements BoKAuto
             // Turn away from our sampling sphere
             gyroTurn(DT_TURN_SPEED_LOW, 40, 48, DT_TURN_THRESHOLD_LOW, false, false, 3/*seconds*/);
             // Move forwards distToWall + 10 inches, detect bump with the crater wall
-            followHeadingPID(48, MOVE_POWER_HIGH + 0.1, distToWall + 10, distToMoveBack, true, 7 /*seconds*/);
+            followHeadingPID(48, MOVE_POWER_HIGH + 0.1, 0.8*distToMoveBack, distToMoveBack, true, 7 /*seconds*/);
         }
         else {
             // Turn away from our sampling sphere
             gyroTurn(DT_TURN_SPEED_LOW, -130, -135, DT_TURN_THRESHOLD_LOW, false, false, 3/*sec*/);
             // Move forwards distToWall + 10 inches, detect bump with the crater wall
-            followHeadingPID(-135, MOVE_POWER_HIGH, distToWall + 10, distToMoveBack, true, 7 /*seconds*/);
+            followHeadingPID(-135, MOVE_POWER_HIGH, 0.8*distToMoveBack, distToMoveBack, true, 7 /*seconds*/);
         }
         Log.v("BOK", "Moving before arm in " +
                 String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));

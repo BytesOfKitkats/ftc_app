@@ -67,7 +67,7 @@ public abstract class BoKHardwareBot
 
     // Encoder positions
     protected static final int DUMPER_SLIDE_FINAL_POS    = 970;
-    protected static final int HANG_LIFT_HIGH_POS        = 2100;//2325;
+    protected static final int HANG_LIFT_HIGH_POS        = 2112;  //2100;
 
     // Sensors
     private static final String IMU_TOP = "imu";        // IMU
@@ -280,7 +280,7 @@ public abstract class BoKHardwareBot
     protected abstract int getRFEncCount();
 
     // Teleop driving
-    protected abstract void moveRobotTele(double speedCoef);
+    protected abstract void moveRobotTele(double speedCoef, boolean armDown);
 
     /*
      *

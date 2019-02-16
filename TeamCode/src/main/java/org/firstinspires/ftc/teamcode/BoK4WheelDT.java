@@ -302,7 +302,7 @@ public class BoK4WheelDT extends BoKHardwareBot
         Log.v("BOK", "rightBack finished");
     }
 
-    protected void moveRobotTele(double speedCoef)
+    protected void moveRobotTele(double speedCoef, boolean armDown)
     {
         /*
          * Gamepad1: Driver 1 controls the robot using the left joystick for throttle and

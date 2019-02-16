@@ -88,7 +88,7 @@ public class BoKTele
             // A:                  Go in fast mode
             // Y:                  Go in slow mode
 
-            moveRobot();
+            moveRobot(intakeArmDown);
 
             if (opMode.gamepad1.y) {
                 speedCoef = robot.SPEED_COEFF_SLOW;
@@ -146,7 +146,7 @@ public class BoKTele
                     robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT);
                     robot.dumperSlideMotor.setTargetPosition(robot.DUMPER_SLIDE_FINAL_POS);
                     robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    robot.dumperSlideMotor.setPower(0.7);
+                    robot.dumperSlideMotor.setPower(0.9);
                 }
                 if (opMode.gamepad2.dpad_down && liftUp) {
                     //robot.plateTilt.setPosition(robot.PLATE_TILT_LOW);
@@ -332,9 +332,9 @@ public class BoKTele
         return BoKTeleStatus.BOK_TELE_SUCCESS;
     }
 
-    private void moveRobot()
+    private void moveRobot(boolean intakeArmDown)
     {
-        robot.moveRobotTele(speedCoef);
+        robot.moveRobotTele(speedCoef, intakeArmDown);
     }
 
     private void moveIntake()
@@ -344,8 +344,7 @@ public class BoKTele
          */
         // NOTE: the left joystick goes negative when pushed upwards
         double gamePad2LeftStickY = -opMode.gamepad2.left_stick_y*INTAKE_MOTOR_CAP_SPEED;
-        if (gamePad2LeftStickY < 0)
-            gamePad2LeftStickY *= 0.67;
+        gamePad2LeftStickY *= 0.8;
         robot.intakeMotor.setPower(gamePad2LeftStickY);
     }
 
