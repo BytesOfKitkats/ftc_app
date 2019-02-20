@@ -328,7 +328,7 @@ public abstract class BoKAutoCommon implements BoKAuto
             robot.stopMove();
         }
     }
-/*
+
     protected void setPowerToDTMotorsStrafeForTime(double power, double time, boolean right)
     {   runTime.reset();
         while(opMode.opModeIsActive() && runTime.seconds() < time) {
@@ -444,7 +444,6 @@ public abstract class BoKAutoCommon implements BoKAuto
             robot.stopMove();
         }
     }
-    */
 
     /*
      * isItWhite

@@ -65,9 +65,13 @@ public class BoKMecanumDT extends BoKHardwareBot
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 
+        leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         setModeForDTMotors(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
@@ -116,15 +120,17 @@ public class BoKMecanumDT extends BoKHardwareBot
         setPowerToDTMotors(power, power, power, power, false);
     }
 
-    /*protected void setPowerToDTMotorsStrafe(double power, boolean right)
+    protected void setPowerToDTMotorsStrafe(double power, boolean right)
     {
         if (right) {
-            setPowerToDTMotors(power*1.6, -power*0.7, power*0.7, -power*1.6, false);
+            //setPowerToDTMotors(power*1.6, -power*0.7, power*0.7, -power*1.6, false);
+            setPowerToDTMotors(power, -power, power, -power, false);
         }
         else {
-            setPowerToDTMotors(-power*1.6, 0.7*power, 0.7*-power, power*1.6, false);
+            //setPowerToDTMotors(-power*1.6, 0.7*power, 0.7*-power, power*1.6, false);
+            setPowerToDTMotors(-power, power, -power, power, false);
         }
-    }*/
+    }
 
     protected void setOnHeading(double leftPower, double rightPower)
     {
@@ -177,7 +183,7 @@ public class BoKMecanumDT extends BoKHardwareBot
                 rightFront.getCurrentPosition() + ", " + currentRightTarget);
     }
 
-    /*
+
     private void setDTMotorEncoderTargetStrafe(int leftFrontTarget,
                                                int leftBackTarget,
                                               int rightFrontTarget,
@@ -201,7 +207,7 @@ public class BoKMecanumDT extends BoKHardwareBot
         //        leftBack.getCurrentPosition() + ", " + currentLeftBackTarget + ", RF: " +
         //        rightFront.getCurrentPosition() + ",  " + currentRightFrontTarget + " RB: " +
         //        rightBack.getCurrentPosition() + ",  " + currentRightBackTarget);
-    } */
+    }
 
     /*
      * move() method: setup the robot to move encoder counts
@@ -238,10 +244,10 @@ public class BoKMecanumDT extends BoKHardwareBot
         }
     }
 
-    /*
     protected int startStrafe(double power, double rotations, boolean right)
     {
         double targetEncCount = (rotations*COUNTS_PER_MOTOR_REV) * DRIVE_GEAR_REDUCTION;
+        int leftBackTarget, rightBackTarget, leftFrontTarget, rightFrontTarget;
         if (right) {
             leftFrontTarget = (int) targetEncCount;
             leftBackTarget = (int) -targetEncCount;
@@ -273,19 +279,18 @@ public class BoKMecanumDT extends BoKHardwareBot
         double targetEncCount = (rotations*COUNTS_PER_MOTOR_REV) * DRIVE_GEAR_REDUCTION;
         if (right) {
             setModeForDTMotors(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            setPowerToDTMotors(power*1.15, -power*1.25, power*1.3, -power*1.2, false);
+            setPowerToDTMotors(power, -power, power, -power, false);
             //setPowerToDTMotors(1, -1, 1, -1, false);
             //setPowerToDTMotors(11.5/13.0, -(12.5/13.0), 1, -(12/13.0), false);
         }
         else {
             setModeForDTMotors(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            //setPowerToDTMotors(-power*1.1, power*1.25, -power*1.31, power*1.28, false);
-            setPowerToDTMotors(-(power*2), power, -power, (power*2), false);
+            setPowerToDTMotors(-power, power, -power, power, false);
+            //setPowerToDTMotors(-(power*2), power, -power, (power*2), false);
             //setPowerToDTMotors(-power, power*1.25, -power*1.3, power*1.2, false);
         }
         return (int)targetEncCount;
     }
-    */
 
     protected void stopMove()
     {
