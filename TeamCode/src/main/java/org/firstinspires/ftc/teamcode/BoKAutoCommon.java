@@ -9,6 +9,7 @@ import android.util.Log;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.ReadWriteFile;
 import com.vuforia.Image;
 import com.vuforia.PIXEL_FORMAT;
 import com.vuforia.Vuforia;
@@ -37,6 +38,7 @@ import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -1153,19 +1155,19 @@ public abstract class BoKAutoCommon implements BoKAuto
     {
         double vEnc, err, sumErr = 0, dErrDT, dT, pid, powerApp,
                 Kp = 0.7, Ki = 0.525, Kd = 0.2, time, lastTime = 0, lastErr = 0;
-        int inPos = robot.intakeArmMotor.getCurrentPosition();
+        int inPos = robot.intakeArmMotorL.getCurrentPosition();
         int lastPos = inPos;
 
         //Runtime
         runTime.reset();
-        //String logString = "pos,lPos,dTime,vEnc,err,sumErr,lastErr,dErrDT,pid,speed\n";
-        robot.intakeArmMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        robot.intakeArmMotor.setPower(power);
+        String logString = "pos,lPos,dTime,vEnc,err,sumErr,lastErr,dErrDT,pid,speed\n";
+        robot.intakeArmMotorL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        robot.intakeArmMotorL.setPower(power);
 
         while (opMode.opModeIsActive() && (Math.abs(inPos - endPos) > 10) &&
                 (runTime.seconds() < waitForSec)) {
 
-            inPos = robot.intakeArmMotor.getCurrentPosition();
+            inPos = robot.intakeArmMotorL.getCurrentPosition();
             time = runTime.milliseconds();
             dT = time - lastTime;
             vEnc = (inPos - lastPos)/dT;
@@ -1180,17 +1182,17 @@ public abstract class BoKAutoCommon implements BoKAuto
             else {
                 powerApp = Range.clip(powerApp, 0.0, 1.0);
             }
-            robot.intakeArmMotor.setPower(powerApp);
+            robot.intakeArmMotorL.setPower(powerApp);
             lastErr = err;
             lastTime = time;
             lastPos = inPos;
-            //logString += inPos+","+lastPos+","+dT+","+vEnc+","+err+","+sumErr+","+lastErr+","+dErrDT+","+pid+","+(power-pid)+"\n";
-            //Log.v("BOK", "Intake arm pos " + inPos);
+            logString += inPos+","+lastPos+","+dT+","+vEnc+","+err+","+sumErr+","+lastErr+","+dErrDT+","+pid+","+(power-pid)+"\n";
+            Log.v("BOK", "Intake arm pos " + inPos);
         }
-        //File file = AppUtil.getInstance().getSettingsFile("BoKMotorData.csv");
-        //ReadWriteFile.writeFile(file,
-        //       logString);
-        robot.intakeArmMotor.setPower(0);
+        File file = AppUtil.getInstance().getSettingsFile("BoKMotorData.csv");
+        ReadWriteFile.writeFile(file,
+               logString);
+        robot.intakeArmMotorL.setPower(0);
         if (runTime.seconds() > waitForSec) {
             Log.v("BOK", "moveIntakeArmPID timed out!");
         }
@@ -1203,11 +1205,11 @@ public abstract class BoKAutoCommon implements BoKAuto
     protected void dropIntakeArmAndExtend() {
         moveIntakeArmPID(1000/*enc count*/, 0.5/*power*/, 0.5/*vTarget*/, 3/*seconds*/);
         // Complete the final position of the intake arm
-        robot.intakeArmMotor.setTargetPosition(1200);
-        robot.intakeArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.intakeArmMotor.setPower(0.5);
+        robot.intakeArmMotorL.setTargetPosition(1200);
+        robot.intakeArmMotorL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        robot.intakeArmMotorL.setPower(0.5);
         moveRamp(0.5/*power*/, 17 /*inches*/, false/*back*/, 4/*seconds*/);
-        robot.intakeArmMotor.setPower(0);
+        robot.intakeArmMotorL.setPower(0);
     }
 
     /*
@@ -1243,8 +1245,8 @@ public abstract class BoKAutoCommon implements BoKAuto
               String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));
 
         // Step 3: Lower the hook, move the lift down a bit and then move forward a bit
-        robot.hangHookServo.setPosition(robot.HANG_HOOK_SERVO_FINAL);
-        opMode.sleep(250);
+        //robot.hangHookServo.setPosition(robot.HANG_HOOK_SERVO_FINAL);
+        //opMode.sleep(250);
 
         // Move the hang lift down a bit and then move forward a bit
         robot.hangMotor.setTargetPosition(robot.HANG_LIFT_HIGH_POS-150);
@@ -1296,14 +1298,14 @@ public abstract class BoKAutoCommon implements BoKAuto
                                     DISTANCE_TO_WALL_LEFT_CUBE_INIT,
                                     DISTANCE_TO_WALL_LEFT_CUBE_INIT + 25, 2/*seconds*/);
             // 8b: Lower the sampler arm!
-            robot.samplerServo.setPosition(robot.SAMPLER_SERVO_FINAL);
-            opMode.sleep(250);
+            //robot.samplerServo.setPosition(robot.SAMPLER_SERVO_FINAL);
+            //opMode.sleep(250);
             // 8c: Move past the cube
             moveWithRangeSensorBack(-MOVE_POWER_LOW,
                                     DISTANCE_TO_WALL_LEFT_CUBE_FINAL,
                                     DISTANCE_TO_WALL_LEFT_CUBE_FINAL + 25, 2/*seconds*/);
             // 8d: Raise the sampler arm
-            robot.samplerServo.setPosition(robot.SAMPLER_SERVO_INIT);
+            //robot.samplerServo.setPosition(robot.SAMPLER_SERVO_INIT);
         }
         else if (loc == BoKAutoCubeLocation.BOK_CUBE_CENTER){
             Log.v("BOK", "Cube on center");
@@ -1312,14 +1314,14 @@ public abstract class BoKAutoCommon implements BoKAuto
                                 DISTANCE_TO_WALL_CENTER_CUBE_INIT,
                                 DISTANCE_TO_WALL_CENTER_CUBE_INIT + 25, 2/*seconds*/);
             // 8b: Lower the sampler arm!
-            robot.samplerServo.setPosition(robot.SAMPLER_SERVO_FINAL);
-            opMode.sleep(250);
+            //robot.samplerServo.setPosition(robot.SAMPLER_SERVO_FINAL);
+            //opMode.sleep(250);
             // 8c: Move past the cube
             moveWithRangeSensorBack(-MOVE_POWER_LOW/2,
                                     DISTANCE_TO_WALL_CENTER_CUBE_FINAL,
                                     DISTANCE_TO_WALL_CENTER_CUBE_FINAL + 25, 2/*seconds*/);
             // 8d: Raise the sampler arm
-            robot.samplerServo.setPosition(robot.SAMPLER_SERVO_INIT);
+            //robot.samplerServo.setPosition(robot.SAMPLER_SERVO_INIT);
             // Back up towards the side wall for a bit
             followHeadingPIDWithDistanceBack(0, -MOVE_POWER_LOW, 110, false, 1/*second*/);
             // Turn away from the lander's support arm
@@ -1332,13 +1334,13 @@ public abstract class BoKAutoCommon implements BoKAuto
                                 DISTANCE_TO_WALL_RIGHT_CUBE_INIT,
                                 DISTANCE_TO_WALL_RIGHT_CUBE_INIT + 25, 2/*seconds*/);
             // 8b: Lower the sampler arm!
-            robot.samplerServo.setPosition(robot.SAMPLER_SERVO_FINAL);
+            //robot.samplerServo.setPosition(robot.SAMPLER_SERVO_FINAL);
             // 8c: Move forward past the cube
             moveWithRangeSensor(MOVE_POWER_LOW,
                                 DISTANCE_TO_WALL_RIGHT_CUBE_FINAL,
                                 DISTANCE_TO_WALL_RIGHT_CUBE_FINAL + 25, 2/*seconds*/);
             // 8d: Raise the sampler arm
-            robot.samplerServo.setPosition(robot.SAMPLER_SERVO_INIT);
+            //robot.samplerServo.setPosition(robot.SAMPLER_SERVO_INIT);
             // Back up towards the side wall for a bit
             followHeadingPIDWithDistanceBack(0, -MOVE_POWER_LOW, 110, false, 5);
             // Turn away from the lander's support arm

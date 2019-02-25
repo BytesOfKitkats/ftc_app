@@ -40,33 +40,27 @@ public abstract class BoKHardwareBot
     protected static final double GAME_STICK_DEAD_ZONE = 0.1;
 
     // DC Motors
-    private static final String INTAKE_ARM_MOTOR_NAME   = "inA";
-    private static final String INTAKE_MOTOR_NAME       = "in";
-    private static final String DUMPER_SLIDE_MOTOR_NAME = "duS";
-    private static final String HANG_MOTOR_NAME         = "ha";
+    private static final String INTAKE_ARM_MOTORL_NAME   = "inAL";
+    private static final String INTAKE_ARM_MOTORR_NAME   = "inAR";
+    private static final String DUMPER_SLIDE_MOTOR_NAME = "duDC";
+    private static final String HANG_MOTOR_NAME         = "haDC";
 
     // Servos
-   private static final String DUMPER_ROTATE_SERVO_NAME = "duR";
-   private static final String HANG_HOOK_SERVO_NAME     = "haH";
-   private static final String SAMPLER_SERVO_NAME       = "sa";
-   private static final String MARKER_SERVO_NAME        = "ma";
-   private static final String DISTANCE_ROTATE_SERVO_NAME = "dsR";
+   private static final String DUMPER_ROTATE_SERVO_NAME = "duS";
+   private static final String INTAKE_SERVO_NAME        = "inS";
+   private static final String MARKER_SERVO_NAME        = "maS";
+   private static final String DISTANCE_ROTATE_SERVO_NAME = "dsS";
 
     // Servo positions
-    protected static final double DUMPER_ROTATE_SERVO_INIT  = 0.6;
-    protected static final double DUMPER_RECEIVE_SERVO      = 0.51;
-    protected static final double DUMPER_ROTATE_SERVO_FINAL = 0.0;
-    protected static final double HANG_HOOK_SERVO_INIT      = 0.7;
-    protected static final double HANG_HOOK_SERVO_FINAL     = 0.07;
-    protected static final double SAMPLER_SERVO_INIT        = 0.5;
-    protected static final double SAMPLER_SERVO_FINAL       = 0.95;
-    protected static final double MARKER_SERVO_INIT         = 0.38;
-    protected static final double MARKER_SERVO_FINAL        = 0.85;
-    protected static final double DISTANCE_ROTATE_SERVO_INIT  = 0.5;
-    protected static final double DISTANCE_ROTATE_SERVO_FINAL = 0.68;
+    protected static final double DUMPER_ROTATE_SERVO_INIT  = 0.35;
+    protected static final double DUMPER_ROTATE_SERVO_FINAL = 0.1;
+    protected static final double MARKER_SERVO_INIT         = .53;
+    protected static final double MARKER_SERVO_FINAL        = 1;
+    protected static final double DISTANCE_ROTATE_SERVO_INIT  = 0.52;
+    protected static final double DISTANCE_ROTATE_SERVO_FINAL = 0.7;
 
     // Encoder positions
-    protected static final int DUMPER_SLIDE_FINAL_POS    = 970;
+    protected static final int DUMPER_SLIDE_FINAL_POS    = 6250;
     protected static final int HANG_LIFT_HIGH_POS        = 2112;  //2100;
 
     // Sensors
@@ -78,16 +72,15 @@ public abstract class BoKHardwareBot
     LinearOpMode opMode; // current opMode
 
     // DC motors
-    protected DcMotor intakeArmMotor;
-    protected DcMotor intakeMotor;
+    protected DcMotor intakeArmMotorL;
+    protected DcMotor intakeArmMotorR;
     protected DcMotor dumperSlideMotor;
     protected DcMotor hangMotor;
 
     // Servos
     protected Servo   dumperRotateServo;
-    protected Servo   hangHookServo;
+    protected CRServo intakeServo;
     protected Servo   markerServo;
-    protected Servo   samplerServo;
     protected Servo   distanceRotateServo;
 
     // Sensors
@@ -131,13 +124,13 @@ public abstract class BoKHardwareBot
     private BoKHardwareStatus initMotorsAndSensors()
     {
         // DC Motors
-        intakeArmMotor = opMode.hardwareMap.dcMotor.get(INTAKE_ARM_MOTOR_NAME);
-        if (intakeArmMotor == null) {
+        intakeArmMotorL = opMode.hardwareMap.dcMotor.get(INTAKE_ARM_MOTORL_NAME);
+        if (intakeArmMotorL == null) {
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 
-        intakeMotor = opMode.hardwareMap.dcMotor.get(INTAKE_MOTOR_NAME);
-        if (intakeMotor == null) {
+        intakeArmMotorR = opMode.hardwareMap.dcMotor.get(INTAKE_ARM_MOTORR_NAME);
+        if (intakeArmMotorR == null) {
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 
@@ -152,18 +145,13 @@ public abstract class BoKHardwareBot
         }
 
         // Servos
-        samplerServo = opMode.hardwareMap.servo.get(SAMPLER_SERVO_NAME);
-        if (samplerServo == null) {
+        intakeServo = opMode.hardwareMap.crservo.get(INTAKE_SERVO_NAME);
+        if (intakeServo == null) {
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 
         dumperRotateServo = opMode.hardwareMap.servo.get(DUMPER_ROTATE_SERVO_NAME);
         if (dumperRotateServo == null) {
-            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
-        }
-
-        hangHookServo = opMode.hardwareMap.servo.get(HANG_HOOK_SERVO_NAME);
-        if (hangHookServo == null) {
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 
@@ -189,20 +177,23 @@ public abstract class BoKHardwareBot
         }
 
         // DC Motor initialization
-        intakeArmMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        intakeArmMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        intakeArmMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        intakeArmMotor.setPower(0);
+        intakeArmMotorR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        intakeArmMotorR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        intakeArmMotorR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        intakeArmMotorR.setDirection(DcMotorSimple.Direction.REVERSE);
+        intakeArmMotorR.setPower(0);
 
-        intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        intakeMotor.setPower(0);
+        intakeArmMotorL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        intakeArmMotorL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        intakeArmMotorL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        intakeArmMotorL.setPower(0);
+
 
         //dumperSlideMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         dumperSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         dumperSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         dumperSlideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        dumperSlideMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         //hangMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         hangMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -212,8 +203,6 @@ public abstract class BoKHardwareBot
 
         // Servos initialization
         if (!opMode.getClass().getName().contains("Tele")) {
-            samplerServo.setPosition(SAMPLER_SERVO_INIT);
-            hangHookServo.setPosition(HANG_HOOK_SERVO_INIT);
             markerServo.setPosition(MARKER_SERVO_INIT);
             dumperRotateServo.setPosition(DUMPER_ROTATE_SERVO_INIT);
             distanceRotateServo.setPosition(DISTANCE_ROTATE_SERVO_INIT);
@@ -280,7 +269,7 @@ public abstract class BoKHardwareBot
     protected abstract int getRFEncCount();
 
     // Teleop driving
-    protected abstract void moveRobotTele(double speedCoef, boolean armDown);
+    protected abstract void moveRobotTele(double speedCoef);
 
     /*
      *
