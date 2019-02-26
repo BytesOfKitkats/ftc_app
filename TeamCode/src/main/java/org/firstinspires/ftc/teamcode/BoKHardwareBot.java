@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.hardware.lynx.LynxI2cColorRangeSensor;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -61,7 +62,7 @@ public abstract class BoKHardwareBot
 
     // Encoder positions
     protected static final int DUMPER_SLIDE_FINAL_POS    = 6250;
-    protected static final int HANG_LIFT_HIGH_POS        = 2112;  //2100;
+    protected static final int HANG_LIFT_HIGH_POS        = 2300;  //2100;
 
     // Sensors
     private static final String IMU_TOP = "imu";        // IMU
@@ -179,12 +180,14 @@ public abstract class BoKHardwareBot
         // DC Motor initialization
         intakeArmMotorR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeArmMotorR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        intakeArmMotorR.setTargetPosition(0);
         intakeArmMotorR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         intakeArmMotorR.setDirection(DcMotorSimple.Direction.REVERSE);
         intakeArmMotorR.setPower(0);
 
         intakeArmMotorL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeArmMotorL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        intakeArmMotorL.setTargetPosition(0);
         intakeArmMotorL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         intakeArmMotorL.setPower(0);
 
@@ -195,7 +198,7 @@ public abstract class BoKHardwareBot
         dumperSlideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         dumperSlideMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        //hangMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        hangMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         hangMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         hangMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         hangMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -206,6 +209,10 @@ public abstract class BoKHardwareBot
             markerServo.setPosition(MARKER_SERVO_INIT);
             dumperRotateServo.setPosition(DUMPER_ROTATE_SERVO_INIT);
             distanceRotateServo.setPosition(DISTANCE_ROTATE_SERVO_INIT);
+            // Lock the motor when latching in autonomous
+            hangMotor.setTargetPosition(0);
+            hangMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            hangMotor.setPower(0.1);
         }
         else {
             // Do nothing for Teleop so that the robot hardware does not move during
@@ -223,7 +230,7 @@ public abstract class BoKHardwareBot
         //parameters.calibrationDataFile = "BNO055IMUCalibration.json";
         //parameters.loggingEnabled      = true;
         //parameters.loggingTag          = "IMU";
-        //parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
         //angles = new Orientation();
         imu.initialize(parameters);
     }

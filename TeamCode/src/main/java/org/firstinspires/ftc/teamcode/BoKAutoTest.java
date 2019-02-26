@@ -24,8 +24,8 @@ public class BoKAutoTest extends BoKAutoCommon {
                 false, // Hanging lift motor
                 false,  // marker servo
                 false,  // distance sensor & servo
-                false,  // autonomous test
-                true}; // take picture
+                true,  // autonomous test
+                false}; // take picture
 
 
         if (arrayTests[0]) {
@@ -158,11 +158,16 @@ public class BoKAutoTest extends BoKAutoCommon {
             // Autonomous tests
             //robot.moveIntakeArmPID(400, 0.25, 0.2, 10);
             //gyroTurn(DT_TURN_SPEED_LOW, 0, 45, DT_TURN_THRESHOLD_LOW, false, false, 4);
-
-            //strafe(0.5, 3, false, 6);
+            //robot.distanceRotateServo.setPosition(robot.DISTANCE_ROTATE_SERVO_FINAL);
+            //strafe(0.4, 1.5, false, 3);
+            //gyroTurn(DT_TURN_SPEED_LOW, 0, 0, DT_TURN_THRESHOLD_LOW, false, false, 2);
+            //while (opMode.opModeIsActive()){
+            //    Log.v("BOK", "Distance to wall " + robot.getDistanceCM(robot.distanceBack, 150, 2));
+            //}
+            followHeadingPID(0, 0.6, 30, 60, true, 7 /*seconds*/);
             //dropIntakeArmAndExtend();
             //followHeadingPIDBack(0, -0.3, 30, false, 6);
-            followHeadingPID(0, 0.5, 35, 45, true, 5);
+            //followHeadingPID(0, 0.5, 35, 45, true, 5);
         }
 
         while (opMode.opModeIsActive() && arrayTests[7] && !opMode.gamepad1.a) {
