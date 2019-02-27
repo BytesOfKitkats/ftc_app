@@ -1196,20 +1196,6 @@ public abstract class BoKAutoCommon implements BoKAuto
     }
 
     /*
-     * dropIntakeArmAndExtend
-     * Helper method to drop intake arm and extend it by moving the robot back.
-     */
-    protected void dropIntakeArmAndExtend() {
-        moveIntakeArmPID(1000/*enc count*/, 0.5/*power*/, 0.5/*vTarget*/, 3/*seconds*/);
-        // Complete the final position of the intake arm
-        robot.intakeArmMotorL.setTargetPosition(1200);
-        robot.intakeArmMotorL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.intakeArmMotorL.setPower(0.5);
-        moveRamp(0.5/*power*/, 17 /*inches*/, false/*back*/, 4/*seconds*/);
-        robot.intakeArmMotorL.setPower(0);
-    }
-
-    /*
      * runAuto
      * Helper method called from BoKAutoRedCraterOpMode or BoKAutoRedDepotOpMode
      */
@@ -1330,43 +1316,36 @@ public abstract class BoKAutoCommon implements BoKAuto
         Log.v("BOK", "Turning to back wall completed in " +
               String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));
         // Move to target distance of 60cm
-        followHeadingPIDWithDistanceBack(headingForBackWall, -MOVE_POWER_HIGH, 60, /*false,*/ 7/*sec*/);
+        followHeadingPIDWithDistanceBack(headingForBackWall,
+                                         -MOVE_POWER_HIGH, 60, 7/*sec*/);
         // Once distance reached, dump the marker
         dumpMarker();
         Log.v("BOK", "Dumping marker completed in " +
                 String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));
         double distToMoveBack = Math.max(distToWall + 10, 60);
-        if (atCrater) {
-            // Turn away from our sampling sphere
-            gyroTurn(DT_TURN_SPEED_LOW, 40, 48, DT_TURN_THRESHOLD_LOW, false, false, 3/*seconds*/);
-            SetupArmThread setupArmThread = new SetupArmThread();
-            setupArmThread.start();
-            // Move forwards distToWall + 10 inches, detect bump with the crater wall
-            followHeadingPID(48, MOVE_POWER_HIGH + 0.1, 0.8*distToMoveBack, distToMoveBack, true, 7 /*seconds*/);
-            try {
-                setupArmThread.join();
-            } catch (InterruptedException e) {
+        double currentHeading = robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
+                                                                AxesOrder.XYZ,
+                                                                AngleUnit.DEGREES).thirdAngle;
+        // Turn away from our sampling sphere
+        gyroTurn(DT_TURN_SPEED_LOW,
+                 currentHeading,
+                 headingForBackWall, DT_TURN_THRESHOLD_LOW, false, false, 3/*seconds*/);
 
-            }
-        }
-        else {
-            // Turn away from our sampling sphere
-            gyroTurn(DT_TURN_SPEED_LOW, -130, -135, DT_TURN_THRESHOLD_LOW, false, false, 3/*sec*/);
-            SetupArmThread setupArmThread = new SetupArmThread();
-            setupArmThread.start();
-            // Move forwards distToWall + 10 inches, detect bump with the crater wall
-            followHeadingPID(-135, MOVE_POWER_HIGH, 0.8*distToMoveBack, distToMoveBack, true, 7 /*seconds*/);
-            try {
-                setupArmThread.join();
-            } catch (InterruptedException e) {
+        // Start raising the intake arm, intake lift and lower the latching lift
+        SetupArmThread setupArmThread = new SetupArmThread();
+        setupArmThread.start();
 
-            }
+        // Move forwards distToWall + 10 inches, detect bump with the crater wall
+        followHeadingPID(headingForBackWall, MOVE_POWER_HIGH + 0.1,
+                         0.8*distToMoveBack, distToMoveBack, true, 7 /*seconds*/);
+        try {
+            setupArmThread.join();
+        } catch (InterruptedException e) {
+
         }
-        Log.v("BOK", "Moving before arm in " +
+
+        Log.v("BOK", "Auto completed in " +
                 String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));
-        //dropIntakeArmAndExtend();
-        //Log.v("BOK", "Moving after arm in " +
-        //        String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));
    }
 
    class SetupArmThread extends Thread{

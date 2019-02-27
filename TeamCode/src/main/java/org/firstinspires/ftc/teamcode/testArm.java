@@ -145,12 +145,13 @@ public class testArm extends LinearOpMode {
                 intakeArmMotorL.setPower(0.3); // from slanting position to straight up
                 intakeArmMotorR.setPower(0.3);
             }
-            dPos = intakeArmMotorR.getCurrentPosition() - lastPos;
+
+            dPos = intakeArmMotorR.getCurrentPosition() - lastPos; // dPos is -ve
             lastPos = intakeArmMotorR.getCurrentPosition();
             if (y_up_pressed) {
                 if (intakeArmMotorR.isBusy() && intakeArmMotorL.isBusy()) {
                     double newServoPos = dumperRotateServo.getPosition()
-                            -0.000370*dPos;
+                            -0.000370*dPos; // note: dPos is -ves
                     Log.v("BOK", "Servo Pos " + newServoPos + " dPos " + dPos);
                     dumperRotateServo.setPosition(newServoPos);
                     // do nothing
@@ -170,7 +171,7 @@ public class testArm extends LinearOpMode {
             if (y_stage_2) {
                 if (intakeArmMotorR.isBusy() && intakeArmMotorL.isBusy()) {
                     double newServoPos = dumperRotateServo.getPosition()
-                            -0.000370*dPos;
+                            -0.000370*dPos; // note: dPos is -ve
                     Log.v("BOK", "Servo Pos " + newServoPos + " dPos ");
                     dumperRotateServo.setPosition(newServoPos);
                 } else {

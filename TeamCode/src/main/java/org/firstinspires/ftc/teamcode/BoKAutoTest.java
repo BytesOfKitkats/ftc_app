@@ -19,9 +19,9 @@ public class BoKAutoTest extends BoKAutoCommon {
     public void runSoftware() {
         boolean[] arrayTests = {
                 false, // 4 DT motors
-                false,  // Dumper lift motor & servo
-                false, // Intake arm motor & intake servo
-                false, // Hanging lift motor
+                false,  // Intake arm motor & intake servo
+                false,  // Dumper lift motor & servo; MUST RUN INTAKE ARM TEST FIRST
+                false,  // Hanging lift motor
                 false,  // marker servo
                 false,  // distance sensor & servo
                 true,  // autonomous test
@@ -42,6 +42,35 @@ public class BoKAutoTest extends BoKAutoCommon {
         }
 
         if (arrayTests[1] && opMode.opModeIsActive()) {
+            // Test intake arm motor and intake servo
+            opMode.telemetry.addData("Test: ", "Intake arm motor");
+            opMode.telemetry.update();
+            // Complete the final position of the intake arm
+            robot.intakeArmMotorL.setTargetPosition(300);
+            robot.intakeArmMotorL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.intakeArmMotorR.setTargetPosition(300);
+            robot.intakeArmMotorR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.intakeArmMotorL.setPower(0.25);
+            robot.intakeArmMotorR.setPower(0.25);
+            while (robot.intakeArmMotorR.isBusy() && robot.intakeArmMotorL.isBusy()) {
+                // Do nothing
+            }
+            robot.intakeArmMotorL.setPower(0);
+            robot.intakeArmMotorR.setPower(0);
+
+            robot.intakeServo.setPower(1);
+            opMode.sleep(1000);
+            robot.intakeServo.setPower(0);
+            opMode.telemetry.addData("Test: ", "Intake arm & servo complete");
+            opMode.telemetry.update();
+        }
+
+
+
+        while (opMode.opModeIsActive() && arrayTests[2] && !opMode.gamepad1.a) {
+        }
+
+        if (arrayTests[2] && opMode.opModeIsActive()) {
             // test Dumper lift motor
             opMode.telemetry.addData("Test: ", "Moving dumper lift");
             opMode.telemetry.update();
@@ -76,27 +105,6 @@ public class BoKAutoTest extends BoKAutoCommon {
             opMode.telemetry.addData("Test: ", "Moving dumper lift complete");
             opMode.telemetry.update();
         } // if (arrayTests[1]) : dumper lift motor and servo
-
-
-        while (opMode.opModeIsActive() && arrayTests[2] && !opMode.gamepad1.a) {
-        }
-
-        if (arrayTests[2] && opMode.opModeIsActive()) {
-            // Test intake arm motor and intake motor
-            opMode.telemetry.addData("Test: ", "Intake arm motor");
-            opMode.telemetry.update();
-            moveIntakeArmPID(1000/*enc count*/, 0.5/*power*/, 0.5/*vTarget*/, 3/*seconds*/);
-            // Complete the final position of the intake arm
-            robot.intakeArmMotorL.setTargetPosition(1200);
-            robot.intakeArmMotorL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            robot.intakeArmMotorL.setPower(0.5);
-            robot.intakeArmMotorL.setPower(0);
-            robot.intakeServo.setPower(1);
-            opMode.sleep(1000);
-            robot.intakeServo.setPower(0);
-            opMode.telemetry.addData("Test: ", "Intake arm complete");
-            opMode.telemetry.update();
-        }
 
         while (opMode.opModeIsActive() && arrayTests[3] && !opMode.gamepad1.a) {
         }
