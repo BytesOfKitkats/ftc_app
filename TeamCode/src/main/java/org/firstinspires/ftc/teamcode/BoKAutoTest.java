@@ -24,8 +24,9 @@ public class BoKAutoTest extends BoKAutoCommon {
                 false,  // Hanging lift motor
                 false,  // marker servo
                 false,  // distance sensor & servo
-                true,  // autonomous test
-                false}; // take picture
+                false,  // autonomous test
+                false, // take picture
+                true}; // dumper servo test
 
 
         if (arrayTests[0]) {
@@ -196,6 +197,35 @@ public class BoKAutoTest extends BoKAutoCommon {
 
                 }
                 x = opMode.gamepad1.x;
+            }
+        } // arrayTests[7]: take picture
+
+        while (opMode.opModeIsActive() && arrayTests[8] && !opMode.gamepad1.a) {
+        }
+
+        if (arrayTests[8] && opMode.opModeIsActive()) {
+
+            // CameraDevice.getInstance().setFlashTorchMode(true);
+
+            int numPics = 0;
+            boolean x = false;
+            boolean b = false;
+            double currServoPos = robot.dumperRotateServo.getPosition();
+            Log.v("BOK", "Init servo pos at " + String.format("%.2f" , currServoPos));
+            while (opMode.opModeIsActive()) {
+                if (opMode.gamepad1.x && !x) {
+                    currServoPos = robot.dumperRotateServo.getPosition() + 0.1;
+                    robot.dumperRotateServo.setPosition(currServoPos);
+                    Log.v("BOK", "Up servo pos at " + String.format("%.2f" , currServoPos));
+                }
+                x = opMode.gamepad1.x;
+
+                if (opMode.gamepad1.b && !b) {
+                    currServoPos = robot.dumperRotateServo.getPosition() - 0.1;
+                    robot.dumperRotateServo.setPosition(currServoPos);
+                    Log.v("BOK", "Down servo pos at " + String.format("%.2f" , currServoPos));
+                }
+                b = opMode.gamepad1.b;
             }
         } // arrayTests[7]: take picture
     }
