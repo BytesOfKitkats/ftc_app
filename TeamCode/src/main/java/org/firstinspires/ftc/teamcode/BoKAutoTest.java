@@ -23,10 +23,10 @@ public class BoKAutoTest extends BoKAutoCommon {
                 false,  // Dumper lift motor & servo; MUST RUN INTAKE ARM TEST FIRST
                 false,  // Hanging lift motor
                 false,  // marker servo
-                false,  // distance sensor & servo
+                true,  // distance sensor & servo
                 false,  // autonomous test
                 false, // take picture
-                true}; // dumper servo test
+                false}; // dumper servo test
 
 
         if (arrayTests[0]) {

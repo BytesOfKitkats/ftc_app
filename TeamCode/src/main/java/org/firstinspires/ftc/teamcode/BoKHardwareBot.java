@@ -6,7 +6,9 @@ import com.qualcomm.hardware.lynx.LynxI2cColorRangeSensor;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.ReadWriteFile;
 import java.io.File;
@@ -37,7 +39,7 @@ public abstract class BoKHardwareBot
     protected static final double SPEED_COEFF_SLOW = 0.35;
     protected static final double SPEED_COEFF_MED = 0.5;
     protected static final double SPEED_COEFF_FAST = 0.8;
-    protected static final double SPEED_COEFF_TURN = 0.6;
+    protected static final double SPEED_COEFF_TURN = 0.3;
     protected static final double GAME_STICK_DEAD_ZONE = 0.1;
 
     // DC Motors
@@ -73,8 +75,8 @@ public abstract class BoKHardwareBot
     LinearOpMode opMode; // current opMode
 
     // DC motors
-    protected DcMotor intakeArmMotorL;
-    protected DcMotor intakeArmMotorR;
+    protected DcMotorEx intakeArmMotorL;
+    protected DcMotorEx intakeArmMotorR;
     protected DcMotor dumperSlideMotor;
     protected DcMotor hangMotor;
 
@@ -125,12 +127,12 @@ public abstract class BoKHardwareBot
     private BoKHardwareStatus initMotorsAndSensors()
     {
         // DC Motors
-        intakeArmMotorL = opMode.hardwareMap.dcMotor.get(INTAKE_ARM_MOTORL_NAME);
+        intakeArmMotorL = opMode.hardwareMap.get(DcMotorEx.class,INTAKE_ARM_MOTORL_NAME);
         if (intakeArmMotorL == null) {
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 
-        intakeArmMotorR = opMode.hardwareMap.dcMotor.get(INTAKE_ARM_MOTORR_NAME);
+        intakeArmMotorR = opMode.hardwareMap.get(DcMotorEx.class,INTAKE_ARM_MOTORR_NAME);
         if (intakeArmMotorR == null) {
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
@@ -276,7 +278,7 @@ public abstract class BoKHardwareBot
     protected abstract int getRFEncCount();
 
     // Teleop driving
-    protected abstract void moveRobotTele(double speedCoef);
+    protected abstract void moveRobotTele(double speedCoef, boolean endGame);
 
     /*
      *

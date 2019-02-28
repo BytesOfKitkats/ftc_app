@@ -330,7 +330,7 @@ public class BoKMecanumDT extends BoKHardwareBot
                 Math.abs(leftFront.getCurrentPosition()))/4.0;
     }
 
-    protected void moveRobotTele(double speedCoef)
+    protected void moveRobotTele(double speedCoef, boolean endGame)
     {
         /*
          * Gamepad1: Driver 1 controls the robot using the left joystick for throttle and
@@ -385,7 +385,10 @@ public class BoKMecanumDT extends BoKHardwareBot
             motorPowerRF = gamePad1RightStickX;
             motorPowerRB = gamePad1RightStickX;
 
-            speedCoefLocal = SPEED_COEFF_TURN;
+            if (!endGame)
+                speedCoefLocal = SPEED_COEFF_TURN;
+            else
+                speedCoefLocal = 0.5;
             //Log.v("BOK","Turn: LF:" + String.format("%.2f", motorPowerLF) +
             //        "LB: " + String.format("%.2f", motorPowerLB) +
             //        "RF: " + String.format("%.2f", motorPowerRF) +
