@@ -64,7 +64,7 @@ public abstract class BoKHardwareBot
 
     // Encoder positions
     protected static final int DUMPER_SLIDE_FINAL_POS    = 6250;
-    protected static final int HANG_LIFT_HIGH_POS        = 2300;  //2100;
+    protected static final int HANG_LIFT_HIGH_POS        = 2400;  //2300;
 
     // Sensors
     private static final String IMU_TOP = "imu";        // IMU

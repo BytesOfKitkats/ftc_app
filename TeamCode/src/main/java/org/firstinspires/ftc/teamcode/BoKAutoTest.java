@@ -8,6 +8,10 @@ import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.vuforia.CameraDevice;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+
 public class BoKAutoTest extends BoKAutoCommon {
 
     // Constructor
@@ -23,8 +27,8 @@ public class BoKAutoTest extends BoKAutoCommon {
                 false,  // Dumper lift motor & servo; MUST RUN INTAKE ARM TEST FIRST
                 false,  // Hanging lift motor
                 false,  // marker servo
-                true,  // distance sensor & servo
-                false,  // autonomous test
+                false,  // distance sensor & servo
+                true,  // autonomous test
                 false, // take picture
                 false}; // dumper servo test
 
@@ -165,18 +169,63 @@ public class BoKAutoTest extends BoKAutoCommon {
 
         if (arrayTests[6] && opMode.opModeIsActive()) {
             // Autonomous tests
-            //robot.moveIntakeArmPID(400, 0.25, 0.2, 10);
             //gyroTurn(DT_TURN_SPEED_LOW, 0, 45, DT_TURN_THRESHOLD_LOW, false, false, 4);
-            //robot.distanceRotateServo.setPosition(robot.DISTANCE_ROTATE_SERVO_FINAL);
-            //strafe(0.4, 1.5, false, 3);
+
+            //strafe(0.4, 3, false, 6);
             //gyroTurn(DT_TURN_SPEED_LOW, 0, 0, DT_TURN_THRESHOLD_LOW, false, false, 2);
-            //while (opMode.opModeIsActive()){
-            //    Log.v("BOK", "Distance to wall " + robot.getDistanceCM(robot.distanceBack, 150, 2));
-            //}
-            followHeadingPID(0, 0.6, 30, 60, true, 7 /*seconds*/);
-            //dropIntakeArmAndExtend();
+
+            //followHeadingPID(0, 0.6, 30, 60, true, 7 /*seconds*/);
+            //strafe(0.4, 3, false, 6);
+            //opMode.sleep(1000);
+            //strafe(0.4, 3, true, 6);
+
             //followHeadingPIDBack(0, -0.3, 30, false, 6);
-            //followHeadingPID(0, 0.5, 35, 45, true, 5);
+
+            // TEST PARKING
+            // First raise the arm
+            robot.intakeArmMotorR.setTargetPosition(400);
+            robot.intakeArmMotorL.setTargetPosition(400);
+            robot.intakeArmMotorR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.intakeArmMotorL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.intakeArmMotorR.setPower(0.2);
+            robot.intakeArmMotorL.setPower(0.2);
+            while (opMode.opModeIsActive() &&
+                   robot.intakeArmMotorR.isBusy() && robot.intakeArmMotorL.isBusy()){
+                // do nothing
+            }
+
+            double distToWall = robot.getDistanceCM(robot.distanceBack, 190, 0.5)/2.54; // in inches
+            Log.v("BOK", "Dist to back wall (inches) " + distToWall);
+
+            // Start raising the intake lift and lower the latching lift
+            SetupArmThread setupArmThread = new SetupArmThread(opMode, false);
+            setupArmThread.start();
+
+            // Move to target distance of 60cm
+            followHeadingPIDWithDistanceBack(0, -0.5, 60, 7/*sec*/);
+
+            // Once distance reached, dump the marker
+            dumpMarker();
+            Log.v("BOK", "Dumping marker completed in " +
+                    String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));
+            double distToMoveBack = Math.max(distToWall + 5, 56);
+            double currentHeading = robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
+                    AxesOrder.XYZ,
+                    AngleUnit.DEGREES).thirdAngle;
+            // Turn away from our sampling sphere
+            gyroTurn(DT_TURN_SPEED_LOW,
+                    currentHeading,
+                    0, DT_TURN_THRESHOLD_LOW, false, false, 3/*seconds*/);
+
+            // Move forwards distToWall + 10 inches, detect bump with the crater wall
+            followHeadingPID(0, 0.5 + 0.1,
+                    0.8*distToMoveBack, distToMoveBack, true, 7 /*seconds*/);
+            try {
+                setupArmThread.join();
+            } catch (InterruptedException e) {
+
+            }
+
         }
 
         while (opMode.opModeIsActive() && arrayTests[7] && !opMode.gamepad1.a) {
