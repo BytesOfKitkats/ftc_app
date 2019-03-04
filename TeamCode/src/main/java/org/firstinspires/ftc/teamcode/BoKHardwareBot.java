@@ -36,7 +36,7 @@ public abstract class BoKHardwareBot
 {
     // CONSTANTS
     protected static final int OPMODE_SLEEP_INTERVAL_MS_SHORT  = 10;
-    protected static final double SPEED_COEFF_SLOW = 0.35;
+    protected static final double SPEED_COEFF_SLOW = 0.25;
     protected static final double SPEED_COEFF_MED = 0.5;
     protected static final double SPEED_COEFF_FAST = 0.8;
     protected static final double SPEED_COEFF_TURN = 0.3;
@@ -64,7 +64,7 @@ public abstract class BoKHardwareBot
 
     // Encoder positions
     protected static final int DUMPER_SLIDE_FINAL_POS    = 6250;
-    protected static final int HANG_LIFT_HIGH_POS        = 2400;  //2300;
+    protected static final int HANG_LIFT_HIGH_POS        = (2375+100);  //2300;
 
     // Sensors
     private static final String IMU_TOP = "imu";        // IMU

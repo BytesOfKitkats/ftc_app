@@ -346,8 +346,8 @@ public class BoKMecanumDT extends BoKHardwareBot
             gamePad1LeftStickY = Math.pow(gamePad1LeftStickY, 3);
         }
 
-        else if ((speedCoef == SPEED_COEFF_MED) && (Math.abs(gamePad1LeftStickX) > 0.5)){
-            speedCoef = SPEED_COEFF_FAST;
+        else if ((speedCoef == SPEED_COEFF_SLOW) && (Math.abs(gamePad1LeftStickX) > 0.5)){
+            speedCoef = SPEED_COEFF_MED;
         }
 
         double speedCoefLocal = speedCoef;

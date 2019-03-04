@@ -25,10 +25,10 @@ public class BoKAutoTest extends BoKAutoCommon {
                 false, // 4 DT motors
                 false,  // Intake arm motor & intake servo
                 false,  // Dumper lift motor & servo; MUST RUN INTAKE ARM TEST FIRST
-                false,  // Hanging lift motor
+                true,  // Hanging lift motor
                 false,  // marker servo
                 false,  // distance sensor & servo
-                true,  // autonomous test
+                false,  // autonomous test
                 false, // take picture
                 false}; // dumper servo test
 
@@ -126,6 +126,9 @@ public class BoKAutoTest extends BoKAutoCommon {
 
             }
             robot.hangMotor.setPower(0);
+            gyroTurn(DT_TURN_SPEED_LOW, 0, 0, DT_TURN_THRESHOLD_LOW, false, false, 4);
+
+            moveRamp(0.3, 2/*inches*/, false/*forward*/, 2/*seconds*/);
             opMode.telemetry.addData("Test: ", "Moving hanging complete");
             opMode.telemetry.update();
         }
@@ -263,16 +266,14 @@ public class BoKAutoTest extends BoKAutoCommon {
             Log.v("BOK", "Init servo pos at " + String.format("%.2f" , currServoPos));
             while (opMode.opModeIsActive()) {
                 if (opMode.gamepad1.x && !x) {
-                    currServoPos = robot.dumperRotateServo.getPosition() + 0.1;
-                    robot.dumperRotateServo.setPosition(currServoPos);
-                    Log.v("BOK", "Up servo pos at " + String.format("%.2f" , currServoPos));
+                    robot.dumperRotateServo.setPosition(0.442);
+                    Log.v("BOK", "x 0.442");
                 }
                 x = opMode.gamepad1.x;
 
                 if (opMode.gamepad1.b && !b) {
-                    currServoPos = robot.dumperRotateServo.getPosition() - 0.1;
-                    robot.dumperRotateServo.setPosition(currServoPos);
-                    Log.v("BOK", "Down servo pos at " + String.format("%.2f" , currServoPos));
+                    robot.dumperRotateServo.setPosition(0.51);
+                    Log.v("BOK", "b 0.51");
                 }
                 b = opMode.gamepad1.b;
             }

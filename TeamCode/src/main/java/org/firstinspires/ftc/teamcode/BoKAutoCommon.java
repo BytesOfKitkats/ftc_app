@@ -895,7 +895,7 @@ public abstract class BoKAutoCommon implements BoKAuto
                     //             " dist to back " +
                     //                   robot.getDistanceCM(robot.distanceBack, 200, 0.2));
 
-                    if (Math.abs(angles.thirdAngle) > 5) {
+                    if (Math.abs(angles.thirdAngle - heading) > 5) {
                         Log.v("BOK", "BUMP: theta z " + String.format("%.2f", angles.thirdAngle));
                         break;
                     }
@@ -1175,7 +1175,7 @@ public abstract class BoKAutoCommon implements BoKAuto
               String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));
 
         // Step 3: Realign robot and back out of latch
-        gyroTurn(DT_TURN_SPEED_LOW, 0, 0, DT_TURN_THRESHOLD_LOW, false, false, 2);
+        gyroTurn(DT_TURN_SPEED_LOW, 0, 0, DT_TURN_THRESHOLD_LOW, false, false, 4);
 
         moveRamp(MOVE_POWER_LOW, 2/*inches*/, false/*forward*/, 2/*seconds*/);
         Log.v("BOK", "Move completed in " +
@@ -1232,6 +1232,8 @@ public abstract class BoKAutoCommon implements BoKAuto
         }
         else if (loc == BoKAutoCubeLocation.BOK_CUBE_CENTER){
             Log.v("BOK", "Cube on center");
+            // Step 8a: Move 4 in forward
+            moveRamp(MOVE_POWER_LOW, 4/*inches*/, true/*forward*/, 2/*seconds*/);
             // Step 8b: Strafe to the left
             strafe(0.4, 1.2, false, 3);
             // Step 8c: strafe to the right
@@ -1286,7 +1288,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         Log.v("BOK", "Dumping marker completed in " +
                 String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));
 
-        double distToMoveBack = Math.max(distToWall + 5, 56);
+        double distToMoveBack = Math.max(distToWall + 10, 56);
         double currentHeading = robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
                                                                 AxesOrder.XYZ,
                                                                 AngleUnit.DEGREES).thirdAngle;
@@ -1312,9 +1314,9 @@ public abstract class BoKAutoCommon implements BoKAuto
         LinearOpMode opMode;
         boolean moveLatchingLift;
 
-        public SetupArmThread(LinearOpMode opMode, boolean moveLatchingLift){
+        public SetupArmThread(LinearOpMode opMode, boolean mvLatchingLift){
             this.opMode = opMode;
-            moveLatchingLift = moveLatchingLift;
+            this.moveLatchingLift = mvLatchingLift;
         }
         @Override
        public void run() {

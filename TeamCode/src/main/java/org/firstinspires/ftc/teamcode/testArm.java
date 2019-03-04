@@ -16,7 +16,7 @@ import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 
 import java.io.File;
 @Autonomous(group="test", name="intakeArm Only")
-@Disabled
+//@Disabled
 public class testArm extends LinearOpMode {
     DcMotor intakeArmMotorL;
     DcMotor intakeArmMotorR;
@@ -154,7 +154,7 @@ public class testArm extends LinearOpMode {
                 if (intakeArmMotorR.isBusy() && intakeArmMotorL.isBusy()) {
                     double newServoPos = dumperRotateServo.getPosition()
                             -0.000370*dPos; // note: dPos is -ves
-                    Log.v("BOK", "Servo Pos " + newServoPos + " dPos " + dPos);
+                    //Log.v("BOK", "Servo Pos " + newServoPos + " dPos " + dPos);
                     dumperRotateServo.setPosition(newServoPos);
                     // do nothing
                 } else {
@@ -174,7 +174,7 @@ public class testArm extends LinearOpMode {
                 if (intakeArmMotorR.isBusy() && intakeArmMotorL.isBusy()) {
                     double newServoPos = dumperRotateServo.getPosition()
                             -0.000370*dPos; // note: dPos is -ve
-                    Log.v("BOK", "Servo Pos " + newServoPos + " dPos ");
+                    //Log.v("BOK", "Servo Pos " + newServoPos + " dPos ");
                     dumperRotateServo.setPosition(newServoPos);
                 } else {
                     Log.v("BOK", "IntakeR Enc up 400: " + intakeArmMotorR.getCurrentPosition());

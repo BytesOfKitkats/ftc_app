@@ -28,7 +28,7 @@ public class BoKTele
     //private static final double GAME_STICK_DEAD_ZONE_LEFT_STICK = 0.3;
     private static final double GAME_TRIGGER_DEAD_ZONE = 0.2;
     private static final double DUMPER_LIFT_POWER = 0.8;
-    private static final double DUMPER_DECREMENT_SPEED = 0.0008; //0.00042
+    private static final double DUMPER_DECREMENT_SPEED = 0.0005; //0.0008
     private BoKHardwareBot robot;
     private LinearOpMode opMode;
     private double speedCoef = robot.SPEED_COEFF_FAST;
@@ -72,6 +72,7 @@ public class BoKTele
 
         boolean hangHookRaised = false;
         boolean armUp = false;
+        boolean armInit = true;
         boolean dumpMinerals = false;
 
         // Initialization after Play is pressed!
@@ -85,7 +86,7 @@ public class BoKTele
             // Y:                  Go in slow mode
 
             moveRobot();
-            moveIntakeArm(armUp);
+            moveIntakeArm(armUp, armInit);
 
             if (opMode.gamepad1.y) {
                 speedCoef = robot.SPEED_COEFF_SLOW;
@@ -101,6 +102,36 @@ public class BoKTele
 
             if (opMode.gamepad1.right_bumper) {
                 robot.markerServo.setPosition(robot.MARKER_SERVO_INIT);
+            }
+
+            if (opMode.gamepad1.x && !end_game) {
+                end_game = true;
+                Log.v("BOK", "End Game started");
+                // Make sure that the intake arm is folded up
+                // 1. bring the arm vertical 2. bring slides down after the arm is vertical
+                if (lastArmPos > 400) {
+                    armUp = true;
+                    up_stage_0_start = up_stage_0_done = false;
+                    up_stage_1_start = up_stage_1_done = false;
+                    up_stage_2_start = false;
+                }
+                else {
+                    armUp = false;
+                    dn_stage_0_start = dn_stage_0_done = false;
+                    dn_stage_1_start = false;
+                }
+
+                robot.intakeServo.setPower(0);
+                robot.hangMotor.setTargetPosition(575);
+                robot.hangMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                robot.hangMotor.setPower(HANG_LIFT_POWER);
+            }
+
+            if (opMode.gamepad1.b && end_game) {
+                end_game = false;
+                dumperLiftEndGame = false;
+
+                Log.v("BOK", "End Game reverted");
             }
 
             // GAMEPAD 2 CONTROLS
@@ -119,32 +150,6 @@ public class BoKTele
             // Dpad Up:                Raise the hanging hook
             // Dpad Down:              Lower the hanging hook
 
-            if (opMode.gamepad2.x && !end_game) {
-                end_game = true;
-                Log.v("BOK", "End Game started");
-                // Make sure that the intake arm is folded up
-                // 1. bring the arm vertical 2. bring slides down after the arm is vertical
-                if (lastArmPos > 400) {
-                    armUp = true;
-                    up_stage_0_start = up_stage_0_done = false;
-                    up_stage_1_start = up_stage_1_done = false;
-                    up_stage_2_start = false;
-                }
-                else {
-                    armUp = false;
-                    dn_stage_0_start = dn_stage_0_done = false;
-                    dn_stage_1_start = false;
-                }
-
-                robot.intakeServo.setPower(0);
-            }
-
-            if (opMode.gamepad2.b && end_game) {
-                end_game = false;
-                dumperLiftEndGame = false;
-
-                Log.v("BOK", "End Game reverted");
-            }
             if (!end_game) {
 
                 if (opMode.gamepad2.right_trigger > GAME_TRIGGER_DEAD_ZONE ) {
@@ -165,13 +170,18 @@ public class BoKTele
                     robot.dumperSlideMotor.setPower(0);
                 }
 
-                if (opMode.gamepad2.a && armUp) {
+                if (opMode.gamepad2.a && (armUp || armInit)) {
                     dumpMinerals = false;
                     armUp = false;
-                    robot.intakeArmMotorL.setTargetPositionTolerance(20);
-                    robot.intakeArmMotorR.setTargetPositionTolerance(20);
-                    dn_stage_0_start = dn_stage_0_done = false;
-                    dn_stage_1_start = false;
+                    if (armInit) {
+                        armInit = false;
+                    }
+                    else {
+                        robot.intakeArmMotorL.setTargetPositionTolerance(20);
+                        robot.intakeArmMotorR.setTargetPositionTolerance(20);
+                        dn_stage_0_start = dn_stage_0_done = false;
+                        dn_stage_1_start = false;
+                    }
                 }
                 else if (opMode.gamepad2.y && !armUp) {
                     armUp = true;
@@ -205,11 +215,19 @@ public class BoKTele
                     robot.dumperRotateServo.setPosition(dumperServoCurrPos);
                 }
 
+                if (opMode.gamepad2.dpad_left) {
+                    robot.intakeArmMotorL.setTargetPosition(900);
+                    robot.intakeArmMotorR.setTargetPosition(900);
+                    robot.intakeArmMotorL.setPower(0.2);
+                    robot.intakeArmMotorR.setPower(0.2);
+                    robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT+0.1);
+                }
+
                 // Intake servo control
                 if (opMode.gamepad2.dpad_up) {
                     robot.intakeServo.setPower(1);
                 }
-                if (opMode.gamepad2.dpad_left || opMode.gamepad2.dpad_right) {
+                if (opMode.gamepad2.dpad_right) {
                     robot.intakeServo.setPower(0);
                 }
                 if (opMode.gamepad2.dpad_down) {
@@ -231,13 +249,13 @@ public class BoKTele
                 // Hanging lift control
                 if (opMode.gamepad2.left_stick_y < -GAME_TRIGGER_DEAD_ZONE) {
                     // Raise the dumper lift
-                    //robot.hangMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    robot.hangMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     robot.hangMotor.setPower(HANG_LIFT_POWER);
                     //Log.v("BOK", "Hanging Lift Pos UP " +
                     //        robot.hangMotor.getCurrentPosition());
                 } else if (opMode.gamepad2.left_stick_y > GAME_TRIGGER_DEAD_ZONE) {
                     // Lower the lift
-                    //robot.hangMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    robot.hangMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     robot.hangMotor.setPower(-HANG_LIFT_POWER);
                     //Log.v("BOK", "Hanging Lift Pos DN " +
                     //        robot.hangMotor.getCurrentPosition());
@@ -256,11 +274,12 @@ public class BoKTele
         robot.moveRobotTele(speedCoef, end_game);
     }
 
-    private void moveIntakeArm (boolean up) {
+    private void moveIntakeArm (boolean up, boolean armInit) {
         double currentPos = robot.intakeArmMotorR.getCurrentPosition();
+
         if (up) {
             if ((currentPos > 750 || up_stage_0_start) && !up_stage_0_done) {
-                if (!up_stage_0_start){
+                if (!up_stage_0_start) {
                     robot.intakeArmMotorR.setTargetPosition(750);
                     robot.intakeArmMotorL.setTargetPosition(750);
                     robot.intakeArmMotorR.setPower(0.4);
@@ -284,7 +303,7 @@ public class BoKTele
                     Log.v("BOK", "End stage 0 " + currentPos);
                 }
             } // currentPos > 750 || up_stage_0
-            else if ((currentPos > 400 || up_stage_1_start) && !up_stage_1_done) {
+            else if ((currentPos > 425 || up_stage_1_start) && !up_stage_1_done) {
                 if (!up_stage_1_start){
                     robot.intakeArmMotorR.setTargetPosition(400);
                     robot.intakeArmMotorL.setTargetPosition(400);
@@ -305,7 +324,11 @@ public class BoKTele
                     up_stage_1_start = false;
                     up_stage_1_done = true;
                     robot.intakeServo.setPower(0); // stop the intake spinner
-                    Log.v("BOK", "End stage 1 " + currentPos);
+                    Log.v("BOK", "End stage 1 " + currentPos + " servo at: " +
+                          robot.dumperRotateServo.getPosition());
+                    robot.dumperRotateServo.setPosition(0.442); // ensure that the dumper is angled
+                    dumperServoCurrPos = 0.442;
+
                     if (end_game) {
                         if (!dumperLiftEndGame) {
                             // Bring the slides down
@@ -318,22 +341,49 @@ public class BoKTele
                     }
                 }
             } // currentPos > 400 || up_stage_1
-            else if (currentPos > 250 || up_stage_2_start){
-                if (!up_stage_2_start){
-                    robot.intakeArmMotorL.setTargetPositionTolerance(5);
-                    robot.intakeArmMotorR.setTargetPositionTolerance(5);
-                    robot.intakeArmMotorR.setTargetPosition(250);
-                    robot.intakeArmMotorL.setTargetPosition(250);
+            else if (currentPos > 175 || up_stage_2_start){
+                if (!up_stage_2_start && opMode.gamepad2.x) {
+                    //robot.intakeArmMotorL.setTargetPositionTolerance(5);
+                    //robot.intakeArmMotorR.setTargetPositionTolerance(5);
+                    robot.intakeArmMotorR.setTargetPosition(150);
+                    robot.intakeArmMotorL.setTargetPosition(150);
                     robot.intakeArmMotorR.setPower(0.06);
                     robot.intakeArmMotorL.setPower(0.06);
                     up_stage_2_start = true;
                     Log.v("BOK", "Start stage 2 " + currentPos);
                 }
                 else if (robot.intakeArmMotorR.isBusy() && robot.intakeArmMotorL.isBusy()){
-                    // do nothing
+                    // Keep rotating the dumper box AWAY from the dump position
+                    double dPos = currentPos - lastArmPos; // dPos is -ve
+                    dumperServoCurrPos -= (dPos * DUMPER_DECREMENT_SPEED);
+                    if (dumperServoCurrPos > 0.8)
+                        dumperServoCurrPos = 0.8;
+                    robot.dumperRotateServo.setPosition(dumperServoCurrPos);
+                    if (!up_stage_2_start) {
+                        Log.v("BOK", "Stage 1c: " + robot.intakeArmMotorR.getCurrentPosition() +
+                                " L: " + robot.intakeArmMotorL.getCurrentPosition());
+                    }
+                    else {
+                        Log.v("BOK", "Stage 2: " + robot.intakeArmMotorR.getCurrentPosition() +
+                                " L: " + robot.intakeArmMotorL.getCurrentPosition());
+                        if (currentPos <= 225) {
+                            robot.intakeArmMotorR.setPower(0.02);
+                            robot.intakeArmMotorL.setPower(0.02);
+                        }
+                    }
                 }
                 else {
-                    //up_stage_2_start = false;
+                    if (!up_stage_2_start) {
+                        Log.v("BOK", "Stage 1c: " + robot.intakeArmMotorR.getCurrentPosition() +
+                                " L: " + robot.intakeArmMotorL.getCurrentPosition());
+                        robot.intakeArmMotorR.setPower(0.6);
+                        robot.intakeArmMotorL.setPower(0.6);
+                    }
+                    else {
+                        Log.v("BOK", "Stage 2c: " + robot.intakeArmMotorR.getCurrentPosition() +
+                                " L: " + robot.intakeArmMotorL.getCurrentPosition());
+                        up_stage_2_start = false;
+                    }
                 }
             } // currentPos > 250 || up_stage_2
         } // up
@@ -375,7 +425,7 @@ public class BoKTele
                     }
                 }
             } //currentPos < 400 || down_stage_0
-            else if (currentPos < 900 || dn_stage_1_start) {
+            else if ((currentPos < 900 || dn_stage_1_start) && !armInit) {
                 if (!dn_stage_1_start){
                     Log.v("BOK", "Entered down stage 1 " + currentPos);
                     robot.intakeArmMotorR.setTargetPosition(900);
