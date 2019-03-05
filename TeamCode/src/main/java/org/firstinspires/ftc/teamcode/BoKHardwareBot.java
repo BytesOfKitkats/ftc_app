@@ -5,6 +5,7 @@ import com.qualcomm.hardware.lynx.LynxI2cColorRangeSensor;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.ReadWriteFile;
@@ -56,7 +57,7 @@ public abstract class BoKHardwareBot
     protected static final double DUMPER_ROTATE_SERVO_INIT  = 0.6;
     protected static final double DUMPER_RECEIVE_SERVO      = 0.51;
     protected static final double DUMPER_ROTATE_SERVO_FINAL = 0.0;
-    protected static final double HANG_HOOK_SERVO_INIT      = 0.7;
+    protected static final double HANG_HOOK_SERVO_INIT      = 0.68;
     protected static final double HANG_HOOK_SERVO_FINAL     = 0.07;
     protected static final double SAMPLER_SERVO_INIT        = 0.5;
     protected static final double SAMPLER_SERVO_FINAL       = 0.95;
@@ -66,8 +67,8 @@ public abstract class BoKHardwareBot
     protected static final double DISTANCE_ROTATE_SERVO_FINAL = 0.68;
 
     // Encoder positions
-    protected static final int DUMPER_SLIDE_FINAL_POS    = 970;
-    protected static final int HANG_LIFT_HIGH_POS        = 2112;  //2100;
+    protected static final int DUMPER_SLIDE_FINAL_POS    = 930;
+    protected static final int HANG_LIFT_HIGH_POS        = 2112;  //103.6 ppr*1.33 gear*0.315"(8mm) = 1750 pulses /4"
 
     // Sensors
     private static final String IMU_TOP = "imu";        // IMU
@@ -80,7 +81,7 @@ public abstract class BoKHardwareBot
     // DC motors
     protected DcMotor intakeArmMotor;
     protected DcMotor intakeMotor;
-    protected DcMotor dumperSlideMotor;
+    protected DcMotorEx dumperSlideMotor;
     protected DcMotor hangMotor;
 
     // Servos
@@ -141,7 +142,7 @@ public abstract class BoKHardwareBot
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 
-        dumperSlideMotor = opMode.hardwareMap.dcMotor.get(DUMPER_SLIDE_MOTOR_NAME);
+        dumperSlideMotor = opMode.hardwareMap.get(DcMotorEx.class,DUMPER_SLIDE_MOTOR_NAME);
         if (dumperSlideMotor == null) {
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
@@ -200,6 +201,7 @@ public abstract class BoKHardwareBot
         intakeMotor.setPower(0);
 
         //dumperSlideMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        dumperSlideMotor.setTargetPositionTolerance(25);
         dumperSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         dumperSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         dumperSlideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -217,6 +219,9 @@ public abstract class BoKHardwareBot
             markerServo.setPosition(MARKER_SERVO_INIT);
             dumperRotateServo.setPosition(DUMPER_ROTATE_SERVO_INIT);
             distanceRotateServo.setPosition(DISTANCE_ROTATE_SERVO_INIT);
+            hangMotor.setTargetPosition(0);
+            hangMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            hangMotor.setPower(0.1);
         }
         else {
             // Do nothing for Teleop so that the robot hardware does not move during

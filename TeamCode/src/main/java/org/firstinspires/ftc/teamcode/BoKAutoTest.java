@@ -20,12 +20,12 @@ public class BoKAutoTest extends BoKAutoCommon {
     public void runSoftware()
     {
         boolean[] arrayTests = {
-                true, // 4 DT motors
-                true, // Dumper lift motor & servo
-                true, // Intake arm motor & intake motor
-                true, // Hanging lift motor & servo
-                true, // flicker servo
-                true, // marker servo
+                false, // 4 DT motors
+                false, // Dumper lift motor & servo
+                false, // Intake arm motor & intake motor
+                false, // Hanging lift motor & servo
+                false, // flicker servo
+                false, // marker servo
                 true, // distance sensor & servo
                 false,  // autonomous test
                 false}; // take picture
@@ -50,8 +50,13 @@ public class BoKAutoTest extends BoKAutoCommon {
             opMode.telemetry.update();
             robot.dumperSlideMotor.setTargetPosition(robot.DUMPER_SLIDE_FINAL_POS);
             robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            robot.dumperSlideMotor.setPower(0.9);
-            opMode.sleep(2000);
+            robot.dumperSlideMotor.setPower(0.95);
+            while (opMode.opModeIsActive() && robot.dumperSlideMotor.isBusy()) {
+                Log.v("BOK", "Dumper slide: " + robot.dumperSlideMotor.getCurrentPosition());
+            }
+
+            Log.v("BOK", "Dumper. final " + robot.dumperSlideMotor.getCurrentPosition());
+            robot.dumperSlideMotor.setPower(0.1);
 
             boolean dump = false;
             double nextPos = robot.DUMPER_ROTATE_SERVO_INIT - 0.05;
@@ -59,7 +64,7 @@ public class BoKAutoTest extends BoKAutoCommon {
                 //Log.v("BOK", "Dumper slide: " + robot.dumperSlideMotor.getCurrentPosition());
                 if (opMode.gamepad1.y && !dump) {
                     dump = opMode.gamepad1.y;
-                    //robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_FINAL);
+                    robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_FINAL);
                 }
                 if (dump && (nextPos > robot.DUMPER_ROTATE_SERVO_FINAL)) {
                     robot.dumperRotateServo.setPosition(nextPos);
