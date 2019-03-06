@@ -38,6 +38,7 @@ public class BoKTele
     private boolean end_game = false;
     private boolean isLiftingIntakeArm = false;
     private boolean hasMovedIntakeArm = false;
+    private int delayCountForDumper = 0;
 
     ElapsedTime intakeArmRunTime;
 
@@ -144,12 +145,21 @@ public class BoKTele
 
                 if (opMode.gamepad2.dpad_up && !liftUp) {
                     liftUp = true;
+                    currentIntakeArmPosition = 300;
                     speedCoef = robot.SPEED_COEFF_MED;
                     robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT);
-                    robot.dumperSlideMotor.setTargetPosition(robot.DUMPER_SLIDE_FINAL_POS);
-                    robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    robot.dumperSlideMotor.setPower(DUMPER_LIFT_POWER_UP);
+                    delayCountForDumper = 0;
                 }
+
+                if (liftUp) {
+                    if (delayCountForDumper == 4) {
+                        robot.dumperSlideMotor.setTargetPosition(robot.DUMPER_SLIDE_FINAL_POS);
+                        robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                        robot.dumperSlideMotor.setPower(DUMPER_LIFT_POWER_UP);
+                    } else
+                        delayCountForDumper++;
+                }
+
                 if (opMode.gamepad2.dpad_down && liftUp) {
                     //robot.plateTilt.setPosition(robot.PLATE_TILT_LOW);
                     //robot.dumperTiltServo.setPosition(robot.DUMPER_TILT_SERVO_INIT);
@@ -194,7 +204,13 @@ public class BoKTele
                 // Intake arm control
                 // TODO: add the ability to cancel the arm movement
                 if (opMode.gamepad2.a && !isLiftingIntakeArm){ // bring the arm down
-                    if(!isRunningIntakeArmPID){
+                    //Log.v("BOK", "A pressed at " + robot.intakeArmMotor.getCurrentPosition());
+                    if (isRunningIntakeArmPID && !intakeArmDown) {
+                        // cancel the up movement
+                        isRunningIntakeArmPID = false;
+                        robot.intakeMotor.setPower(-1);
+                    }
+                    if(!isRunningIntakeArmPID && !intakeArmDown) {
                         isRunningIntakeArmPID = true;
                         intakeArmDown = true;
                         endPos = 1000;
@@ -204,8 +220,13 @@ public class BoKTele
                     }
                 }
                 else if (opMode.gamepad2.y && !isLiftingIntakeArm) { // bring the arm up
+                    //Log.v("BOK", "Y pressed at " + robot.intakeArmMotor.getCurrentPosition());
                     robot.dumperRotateServo.setPosition(robot.DUMPER_RECEIVE_SERVO);
-                    if(!isRunningIntakeArmPID){
+                    if (isRunningIntakeArmPID && intakeArmDown) {
+                        // cancel the down movement
+                        isRunningIntakeArmPID = false;
+                    }
+                    if(!isRunningIntakeArmPID && intakeArmDown){
                         isRunningIntakeArmPID = true;
                         intakeArmDown = false;
                         endPos = 0;
@@ -215,7 +236,7 @@ public class BoKTele
                     }
                 }
                 if (isRunningIntakeArmPID && intakeArmDown){
-                     if(inPos < endPos) {
+                     if (inPos < endPos) {
                         inPos = robot.intakeArmMotor.getCurrentPosition();
                         double time = intakeArmRunTime.milliseconds();
                         double dT = time - lastTime;
@@ -231,12 +252,12 @@ public class BoKTele
                         lastTime = time;
                         lastPos = inPos;
                         //Log.v("BOK", "Intake arm posD " + inPos + " moving at " + powerApp);
-                    }
+                    } // if (inPos < endPos)
                     else {
                         isRunningIntakeArmPID = false;
                         currentIntakeArmPosition = 1100;
                     }
-                }
+                } // if (isRunningIntakeArmPID && intakeArmDown)
                 else if (isRunningIntakeArmPID && !intakeArmDown) {
                     if (inPos > endPos) {
                         inPos = robot.intakeArmMotor.getCurrentPosition();
@@ -254,39 +275,40 @@ public class BoKTele
                         lastTime = time;
                         lastPos = inPos;
                         //Log.v("BOK", "Intake arm posU " + inPos + " moving at " + powerApp);
-                    } else {
+                    } // if (inPos > endPos)
+                    else {
                         isRunningIntakeArmPID = false;
                         currentIntakeArmPosition = -100;
                     }
-                }
+                } // else if (isRunningIntakeArmPID && !intakeArmDown)
                 else {
+                    //Log.v("BOK", "in ELSE isLiftingIntakeArm " + isLiftingIntakeArm + " hasMovedIntakeArm " + hasMovedIntakeArm);
                     if (!isLiftingIntakeArm && hasMovedIntakeArm) {
+                        //Log.v ("BOK", "Holding at " + currentIntakeArmPosition);
                         robot.intakeArmMotor.setTargetPosition(currentIntakeArmPosition);
                         robot.intakeArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                         robot.intakeArmMotor.setPower(0.5);
                     }
                 }
 
+                //the arm is down on the floor but not extended
                 if ((opMode.gamepad2.right_stick_y > GAME_TRIGGER_DEAD_ZONE)
                         && !hasMovedIntakeArm) {
                     robot.intakeArmMotor.setPower(0.5*opMode.gamepad2.right_stick_y);
 
                 }
 
+                // use right joystick to move the arm up
                 else if ((opMode.gamepad2.right_stick_y < -GAME_TRIGGER_DEAD_ZONE)
                         && !hasMovedIntakeArm) {
                     robot.intakeArmMotor.setPower(0.2*opMode.gamepad2.right_stick_y);
 
                 }
 
-                if (isLiftingIntakeArm){
-                    //Log.v("BOK", "Setting -ve power to inA");
-                    robot.intakeArmMotor.setPower(-0.6);
-                }
-
                 if ((opMode.gamepad2.left_trigger > GAME_TRIGGER_DEAD_ZONE)
                         && !isLiftingIntakeArm) {
                     isLiftingIntakeArm = true;
+                    robot.intakeArmMotor.setPower(-0.6);
                     Log.v("BOK", "Tele: Started lifting Intake ARM");
                 }
 
