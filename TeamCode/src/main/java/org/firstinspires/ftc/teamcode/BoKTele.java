@@ -70,7 +70,7 @@ public class BoKTele
         double DUMPER_ROTATE_DECR = 0.02;
         double DUMPER_ROTATE_DECR_LOW = 0.01;
         double sorterSpeed = DUMPER_ROTATE_DECR;
-        double HANG_LIFT_POWER = 0.9;
+        double HANG_LIFT_POWER = 0.95;
 
         double nextPos = robot.DUMPER_ROTATE_SERVO_INIT;
         int currentIntakeArmPosition = 0;
@@ -105,6 +105,14 @@ public class BoKTele
                 sorterSpeed = DUMPER_ROTATE_DECR_LOW;
             }
 
+            if (opMode.gamepad1.left_bumper){
+                robot.frontRotateServo.setPosition(robot.FRONT_DUMPER_SERVO_FINAL);
+            }
+
+            if (opMode.gamepad1.right_bumper){
+                robot.frontRotateServo.setPosition(robot.FRONT_DUMPER_SERVO_MID);
+            }
+
             // GAMEPAD 2 CONTROLS
             // Left Joystick:          Intake sweeper
             // In end game, left joystick drives the hanging motor
@@ -131,6 +139,9 @@ public class BoKTele
                 robot.dumperSlideMotor.setTargetPosition(0);
                 robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 robot.dumperSlideMotor.setPower(DUMPER_LIFT_POWER_DN);
+                robot.intakeArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                robot.intakeArmMotor.setTargetPosition(-100);
+                robot.intakeArmMotor.setPower(0.5);
                 robot.intakeMotor.setPower(0); // sweeper is off
             }
 
@@ -197,8 +208,8 @@ public class BoKTele
                 if (opMode.gamepad2.right_bumper && dump) {
                     dump = false;
                     sorterSpeed = DUMPER_ROTATE_DECR;
-                    nextPos = robot.DUMPER_ROTATE_SERVO_INIT;
-                    robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT);
+                    nextPos = robot.DUMPER_RECEIVE_SERVO;
+                    robot.dumperRotateServo.setPosition(robot.DUMPER_RECEIVE_SERVO);
                 }
 
                 // Intake arm control

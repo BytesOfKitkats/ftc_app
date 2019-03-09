@@ -899,8 +899,8 @@ public abstract class BoKAutoCommon implements BoKAuto
                 if (detectBump) {
                     //Log.v("BOK", "theta x " + angles.firstAngle +
                     //      " theta y " + angles.thirdAngle);
-                    if (Math.abs(angles.secondAngle) > DETECT_BUMP_THRESHOLD) {
-                        Log.v("BOK", "theta y in if " + angles.secondAngle);
+                    if (Math.abs(angles.thirdAngle - heading) > 5) {
+                        Log.v("BOK", "theta z in if " + angles.thirdAngle);
                         break;
                     }
                 }
@@ -1207,6 +1207,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         robot.intakeArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         robot.intakeArmMotor.setPower(0.5);
         moveRamp(0.5/*power*/, 17 /*inches*/, false/*back*/, 4/*seconds*/);
+        robot.frontRotateServo.setPosition(robot.FRONT_DUMPER_SERVO_MID);
         robot.intakeArmMotor.setPower(0);
     }
 
@@ -1294,14 +1295,14 @@ public abstract class BoKAutoCommon implements BoKAuto
             // 8a: Move back till the sampling arm is between center and left minerals
             moveWithRangeSensorBack(-MOVE_POWER_LOW,
                                     DISTANCE_TO_WALL_LEFT_CUBE_INIT,
-                                    DISTANCE_TO_WALL_LEFT_CUBE_INIT + 25, 2/*seconds*/);
+                                    DISTANCE_TO_WALL_LEFT_CUBE_INIT + 25, 2.5/*seconds*/);
             // 8b: Lower the sampler arm!
             robot.samplerServo.setPosition(robot.SAMPLER_SERVO_FINAL);
             opMode.sleep(250);
             // 8c: Move past the cube
             moveWithRangeSensorBack(-MOVE_POWER_LOW,
                                     DISTANCE_TO_WALL_LEFT_CUBE_FINAL,
-                                    DISTANCE_TO_WALL_LEFT_CUBE_FINAL + 25, 2/*seconds*/);
+                                    DISTANCE_TO_WALL_LEFT_CUBE_FINAL + 25, 2.5/*seconds*/);
             // 8d: Raise the sampler arm
             robot.samplerServo.setPosition(robot.SAMPLER_SERVO_INIT);
         }
@@ -1310,7 +1311,7 @@ public abstract class BoKAutoCommon implements BoKAuto
             // 8a: Move forward till the sampling arm is between center and right minerals
             moveWithRangeSensor(MOVE_POWER_LOW,
                                 DISTANCE_TO_WALL_CENTER_CUBE_INIT,
-                                DISTANCE_TO_WALL_CENTER_CUBE_INIT + 25, 2/*seconds*/);
+                                DISTANCE_TO_WALL_CENTER_CUBE_INIT + 25, 2.5/*seconds*/);
             // 8b: Lower the sampler arm!
             robot.samplerServo.setPosition(robot.SAMPLER_SERVO_FINAL);
             opMode.sleep(250);
@@ -1330,13 +1331,13 @@ public abstract class BoKAutoCommon implements BoKAuto
             // 8a: Move forward till the sampling arm is between center and right minerals
             moveWithRangeSensor(MOVE_POWER_LOW,
                                 DISTANCE_TO_WALL_RIGHT_CUBE_INIT,
-                                DISTANCE_TO_WALL_RIGHT_CUBE_INIT + 25, 2/*seconds*/);
+                                DISTANCE_TO_WALL_RIGHT_CUBE_INIT + 25, 2.5/*seconds*/);
             // 8b: Lower the sampler arm!
             robot.samplerServo.setPosition(robot.SAMPLER_SERVO_FINAL);
             // 8c: Move forward past the cube
             moveWithRangeSensor(MOVE_POWER_LOW,
                                 DISTANCE_TO_WALL_RIGHT_CUBE_FINAL,
-                                DISTANCE_TO_WALL_RIGHT_CUBE_FINAL + 25, 2/*seconds*/);
+                                DISTANCE_TO_WALL_RIGHT_CUBE_FINAL + 25, 2.5/*seconds*/);
             // 8d: Raise the sampler arm
             robot.samplerServo.setPosition(robot.SAMPLER_SERVO_INIT);
             // Back up towards the side wall for a bit

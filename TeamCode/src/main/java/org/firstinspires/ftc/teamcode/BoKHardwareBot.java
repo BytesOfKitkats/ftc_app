@@ -52,6 +52,7 @@ public abstract class BoKHardwareBot
    private static final String SAMPLER_SERVO_NAME       = "sa";
    private static final String MARKER_SERVO_NAME        = "ma";
    private static final String DISTANCE_ROTATE_SERVO_NAME = "dsR";
+   private static final String FRONT_DUMOPER_SERVO_NAME = "fdR";
 
     // Servo positions
     protected static final double DUMPER_ROTATE_SERVO_INIT  = 0.6;
@@ -65,6 +66,9 @@ public abstract class BoKHardwareBot
     protected static final double MARKER_SERVO_FINAL        = 0.85;
     protected static final double DISTANCE_ROTATE_SERVO_INIT  = 0.5;
     protected static final double DISTANCE_ROTATE_SERVO_FINAL = 0.68;
+    protected static final double FRONT_DUMPER_SERVO_INIT     = 0.1;
+    protected static final double FRONT_DUMPER_SERVO_MID      = 0.25;
+    protected static final double FRONT_DUMPER_SERVO_FINAL    = 0.35;
 
     // Encoder positions
     protected static final int DUMPER_SLIDE_FINAL_POS    = 930;
@@ -90,6 +94,7 @@ public abstract class BoKHardwareBot
     protected Servo   markerServo;
     protected Servo   samplerServo;
     protected Servo   distanceRotateServo;
+    protected Servo   frontRotateServo;
 
     // Sensors
     protected BNO055IMU imu;
@@ -178,6 +183,11 @@ public abstract class BoKHardwareBot
             return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
         }
 
+        frontRotateServo = opMode.hardwareMap.servo.get(FRONT_DUMOPER_SERVO_NAME);
+        if (frontRotateServo == null) {
+            return BoKHardwareStatus.BOK_HARDWARE_FAILURE;
+        }
+
         // Sensors
         imu = opMode.hardwareMap.get(BNO055IMU.class, IMU_TOP);
         if(imu == null){
@@ -219,6 +229,7 @@ public abstract class BoKHardwareBot
             markerServo.setPosition(MARKER_SERVO_INIT);
             dumperRotateServo.setPosition(DUMPER_ROTATE_SERVO_INIT);
             distanceRotateServo.setPosition(DISTANCE_ROTATE_SERVO_INIT);
+            frontRotateServo.setPosition(FRONT_DUMPER_SERVO_INIT);
             hangMotor.setTargetPosition(0);
             hangMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             hangMotor.setPower(0.1);

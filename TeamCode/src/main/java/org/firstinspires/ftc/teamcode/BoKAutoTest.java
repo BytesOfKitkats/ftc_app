@@ -23,10 +23,10 @@ public class BoKAutoTest extends BoKAutoCommon {
                 false, // 4 DT motors
                 false, // Dumper lift motor & servo
                 false, // Intake arm motor & intake motor
-                false, // Hanging lift motor & servo
+                true, // Hanging lift motor & servo
                 false, // flicker servo
                 false, // marker servo
-                true, // distance sensor & servo
+                false, // distance sensor & servo
                 false,  // autonomous test
                 false}; // take picture
 
