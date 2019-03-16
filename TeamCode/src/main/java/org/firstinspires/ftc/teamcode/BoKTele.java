@@ -139,10 +139,13 @@ public class BoKTele
                 robot.dumperSlideMotor.setTargetPosition(0);
                 robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 robot.dumperSlideMotor.setPower(DUMPER_LIFT_POWER_DN);
-                robot.intakeArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 robot.intakeArmMotor.setTargetPosition(-100);
+                robot.intakeArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 robot.intakeArmMotor.setPower(0.5);
                 robot.intakeMotor.setPower(0); // sweeper is off
+                robot.hangMotor.setTargetPosition(150);
+                robot.hangMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                robot.hangMotor.setPower(0.75);
             }
 
             if (opMode.gamepad2.b && end_game) {
@@ -156,7 +159,7 @@ public class BoKTele
 
                 if (opMode.gamepad2.dpad_up && !liftUp) {
                     liftUp = true;
-                    currentIntakeArmPosition = 300;
+                    currentIntakeArmPosition = 100;
                     speedCoef = robot.SPEED_COEFF_MED;
                     robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT);
                     delayCountForDumper = 0;
@@ -312,7 +315,7 @@ public class BoKTele
                 // use right joystick to move the arm up
                 else if ((opMode.gamepad2.right_stick_y < -GAME_TRIGGER_DEAD_ZONE)
                         && !hasMovedIntakeArm) {
-                    robot.intakeArmMotor.setPower(0.2*opMode.gamepad2.right_stick_y);
+                    robot.intakeArmMotor.setPower(0.4*opMode.gamepad2.right_stick_y);
 
                 }
 
@@ -347,20 +350,24 @@ public class BoKTele
                 // Hanging lift control
                 if (opMode.gamepad2.left_stick_y < -GAME_TRIGGER_DEAD_ZONE) {
                     // Raise the dumper lift
-                    //robot.hangMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    robot.hangMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     robot.hangMotor.setPower(HANG_LIFT_POWER);
-                    //Log.v("BOK", "Hanging Lift Pos UP " +
-                    //        robot.hangMotor.getCurrentPosition());
+                    Log.v("BOK", "Hanging Lift Pos UP " +
+                            robot.hangMotor.getCurrentPosition());
                 } else if (opMode.gamepad2.left_stick_y > GAME_TRIGGER_DEAD_ZONE) {
                     // Lower the lift
-                    //robot.hangMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    robot.hangMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     robot.hangMotor.setPower(-HANG_LIFT_POWER);
-                    //Log.v("BOK", "Hanging Lift Pos DN " +
-                    //        robot.hangMotor.getCurrentPosition());
-                } else {
+                    Log.v("BOK", "Hanging Lift Pos DN " +
+                            robot.hangMotor.getCurrentPosition());
+                } else if (robot.hangMotor.getMode().equals(DcMotor.RunMode.RUN_WITHOUT_ENCODER)) {
                     robot.hangMotor.setPower(0);
                 }
+                if (hangHookRaised){
+                    robot.hangHookServo.setPosition(robot.HANG_HOOK_SERVO_INIT);
+                }
             }
+
             robot.waitForTick(robot.WAIT_PERIOD);
         }
 

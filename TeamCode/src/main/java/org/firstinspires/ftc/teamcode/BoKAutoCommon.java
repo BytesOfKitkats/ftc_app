@@ -74,7 +74,7 @@ public abstract class BoKAutoCommon implements BoKAuto
     private static final double DETECT_BUMP_THRESHOLD = 1.5;
 
     // Constants for runAuto
-    private static final double HANGLIFT_POWER = 0.75;
+    private static final double HANGLIFT_POWER = 0.95;
     //private static final double STRAFE_POWER = 0.5;
     //private static final double STRAFE_ROTATIONS = 3;
     private static final double MOVE_POWER_LOW = 0.3;
@@ -1201,6 +1201,7 @@ public abstract class BoKAutoCommon implements BoKAuto
      * Helper method to drop intake arm and extend it by moving the robot back.
      */
     protected void dropIntakeArmAndExtend() {
+        robot.intakeMotor.setPower(-1);
         moveIntakeArmPID(1000/*enc count*/, 0.5/*power*/, 0.5/*vTarget*/, 3/*seconds*/);
         // Complete the final position of the intake arm
         robot.intakeArmMotor.setTargetPosition(1200);
@@ -1209,6 +1210,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         moveRamp(0.5/*power*/, 17 /*inches*/, false/*back*/, 4/*seconds*/);
         robot.frontRotateServo.setPosition(robot.FRONT_DUMPER_SERVO_MID);
         robot.intakeArmMotor.setPower(0);
+        robot.intakeMotor.setPower(0);
     }
 
     /*
@@ -1227,12 +1229,12 @@ public abstract class BoKAutoCommon implements BoKAuto
         loc = findCube();
 
         // Step 2: Start motor for bringing the robot down (hanging lift)
-        robot.hangMotor.setTargetPosition(robot.HANG_LIFT_HIGH_POS);
-        robot.hangMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
         robot.hangMotor.setPower(HANGLIFT_POWER);
 
         runTime.reset();
-        while (opMode.opModeIsActive() && robot.hangMotor.isBusy() && (runTime.seconds() < 5)) {
+        while (opMode.opModeIsActive() && (robot.hangMotor.getCurrentPosition() < robot.HANG_LIFT_HIGH_POS)
+                && (runTime.seconds() < 5)) {
             // Do nothing while the robot is moving down
             // Log.v("BOK", "hang enc: " + robot.hangMotor.getCurrentPosition());
         }

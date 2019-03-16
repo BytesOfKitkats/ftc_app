@@ -72,7 +72,7 @@ public abstract class BoKHardwareBot
 
     // Encoder positions
     protected static final int DUMPER_SLIDE_FINAL_POS    = 930;
-    protected static final int HANG_LIFT_HIGH_POS        = 2112;  //103.6 ppr*1.33 gear*0.315"(8mm) = 1750 pulses /4"
+    protected static final int HANG_LIFT_HIGH_POS        = 6140; //537.6 ppr*0.75 gear*0.315"(8mm) = 1280 pulses/"
 
     // Sensors
     private static final String IMU_TOP = "imu";        // IMU
@@ -230,9 +230,6 @@ public abstract class BoKHardwareBot
             dumperRotateServo.setPosition(DUMPER_ROTATE_SERVO_INIT);
             distanceRotateServo.setPosition(DISTANCE_ROTATE_SERVO_INIT);
             frontRotateServo.setPosition(FRONT_DUMPER_SERVO_INIT);
-            hangMotor.setTargetPosition(0);
-            hangMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            hangMotor.setPower(0.1);
         }
         else {
             // Do nothing for Teleop so that the robot hardware does not move during
