@@ -204,6 +204,8 @@ public class BoKTele
                     //Log.v("BOK", "LEFT bumper" + nextPos);
                 }
                 if (dump && (nextPos > robot.DUMPER_ROTATE_SERVO_FINAL)) {
+                    if (nextPos < 0.3)
+                        sorterSpeed = DUMPER_ROTATE_DECR_LOW;
                     nextPos -= sorterSpeed;
                     robot.dumperRotateServo.setPosition(nextPos);
                     //Log.v("BOK", "decrement" + nextPos);
