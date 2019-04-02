@@ -8,6 +8,10 @@ import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.vuforia.CameraDevice;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+
 public class BoKAutoTest extends BoKAutoCommon {
 
     // Constructor
@@ -24,7 +28,6 @@ public class BoKAutoTest extends BoKAutoCommon {
                 false, // Dumper lift motor & servo
                 false, // Intake arm motor & intake motor
                 false, // Hanging lift motor & servo
-                false, // flicker servo
                 false, // marker servo
                 false, // distance sensor & servo
                 true,  // autonomous test
@@ -59,21 +62,15 @@ public class BoKAutoTest extends BoKAutoCommon {
             robot.dumperSlideMotor.setPower(0.1);
 
             boolean dump = false;
-            double nextPos = robot.DUMPER_ROTATE_SERVO_INIT - 0.05;
             while (opMode.opModeIsActive() && !opMode.gamepad1.x) {
                 //Log.v("BOK", "Dumper slide: " + robot.dumperSlideMotor.getCurrentPosition());
                 if (opMode.gamepad1.y && !dump) {
                     dump = opMode.gamepad1.y;
-                    robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_FINAL);
-                }
-                if (dump && (nextPos > robot.DUMPER_ROTATE_SERVO_FINAL)) {
-                    robot.dumperRotateServo.setPosition(nextPos);
-                    nextPos -= 0.02;
+                    robot.dumperGateServo.setPosition(robot.DUMPER_GATE_SERVO_FINAL);
                 }
                 if (opMode.gamepad1.b && dump) {
                     dump = false;
-                    nextPos = robot.DUMPER_ROTATE_SERVO_INIT;
-                    robot.dumperRotateServo.setPosition(robot.DUMPER_ROTATE_SERVO_INIT);
+                    robot.dumperGateServo.setPosition(robot.DUMPER_GATE_SERVO_INIT);
                 }
             }
 
@@ -95,12 +92,15 @@ public class BoKAutoTest extends BoKAutoCommon {
             // Test intake arm motor and intake motor
             opMode.telemetry.addData("Test: ", "Intake arm motor");
             opMode.telemetry.update();
-            moveIntakeArmPID(1000/*enc count*/, 0.5/*power*/, 0.5/*vTarget*/, 3/*seconds*/);
-            // Complete the final position of the intake arm
-            robot.intakeArmMotor.setTargetPosition(1200);
-            robot.intakeArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            robot.intakeArmMotor.setPower(0.5);
-            robot.intakeArmMotor.setPower(0);
+            robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_SERVO_UP);
+            robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_SERVO_UP);
+            robot.intakeSlideMotor.setTargetPosition(-800);
+            robot.intakeSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.intakeSlideMotor.setPower(0.7);
+            while (robot.intakeSlideMotor.isBusy()) {
+
+            }
+            robot.intakeSlideMotor.setPower(0);
             robot.intakeMotor.setPower(0.7);
             opMode.sleep(2000);
             robot.intakeMotor.setPower(0);
@@ -124,7 +124,6 @@ public class BoKAutoTest extends BoKAutoCommon {
 
             }
             robot.hangMotor.setPower(0);
-            robot.hangHookServo.setPosition(robot.HANG_HOOK_SERVO_FINAL);
             opMode.telemetry.addData("Test: ", "Moving hanging complete");
             opMode.telemetry.update();
             opMode.sleep(1000);
@@ -134,19 +133,6 @@ public class BoKAutoTest extends BoKAutoCommon {
         }
 
         if (arrayTests[4] && opMode.opModeIsActive()) {
-            // Test flicker servo
-            opMode.telemetry.addData("Test: ", "Flicker servo");
-            opMode.telemetry.update();
-            robot.samplerServo.setPosition(robot.SAMPLER_SERVO_FINAL);
-            opMode.sleep(500);
-            robot.samplerServo.setPosition(robot.SAMPLER_SERVO_INIT);
-            opMode.sleep(1000);
-        }
-
-        while (opMode.opModeIsActive() && arrayTests[5] && !opMode.gamepad1.a) {
-        }
-
-        if (arrayTests[5] && opMode.opModeIsActive()) {
             // Test marker servo
             opMode.telemetry.addData("Test: ", "Marker servo");
             opMode.telemetry.update();
@@ -154,10 +140,10 @@ public class BoKAutoTest extends BoKAutoCommon {
             opMode.sleep(1000);
         }
 
-        while (opMode.opModeIsActive() && arrayTests[6] && !opMode.gamepad1.a) {
+        while (opMode.opModeIsActive() && arrayTests[5] && !opMode.gamepad1.a) {
         }
 
-        if (arrayTests[6] && opMode.opModeIsActive()) {
+        if (arrayTests[5] && opMode.opModeIsActive()) {
             // Test sensor servo & sensor
             opMode.telemetry.addData("Test: ", "Distance sensor");
             opMode.telemetry.update();
@@ -177,35 +163,43 @@ public class BoKAutoTest extends BoKAutoCommon {
                 opMode.telemetry.addData("Distance: ", dist);
                 opMode.telemetry.update();
             }
-            opMode.sleep(1000);
 
         }
         opMode.telemetry.addData("Test: ", "All tests complete");
         opMode.telemetry.update();
 
+        while (opMode.opModeIsActive() && arrayTests[6] && !opMode.gamepad1.a) {
+        }
+
+        if (arrayTests[6] && opMode.opModeIsActive()) {
+            // Autonomous tests
+            //moveRamp(0.5, 24/*inches*/, true/*forward*/, 3/*seconds*/);
+            //gyroTurn(DT_TURN_SPEED_HIGH, 0, 90, DT_TURN_THRESHOLD_LOW, false, false, 4);
+
+            /*strafe(0.5, 3, false, 6);
+            strafe(0.5, 3, true, 6);
+            opMode.sleep(2000);
+            strafeRamp(0.5, 3, false, 6);
+            strafeRamp(0.5, 3, true, 6);*/
+
+            //dropIntakeArmAndExtend();
+            //followHeadingPIDBack(0, -0.3, 30, false, 6);
+            //followHeadingPID(0, 0.5, 35, 45, true, 5);
+            DumpMineral(BoKAutoCubeLocation.BOK_CUBE_RIGHT);
+            /*
+            robot.hangMotor.setTargetPosition(-robot.HANG_LIFT_HIGH_POS+25);
+            robot.hangMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.hangMotor.setPower(0.95);
+            while (opMode.opModeIsActive() && robot.hangMotor.isBusy()) {
+                Log.v("BOK", "hang motor pos " + robot.hangMotor.getCurrentPosition());
+            }
+            robot.hangMotor.setPower(0);*/
+        }
+
         while (opMode.opModeIsActive() && arrayTests[7] && !opMode.gamepad1.a) {
         }
 
         if (arrayTests[7] && opMode.opModeIsActive()) {
-            // Autonomous tests
-            //robot.moveIntakeArmPID(400, 0.25, 0.2, 10);
-            //gyroTurn(DT_TURN_SPEED_LOW, 0, 45, DT_TURN_THRESHOLD_LOW, false, false, 4);
-
-            //strafe(0.5, 3, false, 6);
-            //dropIntakeArmAndExtend();
-            //followHeadingPIDBack(0, -0.3, 30, false, 6);
-            //followHeadingPID(0, 0.5, 35, 45, true, 5);
-            robot.hangMotor.setPower(0.95);
-            while (opMode.opModeIsActive() && (robot.hangMotor.getCurrentPosition() < robot.HANG_LIFT_HIGH_POS)) {
-                Log.v("BOK", "hang motor pos " + robot.hangMotor.getCurrentPosition());
-            }
-            robot.hangMotor.setPower(0);
-        }
-
-        while (opMode.opModeIsActive() && arrayTests[8] && !opMode.gamepad1.a) {
-        }
-
-        if (arrayTests[8] && opMode.opModeIsActive()) {
 
             // CameraDevice.getInstance().setFlashTorchMode(true);
 
@@ -219,6 +213,6 @@ public class BoKAutoTest extends BoKAutoCommon {
                 }
                 x = opMode.gamepad1.x;
             }
-        } // arrayTests[8]
+        } // arrayTests[7]
     }
 }
