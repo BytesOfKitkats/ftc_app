@@ -933,6 +933,7 @@ public abstract class BoKAutoCommon implements BoKAuto
                                                     double power,
                                                     double distTarget,
                                                     boolean detectBump,
+                                                    boolean atCrater,
                                                     double waitForSec)
     {
         double angle, error, diffError, turn, speedL, speedR,
@@ -940,7 +941,8 @@ public abstract class BoKAutoCommon implements BoKAuto
         //String logString = "dTime,ang,err,sum,last,diff,turn,speedL,speedR\n";
         double Kp = 0.1, Ki = 0, Kd = 0; // Ki = 0.165; Kd = 0.093;
         runTime.reset();
-        double dist = robot.getDistanceCM(robot.distanceBack, distTarget+50, 0.25);
+        double maxDist = atCrater ? distTarget + 50: distTarget + 100;
+        double dist = robot.getDistanceCM(robot.distanceBack, maxDist, 0.25);
         Log.v("BOK", "followHeadingPIDWithDistanceBack: heading: " + heading + ", d: " + dist);
 
         while (opMode.opModeIsActive() && (runTime.seconds() < waitForSec)) {
@@ -977,7 +979,7 @@ public abstract class BoKAutoCommon implements BoKAuto
                 //             " dist " + String.format("%.2f", dist));
                 lastError = error;
                 lastTime = currTime;
-                dist = robot.getDistanceCM(robot.distanceBack, distTarget+50, 0.25);
+                dist = robot.getDistanceCM(robot.distanceBack, maxDist, 0.25);
                 if (detectBump) {
                     if (angles.firstAngle < DETECT_BUMP_THRESHOLD) {
                         Log.v("BOK", "theta x " + angles.firstAngle);
@@ -990,6 +992,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         if (runTime.seconds() >= waitForSec) {
             Log.v("BOK", "followHeadingPIDWithDistanceBack timed out!");
         }
+        Log.v("BOK", "Distance at end of followHeadingPIDWithDistanceBack " + dist);
         /*
         File file = AppUtil.getInstance().getSettingsFile("BoKGyroDataFwdDist.csv");
         ReadWriteFile.writeFile(file, logString);
@@ -1276,22 +1279,14 @@ public abstract class BoKAutoCommon implements BoKAuto
                 DT_TURN_THRESHOLD_LOW, false, false, 1);
     }*/
 
-    protected void transferMineral(){
-        robot.dumperGateServo.setPosition(robot.DUMPER_GATE_SERVO_INIT);
-        robot.intakeMotor.setPower(1);
-        robot.intakeGateServo.setPosition(robot.INTAKE_GATE_SERVO_OPEN);
-        runTime.reset();
-        while (opMode.opModeIsActive() && (runTime.seconds() < 1)){}
-        robot.intakeMotor.setPower(0);
-    }
-
-    protected void DumpMineral(BoKAutoCubeLocation loc)
+    protected void DumpMineral(BoKAutoCubeLocation loc, boolean atCrater)
     {
         // Raise the dumper slide
         robot.dumperSlideMotor.setTargetPosition(1120);
         robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         robot.dumperSlideMotor.setPower(1);
-        while (robot.dumperSlideMotor.isBusy()){
+        runTime.reset();
+        while (robot.dumperSlideMotor.isBusy() && (runTime.seconds() < 1.5)){
             // Log.v("BOK", "Dumper pos up " + robot.dumperSlideMotor.getCurrentPosition());
         }
 
@@ -1301,16 +1296,25 @@ public abstract class BoKAutoCommon implements BoKAuto
         int distMoveBwd = 2, distMoveFwd = 5;
         switch (loc) {
             case BOK_CUBE_CENTER:
-                distMoveBwd = 5;
+                if (atCrater)
+                    distMoveBwd = 5;
+                else {
+                    distMoveBwd = 2;
+                    distMoveFwd = 2;
+                }
                 break;
             case BOK_CUBE_LEFT:
+                distMoveBwd = 2;
                 distMoveFwd = 2;
                 break;
             case BOK_CUBE_RIGHT:
+                distMoveFwd = 3;
                 break;
         }
-        move(0.5, 0.5, distMoveBwd, false, 2);
-        move(0.5, 0.5, distMoveFwd, true, 2);
+        if (distMoveBwd != 0)
+            move(0.5, 0.5, distMoveBwd, false, 2);
+        if (distMoveFwd != 0)
+            move(0.5, 0.5, distMoveFwd, true, 2);
 
         // Close the intake gate servo
         robot.intakeGateServo.setPosition(robot.INTAKE_GATE_SERVO_CLOSED);
@@ -1369,19 +1373,22 @@ public abstract class BoKAutoCommon implements BoKAuto
 
         // Step 3: reorient robot and move backward a bit
         gyroTurn(DT_TURN_SPEED_LOW, 0, 0, DT_TURN_THRESHOLD_LOW, false, false, 2/*second*/);
+        Log.v("BOK", "Dist to wall after turn " + robot.getDistanceCM(robot.distanceBack, 200, 0.25));
         //opMode.sleep(250);
         moveRamp(MOVE_POWER_LOW, 2/*inches*/, false/*forward*/, 2/*seconds*/);
 
         // Strafe left about 2 inches
         strafe(0.35/*power*/, 0.35/*rotatiions*/, false, 2/*seconds*/);
-
         //Log.v("BOK", "Strafe completed in " +
         //        String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));
 
         // Step 4: Point the distance sensor so that it is perpendicular to the footprint picture:
         // RED Crater; or the galaxy picture: Red Depot. For Blue Crater, we are pointing at the
         // rover picture & for Blue Depot, we are pointing to the crater picture.
-        robot.distanceRotateServo.setPosition(robot.DISTANCE_ROTATE_SERVO_FINAL);
+
+        for (int i = 0; i < 5; i++) {
+            Log.v("BOK", "Dist to wall after strafe " + robot.getDistanceCM(robot.distanceBack, 150, 0.25));
+        }
 
         Log.v("BOK", "Angle at end " + robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
                 AxesOrder.XYZ,
@@ -1415,15 +1422,15 @@ public abstract class BoKAutoCommon implements BoKAuto
         // Step 6: complete the sampling
         if (loc == BoKAutoCubeLocation.BOK_CUBE_LEFT) {
             // Turn
-            gyroTurn(DT_TURN_SPEED_HIGH, 90, 117, DT_TURN_THRESHOLD_HIGH, false, false, 2);
+            gyroTurn(DT_TURN_SPEED_HIGH, 90, 105, DT_TURN_THRESHOLD_HIGH, false, false, 2);
 
             // Start the intake (a) intake motor, (b) lower the intake arm
             StartIntake();
-            opMode.sleep(100);
 
-            robot.intakeSlideMotor.setTargetPosition(-350);
-            while (robot.intakeSlideMotor.isBusy()) {}
-            opMode.sleep(250);
+            move(0.5, 0.5, 2, true, 2);
+            gyroTurn(DT_TURN_SPEED_LOW, 105, 120, DT_TURN_THRESHOLD_LOW, false, false, 2);
+            move(0.5, 0.5, 5, true, 2);
+
             // Raise the intake arm
             RaiseIntakeArm();
 
@@ -1431,14 +1438,13 @@ public abstract class BoKAutoCommon implements BoKAuto
             RetractIntakeArmAndOpenGate();
 
             // Turn slightly to the left, move forward
-            gyroTurn(DT_TURN_SPEED_HIGH, 117, 85, DT_TURN_THRESHOLD_LOW, false, false, 2);
-            move(0.5, 0.5, 10, true, 2);
+            double headingForDump = atCrater ? 90 : 100;
+            gyroTurn(DT_TURN_SPEED_LOW, 117, headingForDump, DT_TURN_THRESHOLD_LOW, false, false, 2);
+            move(0.5, 0.5, 2, true, 2);
 
             // Dump the collected cube into the cargo hold of the lander
-            DumpMineral(loc);
-
-            // Move the robot back before turning right, so that we don't hit the left sphere
-            moveRamp(0.5, 5, false, 3);
+            DumpMineral(loc, atCrater);
+            moveRamp(0.5, 2, false, 3);
         } else if (loc == BoKAutoCubeLocation.BOK_CUBE_CENTER) {
             Log.v("BOK", "Cube on center");
             // Strafe to the right about 2 inches
@@ -1461,39 +1467,41 @@ public abstract class BoKAutoCommon implements BoKAuto
             RetractIntakeArmAndOpenGate();
 
             // Dump the collected cube into the cargo hold of the lander
-            DumpMineral(loc);
+            DumpMineral(loc, atCrater);
 
             // Move the robot back before turning right, so that we don't hit the left sphere
             moveRamp(0.5, 3, false, 3);
         } else { // loc == BoKAutoCubeLocation.BOK_CUBE_RIGHT
             Log.v("BOK", "Cube on right");
-            gyroTurn(DT_TURN_SPEED_HIGH, 90, 48, DT_TURN_THRESHOLD_HIGH, false, false, 2);
+            gyroTurn(DT_TURN_SPEED_HIGH, 90, 57, DT_TURN_THRESHOLD_HIGH, false, false, 2);
 
-            robot.intakeMotor.setPower(1);
+            // Start the intake (a) intake motor, (b) lower the intake arm
+            StartIntake();
+
             robot.intakeSlideMotor.setTargetPosition(-350);
             robot.intakeSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             robot.intakeSlideMotor.setPower(0.95);
-            while (robot.intakeSlideMotor.isBusy()) {
-            }
-            robot.intakeSlideMotor.setPower(0);
-            robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_SERVO_DOWN);
-            robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_SERVO_DOWN);
-            opMode.sleep(100);
-            move(0.5, 0.5, 5, true, 2);
-            robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_SERVO_UP);
-            robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_SERVO_UP);
-            gyroTurn(DT_TURN_SPEED_HIGH, 48, 75 /*80*/, DT_TURN_THRESHOLD_LOW, false, false, 3);
+            while (robot.intakeSlideMotor.isBusy()) { }
 
-            robot.intakeMotor.setPower(1);
-            robot.intakeSlideMotor.setTargetPosition(-80);
-            robot.intakeSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            robot.intakeSlideMotor.setPower(0.5);
-            while (robot.intakeSlideMotor.isBusy()) {
-            }
-            robot.intakeGateServo.setPosition(robot.INTAKE_GATE_SERVO_OPEN);
-            opMode.sleep(500);
-            robot.intakeMotor.setPower(0);
-            DumpMineral(loc);
+            gyroTurn(DT_TURN_SPEED_LOW, 60, 42, DT_TURN_THRESHOLD_LOW, false, false, 2);
+            move(0.5, 0.5, 5, true, 2);
+
+            opMode.sleep(250);
+            // Raise the intake arm
+            RaiseIntakeArm();
+
+            // Retract the intake arm
+            RetractIntakeArmAndOpenGate();
+
+            double angleBeforeDump = atCrater ? 75 : 85;
+            gyroTurn(DT_TURN_SPEED_HIGH, 48, angleBeforeDump,
+                    DT_TURN_THRESHOLD_LOW, false, false, 3);
+            move(0.5, 0.5, 2, true, 2);
+
+            DumpMineral(loc, atCrater);
+
+            if (!atCrater)
+                move(0.5, 0.5, 2, false, 2);
         }
 
         Log.v("BOK", "Sampling completed in " +
@@ -1505,11 +1513,11 @@ public abstract class BoKAutoCommon implements BoKAuto
         followHeadingPIDWithDistanceBack(0 /*heading*/,
                 -0.6,
                 DISTANCE_TO_WALL_BEFORE_TURN,
-                false/*detectBump*/, 3/*seconds*/);
+                false/*detectBump*/, atCrater, 3/*seconds*/);
         robot.distanceRotateServo.setPosition(robot.DISTANCE_ROTATE_SERVO_INIT);
 
         /* heading for wall pointing slightly away from the mineral of our partner */
-        double headingForBackWall = (atCrater) ? 42 : -130;
+        double headingForBackWall = (atCrater) ? 42 : -132;
         double headingForMarker = (atCrater) ? 45 : -135;
         // Step 10: Turn towards the back wall
         if (atCrater)
@@ -1524,7 +1532,9 @@ public abstract class BoKAutoCommon implements BoKAuto
         Log.v("BOK", "Turning to back wall completed in " +
               String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));
         // Move to target distance of 60cm
-        followHeadingPIDWithDistanceBack(headingForBackWall, -MOVE_POWER_HIGH, 60, false, 7/*sec*/);
+        double speed = atCrater ? -MOVE_POWER_HIGH : -0.7;
+        followHeadingPIDWithDistanceBack(headingForBackWall, speed, 60,
+                false, atCrater, 7/*sec*/);
 
         // Once distance reached, turn robot
 
@@ -1541,15 +1551,15 @@ public abstract class BoKAutoCommon implements BoKAuto
         double distToMoveBack = Math.max(distToWall + 10, 60);
         if (atCrater) {
             // Turn away from our sampling sphere
-            gyroTurn(DT_TURN_SPEED_LOW, 40, 48, DT_TURN_THRESHOLD_LOW, false, false, 3/*seconds*/);
+            gyroTurn(DT_TURN_SPEED_LOW, 40, 46, DT_TURN_THRESHOLD_LOW, false, false, 3/*seconds*/);
             // Move forwards distToWall + 10 inches, detect bump with the crater wall
             followHeadingPID(48, MOVE_POWER_HIGH + 0.1, 0.8*distToMoveBack, distToMoveBack, true, 7 /*seconds*/);
         }
         else {
             // Turn away from our sampling sphere
-            gyroTurn(DT_TURN_SPEED_LOW, -130, -135, DT_TURN_THRESHOLD_LOW, false, false, 3/*sec*/);
+            gyroTurn(DT_TURN_SPEED_LOW, -130, -136, DT_TURN_THRESHOLD_LOW, false, false, 3/*sec*/);
             // Move forwards distToWall + 10 inches, detect bump with the crater wall
-            followHeadingPID(-135, MOVE_POWER_HIGH, 0.8*distToMoveBack, distToMoveBack, true, 7 /*seconds*/);
+            followHeadingPID(-135, MOVE_POWER_HIGH + 0.2, 0.8*distToMoveBack, distToMoveBack, true, 7 /*seconds*/);
         }
         Log.v("BOK", "Moving after arm in " +
                 String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));

@@ -55,21 +55,21 @@ public abstract class BoKHardwareBot
     private static final String DISTANCE_ROTATE_SERVO_NAME = "dsR";
 
     // Servo positions
-    protected static final double DUMPER_GATE_SERVO_INIT  = 0.0;
+    protected static final double DUMPER_GATE_SERVO_INIT  = 0;
     protected static final double DUMPER_GATE_SERVO_FINAL = 0.9;
     protected static final double INTAKE_GATE_SERVO_CLOSED  = 0.82;
     protected static final double INTAKE_GATE_SERVO_OPEN = 0.4;
     protected static final double INTAKE_LEFT_SERVO_DOWN  = 0.95;
-    protected static final double INTAKE_LEFT_SERVO_MID  = 0.81;
-    protected static final double INTAKE_LEFT_SERVO_UP = 0.6;
-    protected static final double INTAKE_LEFT_SERVO_INIT = 0.3333;
+    protected static final double INTAKE_LEFT_SERVO_MID  = 0.754;
+    protected static final double INTAKE_LEFT_SERVO_UP = 0.433;
+    protected static final double INTAKE_LEFT_SERVO_INIT = 0.167;
     protected static final double INTAKE_RIGHT_SERVO_DOWN  = 0.05;
-    protected static final double INTAKE_RIGHT_SERVO_MID  = 0.19;
-    protected static final double INTAKE_RIGHT_SERVO_UP = 0.4;
-    protected static final double INTAKE_RIGHT_SERVO_INIT = 0.6667;
-    protected static final double MARKER_SERVO_INIT         = 0.38;
+    protected static final double INTAKE_RIGHT_SERVO_MID  = 0.246;
+    protected static final double INTAKE_RIGHT_SERVO_UP = 0.567;
+    protected static final double INTAKE_RIGHT_SERVO_INIT = 0.833;
+    protected static final double MARKER_SERVO_INIT         = 0.31;
     protected static final double MARKER_SERVO_FINAL        = 0.85;
-    protected static final double DISTANCE_ROTATE_SERVO_INIT  = 0.5;
+    protected static final double DISTANCE_ROTATE_SERVO_INIT  = 0.52;
     protected static final double DISTANCE_ROTATE_SERVO_FINAL = 0.68;
 
     // Encoder positions
@@ -236,7 +236,7 @@ public abstract class BoKHardwareBot
         if (!opMode.getClass().getName().contains("Tele")) {
             markerServo.setPosition(MARKER_SERVO_INIT);
             dumperGateServo.setPosition(DUMPER_GATE_SERVO_INIT);
-            distanceRotateServo.setPosition(DISTANCE_ROTATE_SERVO_INIT);
+            distanceRotateServo.setPosition(DISTANCE_ROTATE_SERVO_FINAL);
             intakeLeftServo.setPosition(INTAKE_LEFT_SERVO_INIT);
             intakeRightServo.setPosition(INTAKE_RIGHT_SERVO_INIT);
             intakeGateServo.setPosition(INTAKE_GATE_SERVO_CLOSED);
@@ -303,7 +303,7 @@ public abstract class BoKHardwareBot
     protected abstract int getRFEncCount();
 
     // Teleop driving
-    protected abstract void moveRobotTele(double speedCoef);
+    protected abstract void moveRobotTele(double speedCoef, boolean endGame);
 
     /*
      *

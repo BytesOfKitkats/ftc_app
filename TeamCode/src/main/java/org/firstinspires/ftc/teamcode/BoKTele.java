@@ -73,6 +73,7 @@ public class BoKTele
         // Initialize intake box to up
         boolean gateOpen = false;
         boolean bPressed = false, yPressed = false, aPressed = false;
+        int dumperGateCount = 0;
 
         // Initialization after Play is pressed!
         robot.dumperGateServo.setPosition(robot.DUMPER_GATE_SERVO_INIT);
@@ -133,6 +134,8 @@ public class BoKTele
 
             if (opMode.gamepad2.b && end_game) {
                 end_game = false;
+                robot.hangMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                robot.hangMotor.setPower(0);
 
                 Log.v("BOK", "End Game reverted");
             }
@@ -178,7 +181,7 @@ public class BoKTele
                         }
                         if (!liftSlow && liftUpInit &&
                                 (robot.dumperSlideMotor.getCurrentPosition() < DUMPER_LIFT_MID_POS)) {
-                            robot.dumperSlideMotor.setPower(0.8);
+                            robot.dumperSlideMotor.setPower(0.5);
                             liftSlow = true;
                         }
                     }
@@ -191,11 +194,25 @@ public class BoKTele
                     gateOpen = true;
                 }
 
+                if ((opMode.gamepad2.right_trigger > GAME_TRIGGER_DEAD_ZONE) && dump) {
+                    robot.dumperGateServo.setPosition(robot.DUMPER_GATE_SERVO_INIT);
+                    gateOpen = false;
+                    dumperGateCount = 1;
+                }
+
+                if (dump && (dumperGateCount > 0)) {
+                    if (++ dumperGateCount > 5) {
+                        dumperGateCount  = 0;
+                        robot.dumperGateServo.setPosition(robot.DUMPER_GATE_SERVO_FINAL);
+                        gateOpen = true;
+                    }
+                }
+
                 // Intake box control
                 if (opMode.gamepad2.a /*&& !intakeBoxUp*/ && !aPressed) {
                     robot.intakeGateServo.setPosition(robot.INTAKE_GATE_SERVO_CLOSED);
-                    robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_SERVO_DOWN);
-                    robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_SERVO_DOWN);
+                    robot.intakeRightServo.setPosition(0.15);
+                    robot.intakeLeftServo.setPosition(0.85);
                     aPressed = true;
                     yPressed = false;
                     bPressed = false;
@@ -276,7 +293,7 @@ public class BoKTele
 
     private void moveRobot()
     {
-        robot.moveRobotTele(speedCoef);
+        robot.moveRobotTele(speedCoef, end_game);
     }
 
     private void moveIntake()
