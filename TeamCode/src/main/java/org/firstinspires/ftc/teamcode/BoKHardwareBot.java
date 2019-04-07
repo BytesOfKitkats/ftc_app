@@ -57,7 +57,7 @@ public abstract class BoKHardwareBot
     // Servo positions
     protected static final double DUMPER_ROTATE_SERVO_INIT  = 0.6;
     protected static final double DUMPER_RECEIVE_SERVO      = 0.51;
-    protected static final double DUMPER_ROTATE_SERVO_FINAL = 0.0;
+    protected static final double DUMPER_ROTATE_SERVO_FINAL = 0.21;
     protected static final double HANG_HOOK_SERVO_INIT      = 0.68;
     protected static final double HANG_HOOK_SERVO_FINAL     = 0.07;
     protected static final double SAMPLER_SERVO_INIT        = 0.5;
