@@ -178,7 +178,7 @@ public class BoKTele
                         robot.dumperSlideMotor.setPower(DUMPER_LIFT_POWER_HOLD);
                     }
                     if (!liftUp) {
-                        if ((robot.dumperSlideMotor.getCurrentPosition() < 600) && gateOpen) {
+                        if ((robot.dumperSlideMotor.getCurrentPosition() < 900) && gateOpen) {
                             robot.dumperGateServo.setPosition(robot.DUMPER_GATE_SERVO_INIT);
                             gateOpen = false;
                         }
@@ -198,7 +198,7 @@ public class BoKTele
                 }
 
                 if ((opMode.gamepad2.right_trigger > GAME_TRIGGER_DEAD_ZONE) && dump) {
-                    robot.dumperGateServo.setPosition(robot.DUMPER_GATE_SERVO_INIT);
+                    robot.dumperGateServo.setPosition(robot.DUMPER_GATE_SERVO_INIT-0.1);
                     gateOpen = false;
                     dumperGateCount = 1;
                 }
