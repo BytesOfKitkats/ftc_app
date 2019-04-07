@@ -55,7 +55,7 @@ public abstract class BoKHardwareBot
     private static final String DISTANCE_ROTATE_SERVO_NAME = "dsR";
 
     // Servo positions
-    protected static final double DUMPER_GATE_SERVO_INIT  = 0;
+    protected static final double DUMPER_GATE_SERVO_INIT  = 0.05;
     protected static final double DUMPER_GATE_SERVO_FINAL = 0.9;
     protected static final double INTAKE_GATE_SERVO_CLOSED  = 0.82;
     protected static final double INTAKE_GATE_SERVO_OPEN = 0.4;
@@ -303,7 +303,7 @@ public abstract class BoKHardwareBot
     protected abstract int getRFEncCount();
 
     // Teleop driving
-    protected abstract void moveRobotTele(double speedCoef, boolean endGame);
+    protected abstract void moveRobotTele(double speedCoef, double turnCoef, boolean endGame);
 
     /*
      *

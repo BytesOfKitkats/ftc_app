@@ -1226,7 +1226,6 @@ public abstract class BoKAutoCommon implements BoKAuto
     {
         robot.markerServo.setPosition(robot.MARKER_SERVO_FINAL);
         opMode.sleep(500);
-        robot.markerServo.setPosition(robot.MARKER_SERVO_INIT);
     }
 
     /*
@@ -1565,14 +1564,14 @@ public abstract class BoKAutoCommon implements BoKAuto
                 String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));
    }
 
-   private void StartIntake()
+   protected void StartIntake()
    {
        // Start the intake
        // (a) intake motor
        robot.intakeMotor.setPower(1);
        // (b) lower the intake arm
-       robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_SERVO_DOWN + 0.03);
-       robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_SERVO_DOWN - 0.03);
+       robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_SERVO_DOWN-0.05);
+       robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_SERVO_DOWN+0.05);
    }
 
    private void RaiseIntakeArm()

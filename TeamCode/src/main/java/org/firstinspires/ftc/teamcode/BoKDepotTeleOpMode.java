@@ -8,8 +8,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
  * Registers the opMode with the driver station.
  * It uses BoKMecanumDT and BoKTele objects
  */
-@TeleOp(name="BOK TELEOP", group="BoKTele")
-public class BoKTeleOpMode extends LinearOpMode
+@TeleOp(name="BOK TELEOP DEPOT", group="BoKTele")
+public class BoKDepotTeleOpMode extends LinearOpMode
 {
     @Override
     public void runOpMode()  throws InterruptedException
@@ -50,7 +50,7 @@ public class BoKTeleOpMode extends LinearOpMode
         // Run the teleop operation, if hardware and software is initialized
         // else do nothing
         if (status && opModeIsActive()) {
-            opMode.runSoftware(true);
+            opMode.runSoftware(false);
         }
     }
 }

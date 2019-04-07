@@ -185,10 +185,6 @@ public class BoKAutoTest extends BoKAutoCommon {
             //dropIntakeArmAndExtend();
             //followHeadingPIDBack(0, -0.3, 30, false, 6);
             //followHeadingPID(0, 0.5, 35, 45, true, 5);
-            robot.distanceRotateServo.setPosition(robot.DISTANCE_ROTATE_SERVO_INIT);
-            opMode.sleep(250);
-            followHeadingPIDWithDistanceBack(2, -0.7, 60,
-                    false, false, 7/*sec*/);
             /*
             robot.hangMotor.setTargetPosition(-robot.HANG_LIFT_HIGH_POS+25);
             robot.hangMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);

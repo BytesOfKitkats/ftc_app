@@ -32,6 +32,7 @@ public class BoKTele
     private BoKHardwareBot robot;
     private LinearOpMode opMode;
     private double speedCoef = robot.SPEED_COEFF_FAST;
+    private double turnCoef = robot.SPEED_COEFF_TURN;
     private boolean end_game = false;
     private double holdIntakeSpeed = 0;
     private boolean isHoldingSpeed = false;
@@ -57,7 +58,7 @@ public class BoKTele
         return BoKTeleStatus.BOK_TELE_SUCCESS;
     }
 
-    public BoKTeleStatus runSoftware()
+    public BoKTeleStatus runSoftware(boolean atCrater)
     {
         // Constants
         double DUMPER_LIFT_POWER_UP = 0.95;
@@ -80,6 +81,8 @@ public class BoKTele
         robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_SERVO_UP);
         robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_SERVO_UP);
         robot.intakeGateServo.setPosition(robot.INTAKE_GATE_SERVO_CLOSED);
+        if (!atCrater)
+            turnCoef *= 2;
 
         // run until the end of the match (driver presses STOP)
         while (opMode.opModeIsActive()) {
@@ -293,7 +296,7 @@ public class BoKTele
 
     private void moveRobot()
     {
-        robot.moveRobotTele(speedCoef, end_game);
+        robot.moveRobotTele(speedCoef, turnCoef, end_game);
     }
 
     private void moveIntake()
