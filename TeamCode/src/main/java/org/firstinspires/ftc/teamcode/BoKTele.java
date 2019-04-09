@@ -32,7 +32,7 @@ public class BoKTele
     private BoKHardwareBot robot;
     private LinearOpMode opMode;
     private double speedCoef = robot.SPEED_COEFF_FAST;
-    private double turnCoef = robot.SPEED_COEFF_TURN;
+    private double turnCoef = robot.SPEED_COEFF_TURN_FAST;
     private boolean end_game = false;
     private double holdIntakeSpeed = 0;
     private boolean isHoldingSpeed = false;
@@ -74,6 +74,9 @@ public class BoKTele
         // Initialize intake box to up
         boolean gateOpen = false;
         boolean bPressed = false, yPressed = false, aPressed = false;
+        boolean left_trigger_pressed = false;
+        int intakeZero = -10;
+        boolean resetIntake = false;
         int dumperGateCount = 0;
 
         // Initialization after Play is pressed!
@@ -151,6 +154,9 @@ public class BoKTele
                     liftUpInit = true;
                     dump = false;
                     speedCoef = robot.SPEED_COEFF_MED;
+                    turnCoef = robot.SPEED_COEFF_TURN;
+                    robot.intakeLeftServo.setPosition(0.63);
+                    robot.intakeRightServo.setPosition(0.27);
                     robot.dumperGateServo.setPosition(robot.DUMPER_GATE_SERVO_INIT);
                     robot.intakeMotor.setPower(0);
                     robot.dumperSlideMotor.setTargetPosition(robot.DUMPER_SLIDE_FINAL_POS);
@@ -160,6 +166,7 @@ public class BoKTele
 
                 else if (opMode.gamepad2.dpad_down && liftUp) {
                     speedCoef = robot.SPEED_COEFF_FAST;
+                    turnCoef = robot.SPEED_COEFF_TURN_FAST;
                     robot.dumperSlideMotor.setTargetPosition(0);
                     robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     robot.dumperSlideMotor.setPower(DUMPER_LIFT_POWER_DN);
@@ -214,8 +221,8 @@ public class BoKTele
                 // Intake box control
                 if (opMode.gamepad2.a /*&& !intakeBoxUp*/ && !aPressed) {
                     robot.intakeGateServo.setPosition(robot.INTAKE_GATE_SERVO_CLOSED);
-                    robot.intakeRightServo.setPosition(0.15);
-                    robot.intakeLeftServo.setPosition(0.85);
+                    robot.intakeRightServo.setPosition(0.1);
+                    robot.intakeLeftServo.setPosition(0.9);
                     aPressed = true;
                     yPressed = false;
                     bPressed = false;
@@ -244,29 +251,49 @@ public class BoKTele
                     robot.intakeGateServo.setPosition(robot.INTAKE_GATE_SERVO_OPEN);
                 }
 
+                if (opMode.gamepad1.left_bumper && !resetIntake) {
+                    intakeZero = 0;
+                    robot.intakeSlideMotor.setPower(0);
+                    robot.intakeSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    robot.intakeSlideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    resetIntake = true;
+                }
+
                 // Intake arm control
                 if(opMode.gamepad2.left_stick_y > 0.2){
                     // Go back slowly
+                    if (left_trigger_pressed) {
+                        left_trigger_pressed = false;
+                        robot.intakeSlideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    }
                     robot.intakeSlideMotor.setPower(opMode.gamepad2.left_stick_y*0.7);
                 }
                 else if(opMode.gamepad2.left_stick_y < -0.2){
                     // Go forward
-                    robot.intakeSlideMotor.setPower(opMode.gamepad2.left_stick_y);
+                    if (left_trigger_pressed) {
+                        left_trigger_pressed = false;
+                        robot.intakeSlideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    }
+                    robot.intakeSlideMotor.setPower(Math.pow(opMode.gamepad2.left_stick_y,3));
                     Log.v("BOK", "Slide enc " + robot.intakeSlideMotor.getCurrentPosition());
                 }
-                else if (opMode.gamepad2.left_trigger > GAME_TRIGGER_DEAD_ZONE) {
-                    robot.intakeSlideMotor.setTargetPosition(-10/*TODO change*/);
+                else if (!left_trigger_pressed &&
+                        (opMode.gamepad2.left_trigger > GAME_TRIGGER_DEAD_ZONE)) {
+                    left_trigger_pressed = true;
+                    resetIntake = false;
+                    robot.intakeSlideMotor.setTargetPosition(intakeZero);
                     robot.intakeSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     robot.intakeSlideMotor.setPower(0.7);
                     robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_SERVO_UP);
                     robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_SERVO_UP);
+
                 }
                 else if (!robot.intakeSlideMotor.getMode().equals(DcMotor.RunMode.RUN_TO_POSITION))
                     robot.intakeSlideMotor.setPower(0);
-                else if (!robot.intakeSlideMotor.isBusy()) {
-                    robot.intakeSlideMotor.setPower(0);
-                    robot.intakeSlideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                }
+                //else if (!robot.intakeSlideMotor.isBusy()) {
+                //    robot.intakeSlideMotor.setPower(0);
+                //    robot.intakeSlideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                //}
             } // !end_game
             else {
                 // End game
@@ -309,14 +336,14 @@ public class BoKTele
         if (opMode.gamepad2.right_stick_button)
             isHoldingSpeed = false;
         if (opMode.gamepad2.right_bumper && !isHoldingSpeed) {
-            holdIntakeSpeed = gamePad2RightStickY;
+            holdIntakeSpeed = 1;
             isHoldingSpeed = true;
         }
         else if ((Math.abs(gamePad2RightStickY) < GAME_TRIGGER_DEAD_ZONE) && !isHoldingSpeed) {
             robot.intakeMotor.setPower(0);
         }
         else {
-            if (isHoldingSpeed)
+            if (isHoldingSpeed && (Math.abs(gamePad2RightStickY) < GAME_TRIGGER_DEAD_ZONE))
                 robot.intakeMotor.setPower(holdIntakeSpeed);
             else
                 robot.intakeMotor.setPower(gamePad2RightStickY);

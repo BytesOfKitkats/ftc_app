@@ -38,6 +38,7 @@ public abstract class BoKHardwareBot
     protected static final double SPEED_COEFF_MED = 0.5;
     protected static final double SPEED_COEFF_FAST = 0.8;
     protected static final double SPEED_COEFF_TURN = 0.3;
+    protected static final double SPEED_COEFF_TURN_FAST = 0.4;
     protected static final double GAME_STICK_DEAD_ZONE = 0.1;
 
     // DC Motors

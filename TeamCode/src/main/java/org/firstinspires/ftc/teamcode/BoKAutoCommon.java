@@ -1287,6 +1287,9 @@ public abstract class BoKAutoCommon implements BoKAuto
         runTime.reset();
         while (robot.dumperSlideMotor.isBusy() && (runTime.seconds() < 1.5)){
             // Log.v("BOK", "Dumper pos up " + robot.dumperSlideMotor.getCurrentPosition());
+            if ((runTime.seconds() > 0.5) && (robot.dumperSlideMotor.getCurrentPosition() < 100)) {
+                robot.intakeSlideMotor.setTargetPosition(-185);
+            }
         }
 
         // Open the dumper gate
@@ -1317,6 +1320,8 @@ public abstract class BoKAutoCommon implements BoKAuto
 
         // Close the intake gate servo
         robot.intakeGateServo.setPosition(robot.INTAKE_GATE_SERVO_CLOSED);
+        robot.intakeLeftServo.setPosition(0.63);
+        robot.intakeRightServo.setPosition(0.27);
 
         // Move the dumper slide down
         robot.dumperSlideMotor.setTargetPosition(20);
