@@ -1280,6 +1280,8 @@ public abstract class BoKAutoCommon implements BoKAuto
 
     protected void DumpMineral(BoKAutoCubeLocation loc, boolean atCrater)
     {
+        robot.intakeLeftServo.setPosition(0.63);
+        robot.intakeRightServo.setPosition(0.27);
         // Raise the dumper slide
         robot.dumperSlideMotor.setTargetPosition(1120);
         robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -1320,8 +1322,6 @@ public abstract class BoKAutoCommon implements BoKAuto
 
         // Close the intake gate servo
         robot.intakeGateServo.setPosition(robot.INTAKE_GATE_SERVO_CLOSED);
-        robot.intakeLeftServo.setPosition(0.63);
-        robot.intakeRightServo.setPosition(0.27);
 
         // Move the dumper slide down
         robot.dumperSlideMotor.setTargetPosition(20);
@@ -1551,7 +1551,8 @@ public abstract class BoKAutoCommon implements BoKAuto
         Log.v("BOK", "Dumping marker completed in " +
                 String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));
 
-
+        RaiseIntakeArmThread raiseIntakeArmThreadThread = new RaiseIntakeArmThread();
+        raiseIntakeArmThreadThread.start();
         double distToMoveBack = Math.max(distToWall + 10, 60);
         if (atCrater) {
             // Turn away from our sampling sphere
@@ -1602,6 +1603,12 @@ public abstract class BoKAutoCommon implements BoKAuto
        opMode.sleep(500);
        // Stop the intake motor
        robot.intakeMotor.setPower(0);
+   }
+
+   public class RaiseIntakeArmThread extends Thread{
+        public void run() {
+            RaiseIntakeArm();
+        }
    }
 }
 
