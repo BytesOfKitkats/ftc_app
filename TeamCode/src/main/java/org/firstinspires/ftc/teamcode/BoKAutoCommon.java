@@ -1322,6 +1322,8 @@ public abstract class BoKAutoCommon implements BoKAuto
 
         // Close the intake gate servo
         robot.intakeGateServo.setPosition(robot.INTAKE_GATE_SERVO_CLOSED);
+        robot.dumperGateServo.setPosition(robot.DUMPER_GATE_SERVO_INIT);
+        opMode.sleep(250);
 
         // Move the dumper slide down
         robot.dumperSlideMotor.setTargetPosition(20);
@@ -1335,8 +1337,6 @@ public abstract class BoKAutoCommon implements BoKAuto
                 liftSlow = false;
                 Log.v("BOK", "Dumper pos dn in if " + robot.dumperSlideMotor.getCurrentPosition());
                 robot.dumperSlideMotor.setPower(0.8);
-                // Close the dumper gate
-                robot.dumperGateServo.setPosition(robot.DUMPER_GATE_SERVO_INIT);
             }
         }
         robot.dumperSlideMotor.setPower(0);
@@ -1381,20 +1381,14 @@ public abstract class BoKAutoCommon implements BoKAuto
         //opMode.sleep(250);
         moveRamp(MOVE_POWER_LOW, 2/*inches*/, false/*forward*/, 2/*seconds*/);
 
-        // Strafe left about 2 inches
+        // Strafe left about 4 inches
         strafe(0.35/*power*/, 0.35/*rotatiions*/, false, 2/*seconds*/);
-        //Log.v("BOK", "Strafe completed in " +
-        //        String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));
 
         // Step 4: Point the distance sensor so that it is perpendicular to the footprint picture:
         // RED Crater; or the galaxy picture: Red Depot. For Blue Crater, we are pointing at the
         // rover picture & for Blue Depot, we are pointing to the crater picture.
 
-        for (int i = 0; i < 5; i++) {
-            Log.v("BOK", "Dist to wall after strafe " + robot.getDistanceCM(robot.distanceBack, 150, 0.25));
-        }
-
-        Log.v("BOK", "Angle at end " + robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
+        Log.v("BOK", "Angle after strafe " + robot.imu.getAngularOrientation(AxesReference.INTRINSIC,
                 AxesOrder.XYZ,
                 AngleUnit.DEGREES).thirdAngle);
 
@@ -1407,112 +1401,123 @@ public abstract class BoKAutoCommon implements BoKAuto
                 String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));
 
         // 5b: Bring the intake arm to mid position
-        robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_SERVO_MID);
-        robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_SERVO_MID);
+        if (loc != BoKAutoCubeLocation.BOK_CUBE_RIGHT) {
+            robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_SERVO_MID);
+            robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_SERVO_MID);
+        }
 
-        // Bring the intake slides out, this will lower the dumper slide down as
+        // 5c: Bring the intake slides out, this will lower the dumper slide down as
         // space is created
         robot.intakeSlideMotor.setTargetPosition(-175);
         robot.intakeSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         robot.intakeSlideMotor.setPower(0.95);
-
-        //TODO do we need this wait?
         while (robot.intakeSlideMotor.isBusy()) {
         }
-        //robot.intakeSlideMotor.setPower(0);
+
         Log.v("BOK", "Intake setup completed in " +
                 String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));
 
-        // Step 6: complete the sampling
+        // Step 6: complete the sampling, pick up the mineral, score mineral in lander
         if (loc == BoKAutoCubeLocation.BOK_CUBE_LEFT) {
-            // Turn
+            // 6a: Turn slightly right of the gold
             gyroTurn(DT_TURN_SPEED_HIGH, 90, 105, DT_TURN_THRESHOLD_HIGH, false, false, 2);
 
-            // Start the intake (a) intake motor, (b) lower the intake arm
-            StartIntake();
+            // 6b: Start the intake (a) intake motor, (b) lower the intake arm
+            startIntake();
 
+            // 6c: Move forward slightly, turn to sweep past the mineral,
+            // move forward to ensure the gold is collected
             move(0.5, 0.5, 2, true, 2);
             gyroTurn(DT_TURN_SPEED_LOW, 105, 120, DT_TURN_THRESHOLD_LOW, false, false, 2);
             move(0.5, 0.5, 5, true, 2);
 
-            // Raise the intake arm
-            RaiseIntakeArm();
+            // 6d: Raise the intake arm
+            raiseIntakeArm();
 
-            // Retract the intake arm
-            RetractIntakeArmAndOpenGate();
+            // 6e: Retract the intake arm
+            retractIntakeArmAndOpenGate();
 
-            // Turn slightly to the left, move forward
+            // 6f: Turn towards the lander
             double headingForDump = atCrater ? 90 : 100;
-            gyroTurn(DT_TURN_SPEED_LOW, 117, headingForDump, DT_TURN_THRESHOLD_LOW, false, false, 2);
+            gyroTurn(DT_TURN_SPEED_LOW, 120, headingForDump, DT_TURN_THRESHOLD_LOW, false, false, 2);
             move(0.5, 0.5, 2, true, 2);
 
-            // Dump the collected cube into the cargo hold of the lander
+            // 6g: Dump the collected cube into the cargo hold of the lander
             DumpMineral(loc, atCrater);
-            moveRamp(0.5, 2, false, 3);
+            moveRamp(0.5, 2, false, 2);
         } else if (loc == BoKAutoCubeLocation.BOK_CUBE_CENTER) {
             Log.v("BOK", "Cube on center");
-            // Strafe to the right about 2 inches
+            // 6a: Strafe to the right about 2 inches
             strafe(0.35/*power*/, 0.35/*rotations*/, true, 2);
 
-            // Start the intake (a) intake motor, (b) lower the intake arm
-            StartIntake();
+            // 6b: Start the intake (a) intake motor, (b) lower the intake arm
+            startIntake();
 
-            // Move forward to pick up the sampling cube
-            move(0.5, 0.5, 10, true, 2);
-            opMode.sleep(250);
+            // 6c: Move forward to pick up the sampling cube
+            move(0.5, 0.5, 8, true, 2);
+            //??opMode.sleep(250);
 
-            // Raise the intake arm
-            RaiseIntakeArm();
+            // 6d: Raise the intake arm
+            raiseIntakeArm();
 
-            // Turn slightly to the right
-            gyroTurn(DT_TURN_SPEED_LOW, 90, 85, DT_TURN_THRESHOLD_LOW, false, false, 2);
+            // 6e: Turn slightly to the right to face the lander
+            double angleToTurn = atCrater?80:85;
+            gyroTurn(DT_TURN_SPEED_LOW, 90, angleToTurn, DT_TURN_THRESHOLD_LOW, false, false, 2);
+            //??move(0.5, 0.5, 2, false, 2);
 
-            // Retract the intake arm
-            RetractIntakeArmAndOpenGate();
+            // 6f: Retract the intake arm
+            retractIntakeArmAndOpenGate();
 
-            // Dump the collected cube into the cargo hold of the lander
+            // 6g: Dump the collected cube into the cargo hold of the lander
             DumpMineral(loc, atCrater);
 
-            // Move the robot back before turning right, so that we don't hit the left sphere
+            // 6h: Move the robot back before turning right, so that we don't hit the left sphere
             moveRamp(0.5, 3, false, 3);
         } else { // loc == BoKAutoCubeLocation.BOK_CUBE_RIGHT
             Log.v("BOK", "Cube on right");
-            gyroTurn(DT_TURN_SPEED_HIGH, 90, 57, DT_TURN_THRESHOLD_HIGH, false, false, 2);
+            // 6a: Turn slightly left of the gold
+            gyroTurn(DT_TURN_SPEED_HIGH, 90, 57, DT_TURN_THRESHOLD_HIGH, false, false, 3);
 
-            // Start the intake (a) intake motor, (b) lower the intake arm
-            StartIntake();
-
+            // 6b: extend the horizontal slides to reach the cube
+            robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_SERVO_MID);
+            robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_SERVO_MID);
             robot.intakeSlideMotor.setTargetPosition(-350);
             robot.intakeSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             robot.intakeSlideMotor.setPower(0.95);
             while (robot.intakeSlideMotor.isBusy()) { }
 
-            gyroTurn(DT_TURN_SPEED_LOW, 60, 42, DT_TURN_THRESHOLD_LOW, false, false, 2);
+            // 6c: turn to sweep past the mineral, move forward to ensure the gold is collected
+            startIntake();
+            gyroTurn(DT_TURN_SPEED_LOW, 57, 42, DT_TURN_THRESHOLD_LOW, false, false, 2);
             move(0.5, 0.5, 5, true, 2);
 
-            opMode.sleep(250);
-            // Raise the intake arm
-            RaiseIntakeArm();
+            //??opMode.sleep(250);
 
-            // Retract the intake arm
-            RetractIntakeArmAndOpenGate();
+            // 6e: Raise the intake arm
+            raiseIntakeArm();
 
+            // 6f: Retract the intake arm
+            retractIntakeArmAndOpenGate();
+
+            // 6g: Turn to face the lander (turn less on crater side)
             double angleBeforeDump = atCrater ? 75 : 85;
             gyroTurn(DT_TURN_SPEED_HIGH, 48, angleBeforeDump,
                     DT_TURN_THRESHOLD_LOW, false, false, 3);
-            move(0.5, 0.5, 2, true, 2);
+            move(0.5, 0.5, 3, true, 2);
 
+            // 6h: dumper mineral (and move forward on depot side to avoid the silver minerals)
             DumpMineral(loc, atCrater);
 
-            if (!atCrater)
+            if (atCrater)
                 move(0.5, 0.5, 2, false, 2);
+            else
+                move(0.5, 0.5, 3, false, 2);
         }
 
         Log.v("BOK", "Sampling completed in " +
                 String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));
 
         // Step 9: Turn and move to the side wall
-            //move();
         gyroTurn(DT_TURN_SPEED_HIGH, 85, 0, DT_TURN_THRESHOLD_HIGH, false, false, 6);
         followHeadingPIDWithDistanceBack(0 /*heading*/,
                 -0.6,
@@ -1523,6 +1528,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         /* heading for wall pointing slightly away from the mineral of our partner */
         double headingForBackWall = (atCrater) ? 42 : -132;
         double headingForMarker = (atCrater) ? 45 : -135;
+
         // Step 10: Turn towards the back wall
         if (atCrater)
             gyroTurn(DT_TURN_SPEED_HIGH, 0, headingForBackWall ,
@@ -1535,42 +1541,43 @@ public abstract class BoKAutoCommon implements BoKAuto
         Log.v("BOK", "Dist to back wall (inches) " + distToWall);
         Log.v("BOK", "Turning to back wall completed in " +
               String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));
-        // Move to target distance of 60cm
+
+        // Step 11: Move to target distance of 60cm, move faster on depot side
         double speed = atCrater ? -MOVE_POWER_HIGH : -0.7;
         followHeadingPIDWithDistanceBack(headingForBackWall, speed, 60,
                 false, atCrater, 7/*sec*/);
 
-        // Once distance reached, turn robot
-
+        // Before dumping marker, straighten robot
         gyroTurn(DT_TURN_SPEED_LOW, 0, headingForMarker ,
                 DT_TURN_THRESHOLD_LOW, false, false, 2/*seconds*/);
 
 
-        // Once distance reached, dump the marker
+        // Step 12: Dump the marker
         dumpMarker();
         Log.v("BOK", "Dumping marker completed in " +
                 String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));
 
+        // Step 13: Park robot at crater, while moving turn box to setup for teleop
         RaiseIntakeArmThread raiseIntakeArmThreadThread = new RaiseIntakeArmThread();
         raiseIntakeArmThreadThread.start();
         double distToMoveBack = Math.max(distToWall + 10, 60);
         if (atCrater) {
-            // Turn away from our sampling sphere
+            // Step 13a: Turn away from our sampling sphere
             gyroTurn(DT_TURN_SPEED_LOW, 40, 46, DT_TURN_THRESHOLD_LOW, false, false, 3/*seconds*/);
-            // Move forwards distToWall + 10 inches, detect bump with the crater wall
+            // Step 13b: Move forwards distToWall + 10 inches, detect bump with the crater wall
             followHeadingPID(48, MOVE_POWER_HIGH + 0.1, 0.8*distToMoveBack, distToMoveBack, true, 7 /*seconds*/);
         }
         else {
-            // Turn away from our sampling sphere
+            // Step 13a: Turn away from our sampling sphere
             gyroTurn(DT_TURN_SPEED_LOW, -130, -136, DT_TURN_THRESHOLD_LOW, false, false, 3/*sec*/);
-            // Move forwards distToWall + 10 inches, detect bump with the crater wall
+            // Step 13b: Move forwards distToWall + 10 inches, detect bump with the crater wall
             followHeadingPID(-135, MOVE_POWER_HIGH + 0.2, 0.8*distToMoveBack, distToMoveBack, true, 7 /*seconds*/);
         }
         Log.v("BOK", "Moving after arm in " +
                 String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));
    }
 
-   protected void StartIntake()
+   protected void startIntake()
    {
        // Start the intake
        // (a) intake motor
@@ -1580,7 +1587,7 @@ public abstract class BoKAutoCommon implements BoKAuto
        robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_SERVO_DOWN+0.05);
    }
 
-   private void RaiseIntakeArm()
+   private void raiseIntakeArm()
    {
        // raise the intake arm
        robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_SERVO_UP);
@@ -1589,7 +1596,7 @@ public abstract class BoKAutoCommon implements BoKAuto
        // robot.intakeMotor.setPower(0);
    }
 
-   private void RetractIntakeArmAndOpenGate()
+   private void retractIntakeArmAndOpenGate()
    {
        // Retract the intake arm
        robot.intakeSlideMotor.setTargetPosition(-60);
@@ -1607,7 +1614,7 @@ public abstract class BoKAutoCommon implements BoKAuto
 
    public class RaiseIntakeArmThread extends Thread{
         public void run() {
-            RaiseIntakeArm();
+            raiseIntakeArm();
         }
    }
 }

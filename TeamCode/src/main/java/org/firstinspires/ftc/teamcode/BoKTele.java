@@ -164,7 +164,7 @@ public class BoKTele
                     robot.dumperSlideMotor.setPower(DUMPER_LIFT_POWER_UP);
                 }
 
-                else if (opMode.gamepad2.dpad_down && liftUp) {
+                else if (opMode.gamepad1.dpad_down && liftUp) {
                     speedCoef = robot.SPEED_COEFF_FAST;
                     turnCoef = robot.SPEED_COEFF_TURN_FAST;
                     robot.dumperSlideMotor.setTargetPosition(0);
@@ -251,6 +251,10 @@ public class BoKTele
                     robot.intakeGateServo.setPosition(robot.INTAKE_GATE_SERVO_OPEN);
                 }
 
+                if (opMode.gamepad2.dpad_down) {
+                    robot.intakeGateServo.setPosition(robot.INTAKE_GATE_SERVO_CLOSED);
+                }
+
                 if (opMode.gamepad1.left_bumper && !resetIntake) {
                     intakeZero = 0;
                     robot.intakeSlideMotor.setPower(0);
@@ -284,8 +288,8 @@ public class BoKTele
                     robot.intakeSlideMotor.setTargetPosition(intakeZero);
                     robot.intakeSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     robot.intakeSlideMotor.setPower(0.7);
-                    robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_SERVO_UP);
-                    robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_SERVO_UP);
+                    robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_SERVO_UP+0.07);
+                    robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_SERVO_UP-0.07);
 
                 }
                 else if (!robot.intakeSlideMotor.getMode().equals(DcMotor.RunMode.RUN_TO_POSITION))
