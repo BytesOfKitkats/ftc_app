@@ -1225,7 +1225,8 @@ public abstract class BoKAutoCommon implements BoKAuto
     protected void dumpMarker()
     {
         robot.markerServo.setPosition(robot.MARKER_SERVO_FINAL);
-        opMode.sleep(500);
+        opMode.sleep(50);
+        robot.markerServo.setPosition(robot.MARKER_SERVO_FINAL-0.1);
     }
 
     /*
@@ -1324,7 +1325,10 @@ public abstract class BoKAutoCommon implements BoKAuto
         robot.intakeGateServo.setPosition(robot.INTAKE_GATE_SERVO_CLOSED);
         robot.dumperGateServo.setPosition(robot.DUMPER_GATE_SERVO_INIT);
         opMode.sleep(250);
+        //moveDumpLiftDown();
+    }
 
+    public void moveDumpLiftDown() {
         // Move the dumper slide down
         robot.dumperSlideMotor.setTargetPosition(20);
         robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -1333,7 +1337,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         while(robot.dumperSlideMotor.isBusy()){
             // Log.v("BOK", "Dumper pos dn " + robot.dumperSlideMotor.getCurrentPosition());
             if (liftSlow &&
-                 (robot.dumperSlideMotor.getCurrentPosition() < (robot.DUMPER_SLIDE_FINAL_POS/3))) {
+                    (robot.dumperSlideMotor.getCurrentPosition() < (robot.DUMPER_SLIDE_FINAL_POS/3))) {
                 liftSlow = false;
                 Log.v("BOK", "Dumper pos dn in if " + robot.dumperSlideMotor.getCurrentPosition());
                 robot.dumperSlideMotor.setPower(0.8);
@@ -1444,7 +1448,8 @@ public abstract class BoKAutoCommon implements BoKAuto
 
             // 6g: Dump the collected cube into the cargo hold of the lander
             DumpMineral(loc, atCrater);
-            moveRamp(0.5, 2, false, 2);
+
+            //moveRamp(0.5, 2, false, 2);
         } else if (loc == BoKAutoCubeLocation.BOK_CUBE_CENTER) {
             Log.v("BOK", "Cube on center");
             // 6a: Strafe to the right about 2 inches
@@ -1468,11 +1473,17 @@ public abstract class BoKAutoCommon implements BoKAuto
             // 6f: Retract the intake arm
             retractIntakeArmAndOpenGate();
 
+            if (!atCrater)
+                move(0.5, 0.5, 2, true, 2);
+
             // 6g: Dump the collected cube into the cargo hold of the lander
             DumpMineral(loc, atCrater);
 
+            if (!atCrater)
+                move(0.5, 0.5, 2, false, 2);
+
             // 6h: Move the robot back before turning right, so that we don't hit the left sphere
-            moveRamp(0.5, 3, false, 3);
+            //moveRamp(0.5, 3, false, 3);
         } else { // loc == BoKAutoCubeLocation.BOK_CUBE_RIGHT
             Log.v("BOK", "Cube on right");
             // 6a: Turn slightly left of the gold
@@ -1510,8 +1521,8 @@ public abstract class BoKAutoCommon implements BoKAuto
 
             if (atCrater)
                 move(0.5, 0.5, 2, false, 2);
-            else
-                move(0.5, 0.5, 3, false, 2);
+            //else
+            //    move(0.5, 0.5, 3, false, 2);
         }
 
         Log.v("BOK", "Sampling completed in " +
@@ -1519,6 +1530,7 @@ public abstract class BoKAutoCommon implements BoKAuto
 
         // Step 9: Turn and move to the side wall
         gyroTurn(DT_TURN_SPEED_HIGH, 85, 0, DT_TURN_THRESHOLD_HIGH, false, false, 6);
+        moveDumpLiftDown();
         followHeadingPIDWithDistanceBack(0 /*heading*/,
                 -0.6,
                 DISTANCE_TO_WALL_BEFORE_TURN,
@@ -1547,7 +1559,7 @@ public abstract class BoKAutoCommon implements BoKAuto
         followHeadingPIDWithDistanceBack(headingForBackWall, speed, 60,
                 false, atCrater, 7/*sec*/);
 
-        // Before dumping marker, straighten robot
+        // Before dumpdumping marker, straighten robot
         gyroTurn(DT_TURN_SPEED_LOW, 0, headingForMarker ,
                 DT_TURN_THRESHOLD_LOW, false, false, 2/*seconds*/);
 
@@ -1565,7 +1577,7 @@ public abstract class BoKAutoCommon implements BoKAuto
             // Step 13a: Turn away from our sampling sphere
             gyroTurn(DT_TURN_SPEED_LOW, 40, 46, DT_TURN_THRESHOLD_LOW, false, false, 3/*seconds*/);
             // Step 13b: Move forwards distToWall + 10 inches, detect bump with the crater wall
-            followHeadingPID(48, MOVE_POWER_HIGH + 0.1, 0.8*distToMoveBack, distToMoveBack, true, 7 /*seconds*/);
+            followHeadingPID(48, MOVE_POWER_HIGH + 0.2, 0.8*distToMoveBack, distToMoveBack, true, 7 /*seconds*/);
         }
         else {
             // Step 13a: Turn away from our sampling sphere

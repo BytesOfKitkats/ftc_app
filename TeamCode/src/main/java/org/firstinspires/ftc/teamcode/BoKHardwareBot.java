@@ -69,7 +69,7 @@ public abstract class BoKHardwareBot
     protected static final double INTAKE_RIGHT_SERVO_UP = 0.567;
     protected static final double INTAKE_RIGHT_SERVO_INIT = 0.833;
     protected static final double MARKER_SERVO_INIT         = 0.31;
-    protected static final double MARKER_SERVO_FINAL        = 0.75;
+    protected static final double MARKER_SERVO_FINAL        = 0.85;
     protected static final double DISTANCE_ROTATE_SERVO_INIT  = 0.52;
     protected static final double DISTANCE_ROTATE_SERVO_FINAL = 0.68;
 
