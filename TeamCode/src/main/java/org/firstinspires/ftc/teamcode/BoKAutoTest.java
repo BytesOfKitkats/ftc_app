@@ -26,12 +26,15 @@ public class BoKAutoTest extends BoKAutoCommon {
     {
         boolean[] arrayTests = {
                 true, // IMU
-                true, // DT motors
-                true, // intake
-                true, // dumper
-                true, // marker
-                true, // distance
-        }; // take picture
+                false, // DT motors
+                false, // intake
+                false, // dumper
+                false, // latch
+                false, // marker
+                false, // distance sensor
+                false, // take picture
+                false  //auto test
+        };
 
 
         if (arrayTests[0]) {
@@ -80,9 +83,11 @@ public class BoKAutoTest extends BoKAutoCommon {
             robot.intakeMotor.setPower(0.7);
             opMode.sleep(2000);
             robot.intakeMotor.setPower(0);
+            robot.intakeGateServo.setPosition(robot.INTAKE_GATE_SERVO_OPEN);
+            opMode.sleep(500);
+            robot.intakeGateServo.setPosition(robot.INTAKE_GATE_SERVO_CLOSED);
             opMode.telemetry.addData("Test: ", "Intake arm complete");
             opMode.telemetry.update();
-            opMode.sleep(2000);
         } // if (arrayTests[1])
 
         while (opMode.opModeIsActive() && arrayTests[3] && !opMode.gamepad1.a) {
@@ -92,7 +97,7 @@ public class BoKAutoTest extends BoKAutoCommon {
             // test Dumper lift motor
             opMode.telemetry.addData("Test: ", "Moving dumper lift");
             opMode.telemetry.update();
-            robot.dumperSlideMotor.setTargetPosition(robot.DUMPER_SLIDE_FINAL_POS);
+            robot.dumperSlideMotor.setTargetPosition(1120);
             robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             robot.dumperSlideMotor.setPower(0.95);
             while (opMode.opModeIsActive() && robot.dumperSlideMotor.isBusy()) {
@@ -119,12 +124,9 @@ public class BoKAutoTest extends BoKAutoCommon {
             robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             robot.dumperSlideMotor.setPower(0.9);
 
-            //Log.v("BOK", "Dumper slide done: " + robot.dumperSlideMotor.getCurrentPosition());
+            Log.v("BOK", "Dumper slide done: " + robot.dumperSlideMotor.getCurrentPosition());
             opMode.telemetry.addData("Test: ", "Moving dumper lift complete");
             opMode.telemetry.update();
-            opMode.sleep(2000);
-
-
         }
 
         while (opMode.opModeIsActive() && arrayTests[4] && !opMode.gamepad1.a) {
@@ -189,37 +191,9 @@ public class BoKAutoTest extends BoKAutoCommon {
         }
 
         while (opMode.opModeIsActive() && arrayTests[7] && !opMode.gamepad1.a) {
-
         }
 
         if (arrayTests[7] && opMode.opModeIsActive()) {
-            // Autonomous tests
-            //moveRamp(0.5, 24/*inches*/, true/*forward*/, 3/*seconds*/);
-            //gyroTurn(DT_TURN_SPEED_HIGH, 0, 90, DT_TURN_THRESHOLD_LOW, false, false, 4);
-
-            /*strafe(0.5, 3, false, 6);
-            strafe(0.5, 3, true, 6);
-            opMode.sleep(2000);
-            strafeRamp(0.5, 3, false, 6);
-            strafeRamp(0.5, 3, true, 6);*/
-
-            //dropIntakeArmAndExtend();
-            //followHeadingPIDBack(0, -0.3, 30, false, 6);
-            //followHeadingPID(0, 0.5, 35, 45, true, 5);
-            /*
-            robot.hangMotor.setTargetPosition(-robot.HANG_LIFT_HIGH_POS+25);
-            robot.hangMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            robot.hangMotor.setPower(0.95);
-            while (opMode.opModeIsActive() && robot.hangMotor.isBusy()) {
-                Log.v("BOK", "hang motor pos " + robot.hangMotor.getCurrentPosition());
-            }
-            robot.hangMotor.setPower(0);*/
-        } // arrayTests[7]
-
-        while (opMode.opModeIsActive() && arrayTests[8] && !opMode.gamepad1.a) {
-        }
-
-        if (arrayTests[8] && opMode.opModeIsActive()) {
 
             // CameraDevice.getInstance().setFlashTorchMode(true);
 
@@ -234,5 +208,26 @@ public class BoKAutoTest extends BoKAutoCommon {
                 x = opMode.gamepad1.x;
             }
         } // arrayTests[7]
+
+        while (opMode.opModeIsActive() && arrayTests[8] && !opMode.gamepad1.a) {
+
+        }
+
+        if (arrayTests[8] && opMode.opModeIsActive()) {
+            // Autonomous tests
+
+            while (opMode.opModeIsActive() &&
+                    (robot.hangMotor.getCurrentPosition() < robot.HANG_LIFT_HIGH_POS) &&
+                    (runTime.seconds() < 6)) {
+                // Do nothing while the robot is moving down
+                // Log.v("BOK", "hang enc: " + robot.hangMotor.getCurrentPosition());
+            }
+            robot.hangMotor.setPower(0);
+            if (runTime.seconds() >= 6) {
+                Log.v("BOK", "hang lift timed out");
+            }
+
+        } // arrayTests[7]
+
     }
 }

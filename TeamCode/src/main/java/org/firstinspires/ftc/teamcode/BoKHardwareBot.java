@@ -75,7 +75,7 @@ public abstract class BoKHardwareBot
 
     // Encoder positions
     protected static final int DUMPER_SLIDE_FINAL_POS    = 1250;
-    protected static final int HANG_LIFT_HIGH_POS        = 6560; //537.6 ppr*0.75 gear*0.315"(8mm) = 1280 pulses/"
+    protected static final int HANG_LIFT_HIGH_POS        = 6790;//6560; //537.6 ppr*0.75 gear*0.315"(8mm) = 1280 pulses/"
 
     // Sensors
     private static final String IMU_TOP = "imu";        // IMU
@@ -310,7 +310,7 @@ public abstract class BoKHardwareBot
      *
      * waitForTick implements a periodic delay. However, this acts like a metronome with a regular
      * periodic tick.  This is used to compensate for varying processing times for each cycle.
-     * The function looks at the elapsed cycle time, and sleeps for the remaining time interval.
+     *b The function looks at the elapsed cycle time, and sleeps for the remaining time interval.
      *
      * @param periodMs  Length of wait cycle in mSec.
      * @throws InterruptedException

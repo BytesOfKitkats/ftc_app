@@ -560,7 +560,7 @@ public abstract class BoKAutoCommon implements BoKAuto
                             if ((pt.y > SPHERE_LOC_Y_MIN) &&
                                     (pt.y < SPHERE_LOC_Y_MAX)) {
                                 // Now add histogram calculation for double check
-                                Rect roi = new Rect((int) (pt.x - (ROI_WIDTH / 2)),
+                                Rect roi = new Rect((int) (pt.x - 37),
                                         (int) (pt.y - (ROI_HEIGHT / 2)),
                                         ROI_WIDTH, ROI_HEIGHT);
 
@@ -575,7 +575,6 @@ public abstract class BoKAutoCommon implements BoKAuto
                                         new Point(roi.x + roi.width,
                                                 roi.y + roi.height),
                                         rectColor, 3);
-
                                 int radius = (int) Math.round(c[2]);
                                 //Log.v("BOK", "Center: " + pt + ", Radius: " + radius);
                                 Imgproc.circle(src,
