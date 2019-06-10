@@ -26,6 +26,7 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
+import org.opencv.core.CvException;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfFloat;
@@ -461,7 +462,20 @@ public abstract class BoKAutoCommon implements BoKAuto
         List<Mat> hsvPlanes = new ArrayList<>();
         Core.split(imgHSV, hsvPlanes);
 
-        Mat subMask = mask.submat(roi);
+        Mat subMask;
+        try {
+            subMask = mask.submat(roi);
+        } catch (CvException cvE) {
+            Log.v("BOK", "Caught CvException " + cvE.toString());
+            try {
+                Rect newRoi = new Rect(roi.x, roi.y, roi.width/2, roi.height/2);
+                roi = newRoi;
+                subMask = mask.submat(roi);
+            } catch (CvException e) {
+                Log.v("BOK", "Caught another CvException!" + cvE.toString());
+                return true;
+            }
+        }
         subMask.setTo(new Scalar(255));
 
         Imgproc.calcHist(Arrays.asList(hsvPlanes.get(2)), new MatOfInt(0),
@@ -1586,6 +1600,12 @@ public abstract class BoKAutoCommon implements BoKAuto
         }
         Log.v("BOK", "Moving after arm in " +
                 String.format("%.2f", BoKAuto.runTimeOpMode.seconds()));
+
+        robot.dumperSlideMotor.setTargetPosition(0);
+        robot.dumperSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        robot.dumperSlideMotor.setPower(0.4);
+        while (opMode.opModeIsActive() && robot.dumperSlideMotor.isBusy()){}
+        robot.dumperSlideMotor.setPower(0);
    }
 
    protected void startIntake()
