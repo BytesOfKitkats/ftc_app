@@ -2,10 +2,10 @@ package org.firstinspires.ftc.teamcode;
 
 import android.util.Log;
 
+import com.acmerobotics.roadrunner.control.PIDCoefficients;
+import com.acmerobotics.roadrunner.control.PIDFController;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.PIDCoefficients;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.vuforia.CameraDevice;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -22,7 +22,22 @@ public class BoKAutoTest extends BoKAutoCommon {
     }
 
     @Override
-    public void runSoftware()
+    public void runSoftware() {
+        // specify coefficients/gains
+        PIDCoefficients coeffs = new PIDCoefficients(0.1, 0.0, 0.01);
+        // create the controller
+        PIDFController controller = new PIDFController(coeffs);
+
+        // specify the setpoint
+        controller.setTargetPosition(0);
+
+        // in each iteration of the control loop
+        // measure the position or output variable
+        // apply the correction to the input variable
+        //double correction = controller.update();
+    }
+
+    public void runSoftwareOld()
     {
         boolean[] arrayTests = {
                 true, // IMU
