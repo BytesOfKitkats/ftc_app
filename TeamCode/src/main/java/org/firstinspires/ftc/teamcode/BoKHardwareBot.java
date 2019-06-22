@@ -62,11 +62,11 @@ public abstract class BoKHardwareBot
     protected static final double INTAKE_GATE_SERVO_OPEN = 0.4;
     protected static final double INTAKE_LEFT_SERVO_DOWN  = 0.95;
     protected static final double INTAKE_LEFT_SERVO_MID  = 0.754;
-    protected static final double INTAKE_LEFT_SERVO_UP = 0.433;
+    protected static final double INTAKE_LEFT_SERVO_UP = 0.503;
     protected static final double INTAKE_LEFT_SERVO_INIT = 0.167;
     protected static final double INTAKE_RIGHT_SERVO_DOWN  = 0.05;
     protected static final double INTAKE_RIGHT_SERVO_MID  = 0.246;
-    protected static final double INTAKE_RIGHT_SERVO_UP = 0.567;
+    protected static final double INTAKE_RIGHT_SERVO_UP = 0.497;
     protected static final double INTAKE_RIGHT_SERVO_INIT = 0.833;
     protected static final double MARKER_SERVO_INIT         = 0.31;
     protected static final double MARKER_SERVO_FINAL        = 0.85;

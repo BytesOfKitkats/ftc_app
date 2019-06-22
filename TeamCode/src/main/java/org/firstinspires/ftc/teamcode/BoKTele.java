@@ -236,14 +236,14 @@ public class BoKTele
                 }
 
                 // Intake box control
-                if (opMode.gamepad2.a /*&& !intakeBoxUp*/ && !aPressed) {
-                    robot.intakeGateServo.setPosition(robot.INTAKE_GATE_SERVO_CLOSED);
-                    robot.intakeRightServo.setPosition(0.1);
-                    robot.intakeLeftServo.setPosition(0.9);
-                    aPressed = true;
-                    yPressed = false;
-                    bPressed = false;
-                }
+                //if (opMode.gamepad2.a /*&& !intakeBoxUp*/ && !aPressed) {
+                //    robot.intakeGateServo.setPosition(robot.INTAKE_GATE_SERVO_CLOSED);
+                //    robot.intakeRightServo.setPosition(0.1);
+                //    robot.intakeLeftServo.setPosition(0.9);
+                //    aPressed = true;
+                //    yPressed = false;
+                //    bPressed = false;
+                //}
 
                 if (opMode.gamepad2.y && !yPressed) {
                     robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_SERVO_UP);
@@ -305,8 +305,8 @@ public class BoKTele
                     robot.intakeSlideMotor.setTargetPosition(intakeZero);
                     robot.intakeSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     robot.intakeSlideMotor.setPower(0.7);
-                    robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_SERVO_UP+0.07);
-                    robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_SERVO_UP-0.07);
+                    robot.intakeLeftServo.setPosition(robot.INTAKE_LEFT_SERVO_UP);
+                    robot.intakeRightServo.setPosition(robot.INTAKE_RIGHT_SERVO_UP);
 
                 }
                 else if (!robot.intakeSlideMotor.getMode().equals(DcMotor.RunMode.RUN_TO_POSITION))
